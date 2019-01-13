@@ -23,16 +23,41 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/keyboard.hpp>
-#include <selain/main-window.hpp>
+#ifndef SELAIN_KEYBOARD_HPP_GUARD
+#define SELAIN_KEYBOARD_HPP_GUARD
 
-int
-main(int argc, char** argv)
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <unordered_map>
+
+namespace selain
 {
-  const auto app = Gtk::Application::create("pw.rauli.selain");
-  selain::MainWindow window;
+  class Tab;
 
-  selain::keyboard::initialize();
+  namespace keyboard
+  {
+    using Binding = std::function<void(Tab*)>;
 
-  return app->run(window, argc, argv);
+    struct Mapping
+    {
+      using mapping_type = std::unordered_map<
+        std::uint32_t,
+        std::shared_ptr<Mapping>
+      >;
+
+      std::uint32_t value;
+      Binding binding;
+      mapping_type mapping;
+      mapping_type control_mapping;
+    };
+
+    /**
+     * Initializes all builtin keyboard bindings. Must be called during the
+     * application startup before the UI is being shown.
+     */
+    void initialize();
+  }
 }
+
+#endif /* !SELAIN_KEYBOARD_HPP_GUARD */

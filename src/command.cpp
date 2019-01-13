@@ -122,12 +122,12 @@ namespace selain
 
     if (command[0] == '/')
     {
-      // TODO: Implement forwards search.
+      search(command.substr(1));
       return;
     }
     else if (command[0] == '?')
     {
-      // TODO: Implement backwards search.
+      search(command.substr(1), false);
       return;
     }
     else if (command[0] == ':' && length > 1)

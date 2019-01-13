@@ -189,6 +189,18 @@ namespace selain
     tab->go_forward();
   }
 
+  static void
+  normal_mode_n(Tab* tab)
+  {
+    tab->search_next();
+  }
+
+  static void
+  normal_mode_capital_n(Tab* tab)
+  {
+    tab->search_prev();
+  }
+
   static const std::unordered_map<::guint, binding> normal_mode_bindings =
   {
     // Various modes.
@@ -214,6 +226,10 @@ namespace selain
     { ::gdk_unicode_to_keyval(U'O'), { normal_mode_capital_o, false } },
     { ::gdk_unicode_to_keyval(U'H'), { normal_mode_capital_h, false } },
     { ::gdk_unicode_to_keyval(U'L'), { normal_mode_capital_l, false } },
+
+    // Searching.
+    { ::gdk_unicode_to_keyval(U'n'), { normal_mode_n, false } },
+    { ::gdk_unicode_to_keyval(U'N'), { normal_mode_capital_n, false } },
   };
 
   static bool

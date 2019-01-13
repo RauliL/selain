@@ -62,6 +62,10 @@ namespace selain
     void go_back();
     void go_forward();
 
+    void search(const Glib::ustring& text, bool forwards = true);
+    void search_next();
+    void search_prev();
+
     void grab_focus();
 
   private:

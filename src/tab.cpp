@@ -151,6 +151,44 @@ namespace selain
   }
 
   void
+  Tab::search(const Glib::ustring& text, bool forwards)
+  {
+    auto controller = ::webkit_web_view_get_find_controller(m_web_view);
+    ::guint32 options = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE;
+
+    if (text.empty())
+    {
+      return;
+    }
+    if (!forwards)
+    {
+      options |= WEBKIT_FIND_OPTIONS_BACKWARDS;
+    }
+    ::webkit_find_controller_search(
+      controller,
+      text.c_str(),
+      options,
+      150
+    );
+  }
+
+  void
+  Tab::search_next()
+  {
+    ::webkit_find_controller_search_next(
+      ::webkit_web_view_get_find_controller(m_web_view)
+    );
+  }
+
+  void
+  Tab::search_prev()
+  {
+    ::webkit_find_controller_search_previous(
+      ::webkit_web_view_get_find_controller(m_web_view)
+    );
+  }
+
+  void
   Tab::grab_focus()
   {
     if (m_mode == Mode::COMMAND)

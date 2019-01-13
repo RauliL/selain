@@ -281,7 +281,7 @@ namespace selain
       {
         auto title = ::webkit_web_view_get_title(web_view);
 
-        if (!title)
+        if (!title || !*title)
         {
           title = "Untitled";
         }

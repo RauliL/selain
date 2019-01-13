@@ -115,9 +115,13 @@ namespace selain
   {
     const auto index = m_notebook.page_num(*tab);
 
-    if (index >= 0)
+    if (index < 0)
     {
-      m_notebook.set_tab_label_text(*tab, title);
+      return;
     }
+    m_notebook.set_tab_label_text(
+      *tab,
+      title.length() > 20 ? title.substr(0, 19) + U'\u2026' : title
+    );
   }
 }

@@ -56,6 +56,8 @@ namespace selain
     void set_permanent_status(const Glib::ustring& text);
 
     void load_uri(const Glib::ustring& uri);
+    void reload();
+
     void execute_command(const Glib::ustring& command);
     void execute_script(const Glib::ustring& script);
 

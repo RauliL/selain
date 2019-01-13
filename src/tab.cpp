@@ -127,6 +127,12 @@ namespace selain
   }
 
   void
+  Tab::reload()
+  {
+    ::webkit_web_view_reload(m_web_view);
+  }
+
+  void
   Tab::execute_script(const Glib::ustring& script)
   {
     ::webkit_web_view_run_javascript(

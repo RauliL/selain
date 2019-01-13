@@ -190,6 +190,12 @@ namespace selain
   }
 
   static void
+  normal_mode_r(Tab* tab)
+  {
+    tab->reload();
+  }
+
+  static void
   normal_mode_n(Tab* tab)
   {
     tab->search_next();
@@ -226,6 +232,7 @@ namespace selain
     { ::gdk_unicode_to_keyval(U'O'), { normal_mode_capital_o, false } },
     { ::gdk_unicode_to_keyval(U'H'), { normal_mode_capital_h, false } },
     { ::gdk_unicode_to_keyval(U'L'), { normal_mode_capital_l, false } },
+    { ::gdk_unicode_to_keyval(U'r'), { normal_mode_r, false } },
 
     // Searching.
     { ::gdk_unicode_to_keyval(U'n'), { normal_mode_n, false } },

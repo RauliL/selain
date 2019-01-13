@@ -59,6 +59,9 @@ namespace selain
     void execute_command(const Glib::ustring& command);
     void execute_script(const Glib::ustring& script);
 
+    void go_back();
+    void go_forward();
+
     void grab_focus();
 
   private:

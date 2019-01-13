@@ -163,6 +163,18 @@ namespace selain
     static_cast<MainWindow*>(container)->close_tab(tab);
   }
 
+  static void
+  normal_mode_capital_h(Tab* tab)
+  {
+    tab->go_back();
+  }
+
+  static void
+  normal_mode_capital_l(Tab* tab)
+  {
+    tab->go_forward();
+  }
+
   static const std::unordered_map<::guint, binding> normal_mode_bindings =
   {
     // Various modes.
@@ -182,6 +194,10 @@ namespace selain
     { ::gdk_unicode_to_keyval(U'K'), { normal_mode_capital_k, false } },
     { ::gdk_unicode_to_keyval(U't'), { normal_mode_t, false } },
     { ::gdk_unicode_to_keyval(U'x'), { normal_mode_x, false } },
+
+    // History.
+    { ::gdk_unicode_to_keyval(U'H'), { normal_mode_capital_h, false } },
+    { ::gdk_unicode_to_keyval(U'L'), { normal_mode_capital_l, false } },
   };
 
   static bool

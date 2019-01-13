@@ -135,6 +135,18 @@ namespace selain
   }
 
   void
+  Tab::go_back()
+  {
+    ::webkit_web_view_go_back(m_web_view);
+  }
+
+  void
+  Tab::go_forward()
+  {
+    ::webkit_web_view_go_forward(m_web_view);
+  }
+
+  void
   Tab::grab_focus()
   {
     if (m_mode == Mode::COMMAND)

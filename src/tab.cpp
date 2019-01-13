@@ -80,6 +80,10 @@ namespace selain
     pack_start(m_command_input, Gtk::PACK_SHRINK);
 
     override_background_color(theme::window_background);
+    ::webkit_web_view_set_background_color(
+      m_web_view,
+      theme::window_background.gobj()
+    );
 
     show_all_children();
   }

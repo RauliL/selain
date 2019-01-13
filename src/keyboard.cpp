@@ -164,6 +164,13 @@ namespace selain
   }
 
   static void
+  normal_mode_o(Tab* tab)
+  {
+    tab->command_input().set_text(":open ");
+    tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
   normal_mode_capital_h(Tab* tab)
   {
     tab->go_back();
@@ -195,7 +202,8 @@ namespace selain
     { ::gdk_unicode_to_keyval(U't'), { normal_mode_t, false } },
     { ::gdk_unicode_to_keyval(U'x'), { normal_mode_x, false } },
 
-    // History.
+    // Navigation.
+    { ::gdk_unicode_to_keyval(U'o'), { normal_mode_o, false } },
     { ::gdk_unicode_to_keyval(U'H'), { normal_mode_capital_h, false } },
     { ::gdk_unicode_to_keyval(U'L'), { normal_mode_capital_l, false } },
   };

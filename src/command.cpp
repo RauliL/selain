@@ -70,6 +70,30 @@ namespace selain
     std::exit(EXIT_SUCCESS);
   }
 
+  static void
+  cmd_tabprevious(Tab* tab, const Glib::ustring&)
+  {
+    const auto container = tab->get_toplevel();
+
+    if (!container)
+    {
+      return;
+    }
+    static_cast<MainWindow*>(container)->prev_tab();
+  }
+
+  static void
+  cmd_tabnext(Tab* tab, const Glib::ustring&)
+  {
+    const auto container = tab->get_toplevel();
+
+    if (!container)
+    {
+      return;
+    }
+    static_cast<MainWindow*>(container)->next_tab();
+  }
+
   static const command_mapping commands =
   {
     { "o", cmd_open },
@@ -79,6 +103,10 @@ namespace selain
     { "qall", cmd_quit_all },
     {" quit", cmd_quit },
     { "tabnew", cmd_tabnew },
+    { "tabn", cmd_tabnext },
+    { "tabnext", cmd_tabnext },
+    { "tabp", cmd_tabprevious },
+    { "tabprevious", cmd_tabprevious },
   };
 
   void

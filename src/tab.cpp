@@ -23,13 +23,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/tab.hpp>
+#include <selain/main-window.hpp>
 #include <selain/theme.hpp>
 #include <selain/utils.hpp>
 
 namespace selain
 {
   static void set_webkit_settings(::WebKitSettings*);
+  static gboolean on_decide_policy(
+    ::WebKitWebView*,
+    ::WebKitPolicyDecision*,
+    ::WebKitPolicyDecisionType,
+    gpointer
+  );
 
   Tab::Tab()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
@@ -51,8 +57,14 @@ namespace selain
       this,
       &Tab::on_web_view_key_press
     ));
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "decide-policy",
+      G_CALLBACK(on_decide_policy),
+      static_cast<gpointer>(this)
+    );
 
-    pack_start(*m_web_view_widget);
+    pack_start(*m_web_view_widget.get());
     pack_start(m_status_bar, Gtk::PACK_SHRINK);
     pack_start(m_command_input, Gtk::PACK_SHRINK);
 
@@ -134,5 +146,43 @@ namespace selain
   {
     ::webkit_settings_set_enable_java(settings, false);
     ::webkit_settings_set_enable_plugins(settings, false);
+  }
+
+  static gboolean
+  on_decide_policy(::WebKitWebView* web_view,
+                   ::WebKitPolicyDecision* decision,
+                   ::WebKitPolicyDecisionType decision_type,
+                   gpointer data)
+  {
+    auto tab = static_cast<Tab*>(data);
+    auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
+
+    // Open links clicked with middle mouse button in a new tab in the
+    // background.
+    if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
+    {
+      auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
+      auto action = ::webkit_navigation_policy_decision_get_navigation_action(
+        navigation_decision
+      );
+      auto action_type = ::webkit_navigation_action_get_navigation_type(
+        action
+      );
+
+      if (::webkit_navigation_action_get_mouse_button(action) == 2 &&
+          action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED &&
+          main_window)
+      {
+        main_window->open_tab(
+          ::webkit_uri_request_get_uri(
+            ::webkit_navigation_action_get_request(action)
+          ),
+          false
+        );
+        ::webkit_policy_decision_ignore(decision);
+      }
+    }
+
+    return true;
   }
 }

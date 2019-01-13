@@ -67,7 +67,7 @@ namespace selain
   private:
     Mode m_mode;
     WebKitWebView* m_web_view;
-    Gtk::Widget* m_web_view_widget;
+    Glib::RefPtr<Gtk::Widget> m_web_view_widget;
     StatusBar m_status_bar;
     CommandInput m_command_input;
   };

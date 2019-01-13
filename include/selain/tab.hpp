@@ -52,6 +52,8 @@ namespace selain
     }
 
     void set_mode(Mode mode);
+    void set_status(const Glib::ustring& text);
+    void set_permanent_status(const Glib::ustring& text);
 
     void load_uri(const Glib::ustring& uri);
     void execute_command(const Glib::ustring& command);
@@ -70,6 +72,7 @@ namespace selain
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;
     StatusBar m_status_bar;
     CommandInput m_command_input;
+    Glib::ustring m_permanent_status;
   };
 }
 

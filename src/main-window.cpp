@@ -109,4 +109,15 @@ namespace selain
   {
     m_notebook.prev_page();
   }
+
+  void
+  MainWindow::set_tab_title(Tab* tab, const Glib::ustring& title)
+  {
+    const auto index = m_notebook.page_num(*tab);
+
+    if (index >= 0)
+    {
+      m_notebook.set_tab_label_text(*tab, title);
+    }
+  }
 }

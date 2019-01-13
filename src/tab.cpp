@@ -30,6 +30,11 @@
 namespace selain
 {
   static void set_webkit_settings(::WebKitSettings*);
+  static void on_load_changed(
+    ::WebKitWebView*,
+    ::WebKitLoadEvent,
+    gpointer
+  );
   static gboolean on_decide_policy(
     ::WebKitWebView*,
     ::WebKitPolicyDecision*,
@@ -57,6 +62,12 @@ namespace selain
       this,
       &Tab::on_web_view_key_press
     ));
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "load-changed",
+      G_CALLBACK(on_load_changed),
+      static_cast<gpointer>(this)
+    );
     ::g_signal_connect(
       G_OBJECT(m_web_view),
       "decide-policy",
@@ -90,6 +101,19 @@ namespace selain
         m_web_view_widget->grab_focus();
         break;
     }
+  }
+
+  void
+  Tab::set_status(const Glib::ustring& text)
+  {
+    m_status_bar.set_status(text.empty() ? m_permanent_status : text);
+  }
+
+  void
+  Tab::set_permanent_status(const Glib::ustring& text)
+  {
+    m_permanent_status = text;
+    m_status_bar.set_status(text);
   }
 
   void
@@ -146,6 +170,63 @@ namespace selain
   {
     ::webkit_settings_set_enable_java(settings, false);
     ::webkit_settings_set_enable_plugins(settings, false);
+  }
+
+  static void
+  on_load_changed(::WebKitWebView* web_view,
+                  ::WebKitLoadEvent load_event,
+                  gpointer data)
+  {
+    auto tab = static_cast<Tab*>(data);
+    auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
+
+    switch (load_event)
+    {
+      case WEBKIT_LOAD_STARTED:
+        if (main_window)
+        {
+          main_window->set_tab_title(tab, "Loading...");
+        }
+        if (auto uri = ::webkit_web_view_get_uri(web_view))
+        {
+          tab->set_permanent_status(uri);
+          tab->set_status(Glib::ustring("Loading ") + uri + "...");
+        }
+        break;
+
+      case WEBKIT_LOAD_REDIRECTED:
+        if (main_window)
+        {
+          main_window->set_tab_title(tab, "Redirecting...");
+        }
+        if (auto uri = ::webkit_web_view_get_uri(web_view))
+        {
+          tab->set_status(Glib::ustring("Redirecting to ") + uri + "...");
+        }
+        break;
+
+      case WEBKIT_LOAD_COMMITTED:
+        if (auto uri = ::webkit_web_view_get_uri(web_view))
+        {
+          tab->set_permanent_status(uri);
+        }
+        break;
+
+      case WEBKIT_LOAD_FINISHED:
+      {
+        auto title = ::webkit_web_view_get_title(web_view);
+
+        if (!title)
+        {
+          title = "Untitled";
+        }
+        if (main_window)
+        {
+          main_window->set_tab_title(tab, title);
+        }
+        break;
+      }
+    }
   }
 
   static gboolean

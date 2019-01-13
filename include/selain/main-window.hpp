@@ -52,6 +52,8 @@ namespace selain
     void next_tab();
     void prev_tab();
 
+    void set_tab_title(Tab* tab, const Glib::ustring& title);
+
   private:
     Gtk::Notebook m_notebook;
   };

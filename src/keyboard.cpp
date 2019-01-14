@@ -31,173 +31,36 @@
 namespace selain
 {
   static const int keypress_timeout = 2;
+  static std::shared_ptr<keyboard::Mapping> top_mapping;
 
   static bool key_event_normal_mode(Tab*, ::GdkEventKey*);
   static bool key_event_insert_mode(Tab*, ::GdkEventKey*);
+  static void add_mapping(const std::u32string&, const keyboard::Binding&);
+
+  static void bind_mode_command(Tab*);
+  static void bind_mode_insert(Tab*);
+  static void bind_tab_reload(Tab*);
+  static void bind_tab_open(Tab*);
+  static void bind_tab_close(Tab*);
+  static void bind_tab_prev(Tab*);
+  static void bind_tab_next(Tab*);
+  static void bind_scroll_left(Tab*);
+  static void bind_scroll_down(Tab*);
+  static void bind_scroll_up(Tab*);
+  static void bind_scroll_right(Tab*);
+  static void bind_scroll_top(Tab*);
+  static void bind_scroll_bottom(Tab*);
+  static void bind_history_prev(Tab*);
+  static void bind_history_next(Tab*);
+  static void bind_complete_open(Tab*);
+  static void bind_complete_tabnew(Tab*);
+  static void bind_search_forwards(Tab*);
+  static void bind_search_backwards(Tab*);
+  static void bind_search_next(Tab*);
+  static void bind_search_prev(Tab*);
 
   namespace keyboard
   {
-    static std::shared_ptr<Mapping> top_mapping;
-
-    static void add_mapping(const std::u32string&, const Binding&);
-
-    static void
-    bind_mode_command(Tab* tab)
-    {
-      tab->command_input().set_text(":");
-      tab->set_mode(Mode::COMMAND);
-    }
-
-    static void
-    bind_mode_insert(Tab* tab)
-    {
-      tab->set_mode(Mode::INSERT);
-    }
-
-    static void
-    bind_tab_reload(Tab* tab)
-    {
-      tab->reload();
-    }
-
-    static void
-    bind_tab_open(Tab* tab)
-    {
-      const auto container = tab->get_toplevel();
-
-      if (!container)
-      {
-        return;
-      }
-      static_cast<MainWindow*>(container)->open_tab();
-    }
-
-    static void
-    bind_tab_close(Tab* tab)
-    {
-      const auto container = tab->get_toplevel();
-
-      if (!container)
-      {
-        return;
-      }
-      static_cast<MainWindow*>(container)->close_tab(tab);
-    }
-
-    static void
-    bind_tab_next(Tab* tab)
-    {
-      const auto container = tab->get_toplevel();
-
-      if (!container)
-      {
-        return;
-      }
-      static_cast<MainWindow*>(container)->next_tab();
-    }
-
-    static void
-    bind_tab_prev(Tab* tab)
-    {
-      const auto container = tab->get_toplevel();
-
-      if (!container)
-      {
-        return;
-      }
-      static_cast<MainWindow*>(container)->prev_tab();
-    }
-
-    static void
-    bind_scroll_left(Tab* tab)
-    {
-      tab->execute_script("window.scrollBy({ left: -100 });");
-    }
-
-    static void
-    bind_scroll_right(Tab* tab)
-    {
-      tab->execute_script("window.scrollBy({ left: 100 });");
-    }
-
-    static void
-    bind_scroll_up(Tab* tab)
-    {
-      tab->execute_script("window.scrollBy({ top: -100 });");
-    }
-
-    static void
-    bind_scroll_down(Tab* tab)
-    {
-      tab->execute_script("window.scrollBy({ top: 100 });");
-    }
-
-    static void
-    bind_scroll_top(Tab* tab)
-    {
-      tab->execute_script("window.scrollTo({ top: 0 });");
-    }
-
-    static void
-    bind_scroll_bottom(Tab* tab)
-    {
-      tab->execute_script(
-        "window.scrollTo({ top: document.body.scrollHeight });"
-      );
-    }
-
-    static void
-    bind_history_prev(Tab* tab)
-    {
-      tab->go_back();
-    }
-
-    static void
-    bind_history_next(Tab* tab)
-    {
-      tab->go_forward();
-    }
-
-    static void
-    bind_complete_open(Tab* tab)
-    {
-      tab->command_input().set_text(":open ");
-      tab->set_mode(Mode::COMMAND);
-    }
-
-    static void
-    bind_complete_tabnew(Tab* tab)
-    {
-      tab->command_input().set_text(":tabnew ");
-      tab->set_mode(Mode::COMMAND);
-    }
-
-    static void
-    bind_search_forwards(Tab* tab)
-    {
-      tab->command_input().set_text("/");
-      tab->set_mode(Mode::COMMAND);
-    }
-
-    static void
-    bind_search_backwards(Tab* tab)
-    {
-      tab->command_input().set_text("?");
-      tab->set_mode(Mode::COMMAND);
-    }
-
-    static void
-    bind_search_next(Tab* tab)
-    {
-      tab->search_next();
-    }
-
-    static void
-    bind_search_prev(Tab* tab)
-    {
-      tab->search_prev();
-    }
-
     void
     initialize()
     {
@@ -229,55 +92,6 @@ namespace selain
       add_mapping(U"?", bind_search_backwards);
       add_mapping(U"n", bind_search_next);
       add_mapping(U"N", bind_search_prev);
-    }
-
-    static void
-    add_mapping(const std::u32string& sequence, const Binding& binding)
-    {
-      const auto length = sequence.length();
-      std::shared_ptr<Mapping> current_mapping;
-
-      if (!length)
-      {
-        return;
-      }
-
-      if (!top_mapping)
-      {
-        top_mapping = std::make_shared<Mapping>();
-      }
-      current_mapping = top_mapping;
-
-      for (std::u32string::size_type i = 0; i < length; ++i)
-      {
-        const auto c = ::gdk_unicode_to_keyval(sequence[i]);
-        bool is_control = false;
-        Mapping::mapping_type::const_iterator entry;
-
-        if (c == '^' && i + 1 < length)
-        {
-          ++i;
-          is_control = true;
-          entry = current_mapping->control_mapping.find(c);
-        } else {
-          entry = current_mapping->mapping.find(c);
-        }
-        if (entry == std::end(current_mapping->mapping))
-        {
-          const auto owner = current_mapping;
-
-          current_mapping = std::make_shared<Mapping>();
-          current_mapping->value = c;
-          if (is_control)
-          {
-            owner->control_mapping[c] = current_mapping;
-          } else {
-            owner->mapping[c] = current_mapping;
-          }
-        }
-      }
-
-      current_mapping->binding = binding;
     }
   }
 
@@ -319,7 +133,7 @@ namespace selain
 
     if (!last_mapping)
     {
-      last_mapping = keyboard::top_mapping;
+      last_mapping = top_mapping;
     }
     last_keypress = now;
 
@@ -362,5 +176,211 @@ namespace selain
     }
 
     return GDK_EVENT_PROPAGATE;
+  }
+
+  static void
+  add_mapping(const std::u32string& sequence, const keyboard::Binding& binding)
+  {
+    const auto length = sequence.length();
+    std::shared_ptr<keyboard::Mapping> current_mapping;
+
+    if (!length)
+    {
+      return;
+    }
+
+    if (!top_mapping)
+    {
+      top_mapping = std::make_shared<keyboard::Mapping>();
+    }
+    current_mapping = top_mapping;
+
+    for (std::u32string::size_type i = 0; i < length; ++i)
+    {
+      const auto c = ::gdk_unicode_to_keyval(sequence[i]);
+      bool is_control = false;
+      keyboard::Mapping::mapping_type::const_iterator entry;
+
+      if (c == '^' && i + 1 < length)
+      {
+        ++i;
+        is_control = true;
+        entry = current_mapping->control_mapping.find(c);
+      } else {
+        entry = current_mapping->mapping.find(c);
+      }
+      if (entry == std::end(current_mapping->mapping))
+      {
+        const auto owner = current_mapping;
+
+        current_mapping = std::make_shared<keyboard::Mapping>();
+        current_mapping->value = c;
+        if (is_control)
+        {
+          owner->control_mapping[c] = current_mapping;
+        } else {
+          owner->mapping[c] = current_mapping;
+        }
+      }
+    }
+
+    current_mapping->binding = binding;
+  }
+
+  static void
+  bind_mode_command(Tab* tab)
+  {
+    tab->command_input().set_text(":");
+    tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_mode_insert(Tab* tab)
+  {
+    tab->set_mode(Mode::INSERT);
+  }
+
+  static void
+  bind_tab_reload(Tab* tab)
+  {
+    tab->reload();
+  }
+
+  static void
+  bind_tab_open(Tab* tab)
+  {
+    const auto container = tab->get_toplevel();
+
+    if (!container)
+    {
+      return;
+    }
+    static_cast<MainWindow*>(container)->open_tab();
+  }
+
+  static void
+  bind_tab_close(Tab* tab)
+  {
+    const auto container = tab->get_toplevel();
+
+    if (!container)
+    {
+      return;
+    }
+    static_cast<MainWindow*>(container)->close_tab(tab);
+  }
+
+  static void
+  bind_tab_next(Tab* tab)
+  {
+    const auto container = tab->get_toplevel();
+
+    if (!container)
+    {
+      return;
+    }
+    static_cast<MainWindow*>(container)->next_tab();
+  }
+
+  static void
+  bind_tab_prev(Tab* tab)
+  {
+    const auto container = tab->get_toplevel();
+
+    if (!container)
+    {
+      return;
+    }
+    static_cast<MainWindow*>(container)->prev_tab();
+  }
+
+  static void
+  bind_scroll_left(Tab* tab)
+  {
+    tab->execute_script("window.scrollBy({ left: -100 });");
+  }
+
+  static void
+  bind_scroll_right(Tab* tab)
+  {
+    tab->execute_script("window.scrollBy({ left: 100 });");
+  }
+
+  static void
+  bind_scroll_up(Tab* tab)
+  {
+    tab->execute_script("window.scrollBy({ top: -100 });");
+  }
+
+  static void
+  bind_scroll_down(Tab* tab)
+  {
+    tab->execute_script("window.scrollBy({ top: 100 });");
+  }
+
+  static void
+  bind_scroll_top(Tab* tab)
+  {
+    tab->execute_script("window.scrollTo({ top: 0 });");
+  }
+
+  static void
+  bind_scroll_bottom(Tab* tab)
+  {
+    tab->execute_script(
+      "window.scrollTo({ top: document.body.scrollHeight });"
+    );
+  }
+
+  static void
+  bind_history_prev(Tab* tab)
+  {
+    tab->go_back();
+  }
+
+  static void
+  bind_history_next(Tab* tab)
+  {
+    tab->go_forward();
+  }
+
+  static void
+  bind_complete_open(Tab* tab)
+  {
+    tab->command_input().set_text(":open ");
+    tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_complete_tabnew(Tab* tab)
+  {
+    tab->command_input().set_text(":tabnew ");
+    tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_search_forwards(Tab* tab)
+  {
+    tab->command_input().set_text("/");
+    tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_search_backwards(Tab* tab)
+  {
+    tab->command_input().set_text("?");
+    tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_search_next(Tab* tab)
+  {
+    tab->search_next();
+  }
+
+  static void
+  bind_search_prev(Tab* tab)
+  {
+    tab->search_prev();
   }
 }

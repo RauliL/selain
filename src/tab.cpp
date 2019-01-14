@@ -48,13 +48,13 @@ namespace selain
     , m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
-    m_command_input.override_font(utils::get_monospace_font());
+    m_command_entry.override_font(utils::get_monospace_font());
 
-    m_command_input.signal_key_press_event().connect(sigc::mem_fun(
+    m_command_entry.signal_key_press_event().connect(sigc::mem_fun(
       this,
-      &Tab::on_command_input_key_press
+      &Tab::on_command_entry_key_press
     ));
-    m_command_input.signal_command_received().connect(sigc::mem_fun(
+    m_command_entry.signal_activate().connect(sigc::mem_fun(
       this,
       &Tab::on_command_received
     ));
@@ -77,15 +77,13 @@ namespace selain
 
     pack_start(*m_web_view_widget.get());
     pack_start(m_status_bar, Gtk::PACK_SHRINK);
-    pack_start(m_command_input, Gtk::PACK_SHRINK);
+    pack_start(m_command_entry, Gtk::PACK_SHRINK);
 
     override_background_color(theme::window_background);
     ::webkit_web_view_set_background_color(
       m_web_view,
       theme::window_background.gobj()
     );
-
-    show_all_children();
   }
 
   void
@@ -96,12 +94,15 @@ namespace selain
     switch (mode)
     {
       case Mode::COMMAND:
-        m_command_input.grab_focus();
+        m_command_entry.show();
+        m_command_entry.grab_focus_without_selecting();
+        m_command_entry.set_position(m_command_entry.get_text().length());
         break;
 
       case Mode::NORMAL:
       case Mode::INSERT:
-        m_command_input.set_text("");
+        m_command_entry.hide();
+        m_command_entry.set_text("");
         m_web_view_widget->grab_focus();
         break;
     }
@@ -204,14 +205,25 @@ namespace selain
   {
     if (m_mode == Mode::COMMAND)
     {
-      m_command_input.grab_focus();
+      m_command_entry.grab_focus_without_selecting();
+      m_command_entry.set_position(m_command_entry.get_text().length());
     } else {
       m_web_view_widget->grab_focus();
     }
   }
 
+  void
+  Tab::on_show()
+  {
+    Gtk::Box::on_show();
+    if (m_mode == Mode::NORMAL)
+    {
+      m_command_entry.hide();
+    }
+  }
+
   bool
-  Tab::on_command_input_key_press(GdkEventKey* event)
+  Tab::on_command_entry_key_press(::GdkEventKey* event)
   {
     if (event->keyval == GDK_KEY_Escape)
     {
@@ -224,8 +236,11 @@ namespace selain
   }
 
   void
-  Tab::on_command_received(const Glib::ustring& command)
+  Tab::on_command_received()
   {
+    const auto command = m_command_entry.get_text();
+
+    m_command_entry.set_text(Glib::ustring());
     set_mode(Mode::NORMAL);
     execute_command(command);
   }

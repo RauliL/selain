@@ -26,7 +26,6 @@
 #ifndef SELAIN_TAB_HPP_GUARD
 #define SELAIN_TAB_HPP_GUARD
 
-#include <selain/command-input.hpp>
 #include <selain/status-bar.hpp>
 
 #include <webkit2/webkit2.h>
@@ -51,14 +50,14 @@ namespace selain
       return m_status_bar;
     }
 
-    inline CommandInput& command_input()
+    inline Gtk::Entry& command_entry()
     {
-      return m_command_input;
+      return m_command_entry;
     }
 
-    inline const CommandInput& command_input() const
+    inline const Gtk::Entry& command_entry() const
     {
-      return m_command_input;
+      return m_command_entry;
     }
 
     void set_mode(Mode mode);
@@ -80,17 +79,17 @@ namespace selain
     void grab_focus();
 
   private:
-    bool on_command_input_key_press(GdkEventKey* event);
-    bool on_web_view_key_press(GdkEventKey* event);
-    void on_command_received(const Glib::ustring&);
+    void on_show();
+    bool on_command_entry_key_press(::GdkEventKey* event);
+    bool on_web_view_key_press(::GdkEventKey* event);
+    void on_command_received();
 
   private:
     Mode m_mode;
-    WebKitWebView* m_web_view;
+    ::WebKitWebView* m_web_view;
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;
     StatusBar m_status_bar;
-    CommandInput m_command_input;
-    Glib::ustring m_permanent_status;
+    Gtk::Entry m_command_entry;
   };
 }
 

@@ -238,7 +238,7 @@ namespace selain
   static void
   bind_mode_command(Tab* tab)
   {
-    tab->command_input().set_text(":");
+    tab->command_entry().set_text(":");
     tab->set_mode(Mode::COMMAND);
   }
 
@@ -361,14 +361,14 @@ namespace selain
   static void
   bind_complete_open(Tab* tab)
   {
-    tab->command_input().set_text(":open ");
+    tab->command_entry().set_text(":open ");
     tab->set_mode(Mode::COMMAND);
   }
 
   static void
   bind_complete_open_tab(Tab* tab)
   {
-    tab->command_input().set_text(":open-tab ");
+    tab->command_entry().set_text(":open-tab ");
     tab->set_mode(Mode::COMMAND);
   }
 
@@ -423,14 +423,14 @@ namespace selain
   static void
   bind_search_forwards(Tab* tab)
   {
-    tab->command_input().set_text("/");
+    tab->command_entry().set_text("/");
     tab->set_mode(Mode::COMMAND);
   }
 
   static void
   bind_search_backwards(Tab* tab)
   {
-    tab->command_input().set_text("?");
+    tab->command_entry().set_text("?");
     tab->set_mode(Mode::COMMAND);
   }
 

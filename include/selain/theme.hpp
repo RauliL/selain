@@ -26,7 +26,7 @@
 #ifndef SELAIN_THEME_HPP_GUARD
 #define SELAIN_THEME_HPP_GUARD
 
-#include <gdkmm.h>
+#include <gtkmm.h>
 
 namespace selain
 {
@@ -41,6 +41,8 @@ namespace selain
     extern const Gdk::RGBA mode_bar_normal_foreground;
     extern const Gdk::RGBA mode_bar_insert_background;
     extern const Gdk::RGBA mode_bar_insert_foreground;
+
+    const Glib::RefPtr<Gtk::CssProvider>& get_command_entry_style_provider();
   }
 }
 

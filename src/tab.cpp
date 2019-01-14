@@ -30,6 +30,7 @@
 namespace selain
 {
   static void set_webkit_settings(::WebKitSettings*);
+  static void set_command_entry_style(const Glib::RefPtr<Gtk::StyleContext>&);
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
@@ -84,7 +85,9 @@ namespace selain
       m_web_view,
       theme::window_background.gobj()
     );
+
     set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
+    set_command_entry_style(m_command_entry.get_style_context());
   }
 
   void
@@ -252,7 +255,6 @@ namespace selain
   {
     const auto command = m_command_entry.get_text();
 
-    m_command_entry.set_text(Glib::ustring());
     set_mode(Mode::NORMAL);
     execute_command(command);
   }
@@ -267,6 +269,12 @@ namespace selain
       "Selain",
       "1.0"
     );
+  }
+
+  static void
+  set_command_entry_style(const Glib::RefPtr<Gtk::StyleContext>& context)
+  {
+    context->add_provider(theme::get_command_entry_style_provider(), 1000);
   }
 
   static void

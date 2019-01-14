@@ -41,7 +41,7 @@ namespace selain
   }
 
   static void
-  cmd_tabnew(Tab* tab, const Glib::ustring& args)
+  cmd_open_tab(Tab* tab, const Glib::ustring& args)
   {
     const auto container = tab->get_toplevel();
 
@@ -98,11 +98,12 @@ namespace selain
   {
     { "o", cmd_open },
     { "open", cmd_open },
+    { "ot", cmd_open_tab },
+    { "open-tab", cmd_open_tab },
     { "q", cmd_quit },
     { "qa", cmd_quit_all },
     { "qall", cmd_quit_all },
     {" quit", cmd_quit },
-    { "tabnew", cmd_tabnew },
     { "tabn", cmd_tabnext },
     { "tabnext", cmd_tabnext },
     { "tabp", cmd_tabprevious },

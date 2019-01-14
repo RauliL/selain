@@ -53,7 +53,7 @@ namespace selain
   static void bind_history_prev(Tab*);
   static void bind_history_next(Tab*);
   static void bind_complete_open(Tab*);
-  static void bind_complete_tabnew(Tab*);
+  static void bind_complete_open_tab(Tab*);
   static void bind_search_forwards(Tab*);
   static void bind_search_backwards(Tab*);
   static void bind_search_next(Tab*);
@@ -85,7 +85,7 @@ namespace selain
       add_mapping(U"H", bind_history_prev);
       add_mapping(U"L", bind_history_next);
       add_mapping(U"o", bind_complete_open);
-      add_mapping(U"O", bind_complete_tabnew);
+      add_mapping(U"O", bind_complete_open_tab);
 
       // Searching.
       add_mapping(U"/", bind_search_forwards);
@@ -352,9 +352,9 @@ namespace selain
   }
 
   static void
-  bind_complete_tabnew(Tab* tab)
+  bind_complete_open_tab(Tab* tab)
   {
-    tab->command_input().set_text(":tabnew ");
+    tab->command_input().set_text(":open-tab ");
     tab->set_mode(Mode::COMMAND);
   }
 

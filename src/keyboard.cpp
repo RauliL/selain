@@ -113,9 +113,10 @@ namespace selain
 
       case Mode::INSERT:
         return key_event_insert_mode(this, event);
-    }
 
-    return GDK_EVENT_PROPAGATE;
+      default:
+        return GDK_EVENT_PROPAGATE;
+    }
   }
 
   static bool

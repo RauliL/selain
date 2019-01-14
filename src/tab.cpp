@@ -140,9 +140,14 @@ namespace selain
   }
 
   void
-  Tab::reload()
+  Tab::reload(bool bypass_cache)
   {
-    ::webkit_web_view_reload(m_web_view);
+    if (bypass_cache)
+    {
+      ::webkit_web_view_reload_bypass_cache(m_web_view);
+    } else {
+      ::webkit_web_view_reload(m_web_view);
+    }
   }
 
   void

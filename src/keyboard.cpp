@@ -40,6 +40,7 @@ namespace selain
   static void bind_mode_command(Tab*);
   static void bind_mode_insert(Tab*);
   static void bind_tab_reload(Tab*);
+  static void bind_tab_reload_bypass_cache(Tab*);
   static void bind_tab_open(Tab*);
   static void bind_tab_close(Tab*);
   static void bind_tab_prev(Tab*);
@@ -73,6 +74,7 @@ namespace selain
 
       // Tab management.
       add_mapping(U"r", bind_tab_reload);
+      add_mapping(U"R", bind_tab_reload_bypass_cache);
       add_mapping(U"t", bind_tab_open);
       add_mapping(U"x", bind_tab_close);
       add_mapping(U"J", bind_tab_prev);
@@ -250,6 +252,12 @@ namespace selain
   bind_tab_reload(Tab* tab)
   {
     tab->reload();
+  }
+
+  static void
+  bind_tab_reload_bypass_cache(Tab* tab)
+  {
+    tab->reload(true);
   }
 
   static void

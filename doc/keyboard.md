@@ -12,13 +12,14 @@ all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
 
 ## Tab management
 
-|Key|                       |
-|---|-----------------------|
-|`r`|Reload current tab.    |
-|`t`|Open new tab.          |
-|`x`|Close current tab.     |
-|`J`|Switch to previous tab.|
-|`K`|Switch to next tab.    |
+|Key|                                    |
+|---|------------------------------------|
+|`r`|Reload current tab.                 |
+|`R`|Reload current tab, bypassing cache.|
+|`t`|Open new tab.                       |
+|`x`|Close current tab.                  |
+|`J`|Switch to previous tab.             |
+|`K`|Switch to next tab.                 |
 
 ## Navigating the page
 

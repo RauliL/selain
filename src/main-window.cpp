@@ -51,7 +51,6 @@ namespace selain
 
     m_notebook.append_page(*tab.get(), "New tab");
     show_all_children();
-    tab->grab_focus();
     if (!uri.empty())
     {
       tab->load_uri(uri);

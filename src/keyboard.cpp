@@ -54,6 +54,9 @@ namespace selain
   static void bind_history_next(Tab*);
   static void bind_complete_open(Tab*);
   static void bind_complete_open_tab(Tab*);
+  static void bind_paste(Tab*);
+  static void bind_paste_open_tab(Tab*);
+  static void bind_yank(Tab*);
   static void bind_search_forwards(Tab*);
   static void bind_search_backwards(Tab*);
   static void bind_search_next(Tab*);
@@ -86,6 +89,9 @@ namespace selain
       add_mapping(U"L", bind_history_next);
       add_mapping(U"o", bind_complete_open);
       add_mapping(U"O", bind_complete_open_tab);
+      add_mapping(U"p", bind_paste);
+      add_mapping(U"P", bind_paste_open_tab);
+      add_mapping(U"yy", bind_yank);
 
       // Searching.
       add_mapping(U"/", bind_search_forwards);
@@ -356,6 +362,55 @@ namespace selain
   {
     tab->command_input().set_text(":open-tab ");
     tab->set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_paste(Tab* tab)
+  {
+    const auto clipboard = Gtk::Clipboard::get();
+    Glib::ustring uri;
+
+    if (!clipboard->wait_is_text_available())
+    {
+      return;
+    }
+    uri = clipboard->wait_for_text();
+    if (!uri.empty())
+    {
+      tab->load_uri(uri);
+    }
+  }
+
+  static void
+  bind_paste_open_tab(Tab* tab)
+  {
+    const auto clipboard = Gtk::Clipboard::get();
+    const auto container = tab->get_toplevel();
+    Glib::ustring uri;
+
+    if (!clipboard->wait_is_text_available() || !container)
+    {
+      return;
+    }
+    uri = clipboard->wait_for_text();
+    if (!uri.empty())
+    {
+      static_cast<MainWindow*>(container)->open_tab(uri);
+    }
+  }
+
+  static void
+  bind_yank(Tab* tab)
+  {
+    const auto clipboard = Gtk::Clipboard::get();
+    const auto uri = tab->get_uri();
+
+    if (!uri.empty())
+    {
+      clipboard->set_text(uri);
+      // TODO: Display message to the user which informs that the URI has been
+      // yanked.
+    }
   }
 
   static void

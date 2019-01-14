@@ -120,6 +120,19 @@ namespace selain
     m_status_bar.set_status(text);
   }
 
+  Glib::ustring
+  Tab::get_uri() const
+  {
+    const auto uri = ::webkit_web_view_get_uri(m_web_view);
+
+    if (!uri || !*uri)
+    {
+      return Glib::ustring();
+    }
+
+    return uri;
+  }
+
   void
   Tab::load_uri(const Glib::ustring& uri)
   {

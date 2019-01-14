@@ -124,7 +124,18 @@ namespace selain
   void
   Tab::load_uri(const Glib::ustring& uri)
   {
-    ::webkit_web_view_load_uri(m_web_view, uri.c_str());
+    if (uri.empty())
+    {
+      return;
+    }
+    ::webkit_web_view_load_uri(
+      m_web_view,
+      (
+        uri.find("://") == Glib::ustring::npos
+          ? "http://" + uri
+          : uri
+      ).c_str()
+    );
   }
 
   void

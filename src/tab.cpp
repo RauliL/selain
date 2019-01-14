@@ -34,13 +34,19 @@ namespace selain
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
-    gpointer
+    ::gpointer
   );
-  static gboolean on_decide_policy(
+  static ::gboolean on_decide_policy(
     ::WebKitWebView*,
     ::WebKitPolicyDecision*,
     ::WebKitPolicyDecisionType,
-    gpointer
+    ::gpointer
+  );
+  static void on_mouse_target_changed(
+    ::WebKitWebView*,
+    ::WebKitHitTestResult*,
+    ::guint,
+    ::gpointer
   );
 
   Tab::Tab()
@@ -63,17 +69,24 @@ namespace selain
       this,
       &Tab::on_web_view_key_press
     ));
+
     ::g_signal_connect(
       G_OBJECT(m_web_view),
       "load-changed",
       G_CALLBACK(on_load_changed),
-      static_cast<gpointer>(this)
+      static_cast<::gpointer>(this)
     );
     ::g_signal_connect(
       G_OBJECT(m_web_view),
       "decide-policy",
       G_CALLBACK(on_decide_policy),
-      static_cast<gpointer>(this)
+      static_cast<::gpointer>(this)
+    );
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "mouse-target-changed",
+      G_CALLBACK(on_mouse_target_changed),
+      static_cast<::gpointer>(this)
     );
 
     pack_start(*m_web_view_widget.get());
@@ -280,7 +293,7 @@ namespace selain
   static void
   on_load_changed(::WebKitWebView* web_view,
                   ::WebKitLoadEvent load_event,
-                  gpointer data)
+                  ::gpointer data)
   {
     auto tab = static_cast<Tab*>(data);
     auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
@@ -337,11 +350,11 @@ namespace selain
     }
   }
 
-  static gboolean
+  static ::gboolean
   on_decide_policy(::WebKitWebView* web_view,
                    ::WebKitPolicyDecision* decision,
                    ::WebKitPolicyDecisionType decision_type,
-                   gpointer data)
+                   ::gpointer data)
   {
     auto tab = static_cast<Tab*>(data);
     auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
@@ -373,5 +386,16 @@ namespace selain
     }
 
     return true;
+  }
+
+  static void on_mouse_target_changed(::WebKitWebView*,
+                                      ::WebKitHitTestResult* hit_test_result,
+                                      ::guint,
+                                      ::gpointer data)
+  {
+    const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
+    auto tab = static_cast<Tab*>(data);
+
+    tab->status_bar().set_status(!uri || !*uri ? Glib::ustring() : uri);
   }
 }

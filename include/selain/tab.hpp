@@ -41,6 +41,16 @@ namespace selain
   public:
     explicit Tab();
 
+    inline StatusBar& status_bar()
+    {
+      return m_status_bar;
+    }
+
+    inline const StatusBar& status_bar() const
+    {
+      return m_status_bar;
+    }
+
     inline CommandInput& command_input()
     {
       return m_command_input;
@@ -52,8 +62,6 @@ namespace selain
     }
 
     void set_mode(Mode mode);
-    void set_status(const Glib::ustring& text);
-    void set_permanent_status(const Glib::ustring& text);
 
     Glib::ustring get_uri() const;
     void load_uri(const Glib::ustring& uri);

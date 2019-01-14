@@ -38,15 +38,32 @@ namespace selain
   class StatusBar : public Gtk::Box
   {
   public:
+    enum class NotificationType
+    {
+      NORMAL,
+      ERROR
+    };
+
     explicit StatusBar();
 
     void set_mode(Mode mode);
 
     void set_status(const Glib::ustring& status);
+    void set_permanent_status(const Glib::ustring& status);
+
+    void add_notification(
+      const Glib::ustring& status,
+      NotificationType type = NotificationType::NORMAL,
+      int timeout = 5
+    );
+
+  private:
+    void on_notification_reset();
 
   private:
     Gtk::Label m_mode_label;
     Gtk::Label m_status_label;
+    Glib::ustring m_permanent_status;
   };
 }
 

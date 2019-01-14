@@ -57,7 +57,8 @@ namespace selain
     show_all_children();
   }
 
-  void StatusBar::set_mode(Mode mode)
+  void
+  StatusBar::set_mode(Mode mode)
   {
     m_mode_label.set_text(get_mode_text(mode));
     if (mode == Mode::INSERT)
@@ -70,8 +71,55 @@ namespace selain
     }
   }
 
-  void StatusBar::set_status(const Glib::ustring& status)
+  void
+  StatusBar::set_status(const Glib::ustring& status)
   {
+    m_status_label.set_text(status.empty() ? m_permanent_status : status);
+  }
+
+  void
+  StatusBar::set_permanent_status(const Glib::ustring& status)
+  {
+    m_permanent_status = status;
     m_status_label.set_text(status);
+  }
+
+  void
+  StatusBar::add_notification(const Glib::ustring& status,
+                              NotificationType type,
+                              int timeout)
+  {
+    Gdk::RGBA background;
+    Gdk::RGBA foreground;
+
+    switch (type)
+    {
+      case NotificationType::ERROR:
+        background = theme::status_bar_error_background;
+        foreground = theme::status_bar_error_foreground;
+        break;
+
+      default:
+        background = theme::status_bar_background;
+        foreground = theme::status_bar_foreground;
+        break;
+    }
+
+    m_status_label.override_background_color(background);
+    m_status_label.override_color(foreground);
+    m_status_label.set_text(status);
+
+    Glib::signal_timeout().connect_once(
+      sigc::mem_fun(*this, &StatusBar::on_notification_reset),
+      timeout * 1000
+    );
+  }
+
+  void
+  StatusBar::on_notification_reset()
+  {
+    m_status_label.override_background_color(theme::status_bar_background);
+    m_status_label.override_color(theme::status_bar_foreground);
+    set_status(Glib::ustring());
   }
 }

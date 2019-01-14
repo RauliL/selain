@@ -107,19 +107,6 @@ namespace selain
     }
   }
 
-  void
-  Tab::set_status(const Glib::ustring& text)
-  {
-    m_status_bar.set_status(text.empty() ? m_permanent_status : text);
-  }
-
-  void
-  Tab::set_permanent_status(const Glib::ustring& text)
-  {
-    m_permanent_status = text;
-    m_status_bar.set_status(text);
-  }
-
   Glib::ustring
   Tab::get_uri() const
   {
@@ -262,6 +249,7 @@ namespace selain
   {
     auto tab = static_cast<Tab*>(data);
     auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
+    auto& status_bar = tab->status_bar();
 
     switch (load_event)
     {
@@ -272,8 +260,8 @@ namespace selain
         }
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          tab->set_permanent_status(uri);
-          tab->set_status(Glib::ustring("Loading ") + uri + "...");
+          status_bar.set_permanent_status(uri);
+          status_bar.set_status(Glib::ustring("Loading ") + uri + "...");
         }
         break;
 
@@ -284,14 +272,16 @@ namespace selain
         }
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          tab->set_status(Glib::ustring("Redirecting to ") + uri + "...");
+          status_bar.set_status(
+            Glib::ustring("Redirecting to ") + uri + "..."
+          );
         }
         break;
 
       case WEBKIT_LOAD_COMMITTED:
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          tab->set_permanent_status(uri);
+          status_bar.set_permanent_status(uri);
         }
         break;
 

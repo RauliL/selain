@@ -32,6 +32,8 @@ namespace selain
     const Gdk::RGBA window_background("#262626");
     const Gdk::RGBA status_bar_background("#444444");
     const Gdk::RGBA status_bar_foreground("#a7d6f8");
+    const Gdk::RGBA status_bar_error_background("#f43753");
+    const Gdk::RGBA status_bar_error_foreground("#eeeeee");
     const Gdk::RGBA mode_bar_normal_background("#b3deef");
     const Gdk::RGBA mode_bar_normal_foreground("#282828");
     const Gdk::RGBA mode_bar_insert_background("#d7d75f");

@@ -35,6 +35,8 @@ namespace selain
     extern const Gdk::RGBA window_background;
     extern const Gdk::RGBA status_bar_background;
     extern const Gdk::RGBA status_bar_foreground;
+    extern const Gdk::RGBA status_bar_error_background;
+    extern const Gdk::RGBA status_bar_error_foreground;
     extern const Gdk::RGBA mode_bar_normal_background;
     extern const Gdk::RGBA mode_bar_normal_foreground;
     extern const Gdk::RGBA mode_bar_insert_background;

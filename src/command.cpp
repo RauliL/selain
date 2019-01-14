@@ -104,10 +104,10 @@ namespace selain
     { "qa", cmd_quit_all },
     { "qall", cmd_quit_all },
     {" quit", cmd_quit },
-    { "tabn", cmd_tabnext },
+    { "tn", cmd_tabnext },
     { "tabnext", cmd_tabnext },
-    { "tabp", cmd_tabprevious },
-    { "tabprevious", cmd_tabprevious },
+    { "tp", cmd_tabprevious },
+    { "tabprev", cmd_tabprevious },
   };
 
   void

@@ -84,6 +84,7 @@ namespace selain
       m_web_view,
       theme::window_background.gobj()
     );
+    set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
   }
 
   void

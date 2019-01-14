@@ -416,8 +416,7 @@ namespace selain
     if (!uri.empty())
     {
       clipboard->set_text(uri);
-      // TODO: Display message to the user which informs that the URI has been
-      // yanked.
+      tab->status_bar().add_notification("Yanked " + uri);
     }
   }
 

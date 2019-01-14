@@ -154,6 +154,9 @@ namespace selain
       }
     }
 
-    // TODO: Display "Unknown command" error message to the user.
+    m_status_bar.add_notification(
+      "Error: Unknown command: " + command,
+      StatusBar::NotificationType::ERROR
+    );
   }
 }

@@ -26,6 +26,7 @@
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
 #include <selain/utils.hpp>
+#include <selain/version.hpp>
 
 namespace selain
 {
@@ -280,7 +281,7 @@ namespace selain
     ::webkit_settings_set_user_agent_with_application_details(
       settings,
       "Selain",
-      "1.0"
+      SELAIN_VERSION
     );
   }
 

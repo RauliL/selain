@@ -45,3 +45,12 @@ INSTALL(
   RUNTIME DESTINATION
     bin
 )
+
+INSTALL(
+  FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/selain.desktop
+  DESTINATION
+    share/applications
+)
+
+ADD_SUBDIRECTORY(icons)

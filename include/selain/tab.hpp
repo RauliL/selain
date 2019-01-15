@@ -60,6 +60,11 @@ namespace selain
       return m_command_entry;
     }
 
+    inline Mode get_mode() const
+    {
+      return m_mode;
+    }
+
     void set_mode(Mode mode);
 
     Glib::ustring get_uri() const;
@@ -81,7 +86,6 @@ namespace selain
   private:
     void on_show();
     bool on_command_entry_key_press(::GdkEventKey* event);
-    bool on_web_view_key_press(::GdkEventKey* event);
     void on_command_received();
 
   private:

@@ -50,6 +50,14 @@ namespace selain
     ::gpointer
   );
 
+  namespace keyboard
+  {
+    /**
+     * GTK signal callback used for key press events inside web view of a tab.
+     */
+    ::gboolean on_tab_key_press(::WebKitWebView*, ::GdkEventKey*, Tab*);
+  }
+
   Tab::Tab()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , m_mode(Mode::NORMAL)
@@ -65,10 +73,6 @@ namespace selain
     m_command_entry.signal_activate().connect(sigc::mem_fun(
       this,
       &Tab::on_command_received
-    ));
-    m_web_view_widget->signal_key_press_event().connect(sigc::mem_fun(
-      this,
-      &Tab::on_web_view_key_press
     ));
 
     ::g_signal_connect(
@@ -87,6 +91,12 @@ namespace selain
       G_OBJECT(m_web_view),
       "mouse-target-changed",
       G_CALLBACK(on_mouse_target_changed),
+      static_cast<::gpointer>(this)
+    );
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "key-press-event",
+      G_CALLBACK(keyboard::on_tab_key_press),
       static_cast<::gpointer>(this)
     );
 

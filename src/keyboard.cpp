@@ -33,8 +33,8 @@ namespace selain
   static const int keypress_timeout = 2;
   static std::shared_ptr<keyboard::Mapping> top_mapping;
 
-  static bool key_event_normal_mode(Tab*, ::GdkEventKey*);
-  static bool key_event_insert_mode(Tab*, ::GdkEventKey*);
+  static ::gboolean key_event_normal_mode(Tab*, ::GdkEventKey*);
+  static ::gboolean key_event_insert_mode(Tab*, ::GdkEventKey*);
   static void add_mapping(const std::u32string&, const keyboard::Binding&);
 
   static void bind_mode_command(Tab*);
@@ -101,25 +101,25 @@ namespace selain
       add_mapping(U"n", bind_search_next);
       add_mapping(U"N", bind_search_prev);
     }
-  }
 
-  bool
-  Tab::on_web_view_key_press(GdkEventKey* event)
-  {
-    switch (m_mode)
+    ::gboolean
+    on_tab_key_press(::WebKitWebView*, ::GdkEventKey* event, Tab* tab)
     {
-      case Mode::NORMAL:
-        return key_event_normal_mode(this, event);
+      switch (tab->get_mode())
+      {
+        case Mode::NORMAL:
+          return key_event_normal_mode(tab, event);
 
-      case Mode::INSERT:
-        return key_event_insert_mode(this, event);
+        case Mode::INSERT:
+          return key_event_insert_mode(tab, event);
 
-      default:
-        return GDK_EVENT_PROPAGATE;
+        default:
+          return FALSE;
+      }
     }
   }
 
-  static bool
+  static ::gboolean
   key_event_normal_mode(Tab* tab, ::GdkEventKey* event)
   {
     static std::shared_ptr<keyboard::Mapping> last_mapping;
@@ -151,13 +151,13 @@ namespace selain
       entry = last_mapping->control_mapping.find(event->keyval);
       if (entry == std::end(last_mapping->control_mapping))
       {
-        return GDK_EVENT_STOP;
+        return TRUE;
       }
     } else {
       entry = last_mapping->mapping.find(event->keyval);
       if (entry == std::end(last_mapping->mapping))
       {
-        return GDK_EVENT_STOP;
+        return TRUE;
       }
     }
 
@@ -171,20 +171,20 @@ namespace selain
       last_mapping = entry->second;
     }
 
-    return GDK_EVENT_STOP;
+    return TRUE;
   }
 
-  static bool
+  static ::gboolean
   key_event_insert_mode(Tab* tab, ::GdkEventKey* event)
   {
     if (event->keyval == GDK_KEY_Escape)
     {
       tab->set_mode(Mode::NORMAL);
 
-      return GDK_EVENT_STOP;
+      return TRUE;
     }
 
-    return GDK_EVENT_PROPAGATE;
+    return FALSE;
   }
 
   static void

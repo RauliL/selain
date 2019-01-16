@@ -34,6 +34,7 @@ namespace selain
     , m_mode_label("NORMAL")
   {
     const auto& font = utils::get_monospace_font();
+    const auto& style_provider = theme::get_status_bar_style_provider();
 
     set_border_width(0);
 
@@ -47,12 +48,14 @@ namespace selain
     m_mode_label.override_color(theme::mode_bar_normal_foreground);
     m_mode_label.set_halign(Gtk::ALIGN_CENTER);
     m_mode_label.set_justify(Gtk::JUSTIFY_CENTER);
+    m_mode_label.get_style_context()->add_provider(style_provider, 1000);
 
     m_status_label.override_font(font);
     m_status_label.override_background_color(theme::status_bar_background);
     m_status_label.override_color(theme::status_bar_foreground);
     m_status_label.set_halign(Gtk::ALIGN_START);
     m_status_label.set_justify(Gtk::JUSTIFY_LEFT);
+    m_status_label.get_style_context()->add_provider(style_provider, 1000);
 
     show_all_children();
   }

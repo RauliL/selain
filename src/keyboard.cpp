@@ -264,49 +264,37 @@ namespace selain
   static void
   bind_tab_open(Tab* tab)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->open_tab();
     }
-    static_cast<MainWindow*>(container)->open_tab();
   }
 
   static void
   bind_tab_close(Tab* tab)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->close_tab(tab);
     }
-    static_cast<MainWindow*>(container)->close_tab(tab);
   }
 
   static void
   bind_tab_next(Tab* tab)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->next_tab();
     }
-    static_cast<MainWindow*>(container)->next_tab();
   }
 
   static void
   bind_tab_prev(Tab* tab)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->prev_tab();
     }
-    static_cast<MainWindow*>(container)->prev_tab();
   }
 
   static void
@@ -394,17 +382,16 @@ namespace selain
   bind_paste_open_tab(Tab* tab)
   {
     const auto clipboard = Gtk::Clipboard::get();
-    const auto container = tab->get_toplevel();
-    Glib::ustring uri;
+    const auto window = tab->get_main_window();
 
-    if (!clipboard->wait_is_text_available() || !container)
+    if (window && clipboard && clipboard->wait_is_text_available())
     {
-      return;
-    }
-    uri = clipboard->wait_for_text();
-    if (!uri.empty())
-    {
-      static_cast<MainWindow*>(container)->open_tab(uri);
+      const auto uri = clipboard->wait_for_text();
+
+      if (!uri.empty())
+      {
+        window->open_tab(uri);
+      }
     }
   }
 
@@ -414,7 +401,7 @@ namespace selain
     const auto clipboard = Gtk::Clipboard::get();
     const auto uri = tab->get_uri();
 
-    if (!uri.empty())
+    if (clipboard && !uri.empty())
     {
       clipboard->set_text(uri);
       tab->status_bar().add_notification("Yanked " + uri);

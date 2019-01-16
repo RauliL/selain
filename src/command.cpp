@@ -43,25 +43,19 @@ namespace selain
   static void
   cmd_open_tab(Tab* tab, const Glib::ustring& args)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->open_tab(args);
     }
-    static_cast<MainWindow*>(container)->open_tab(args);
   }
 
   static void
   cmd_quit(Tab* tab, const Glib::ustring&)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->close_tab(tab);
     }
-    static_cast<MainWindow*>(container)->close_tab(tab);
   }
 
   static void
@@ -73,25 +67,19 @@ namespace selain
   static void
   cmd_tabprevious(Tab* tab, const Glib::ustring&)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->prev_tab();
     }
-    static_cast<MainWindow*>(container)->prev_tab();
   }
 
   static void
   cmd_tabnext(Tab* tab, const Glib::ustring&)
   {
-    const auto container = tab->get_toplevel();
-
-    if (!container)
+    if (const auto window = tab->get_main_window())
     {
-      return;
+      window->next_tab();
     }
-    static_cast<MainWindow*>(container)->next_tab();
   }
 
   static const command_mapping commands =

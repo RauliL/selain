@@ -32,6 +32,8 @@
 
 namespace selain
 {
+  class MainWindow;
+
   /**
    * GTK widget for a browser tab.
    */
@@ -39,6 +41,18 @@ namespace selain
   {
   public:
     explicit Tab();
+
+    /**
+     * Returns pointer to the main window where this tab is being displayed, or
+     * null pointer if this tab isn't being displayed on a window.
+     */
+    MainWindow* get_main_window();
+
+    /**
+     * Returns pointer to the main window where this tab is being displayed, or
+     * null pointer if this tab isn't being displayed on a window.
+     */
+    const MainWindow* get_main_window() const;
 
     inline StatusBar& status_bar()
     {

@@ -35,19 +35,19 @@ namespace selain
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
-    ::gpointer
+    Tab*
   );
   static ::gboolean on_decide_policy(
     ::WebKitWebView*,
     ::WebKitPolicyDecision*,
     ::WebKitPolicyDecisionType,
-    ::gpointer
+    Tab*
   );
   static void on_mouse_target_changed(
     ::WebKitWebView*,
     ::WebKitHitTestResult*,
     ::guint,
-    ::gpointer
+    Tab*
   );
 
   namespace keyboard
@@ -112,6 +112,22 @@ namespace selain
 
     set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
     set_command_entry_style(m_command_entry.get_style_context());
+  }
+
+  MainWindow*
+  Tab::get_main_window()
+  {
+    const auto container = get_toplevel();
+
+    return container ? static_cast<MainWindow*>(container) : nullptr;
+  }
+
+  const MainWindow*
+  Tab::get_main_window() const
+  {
+    const auto container = get_toplevel();
+
+    return container ? static_cast<const MainWindow*>(container) : nullptr;
   }
 
   void
@@ -304,18 +320,17 @@ namespace selain
   static void
   on_load_changed(::WebKitWebView* web_view,
                   ::WebKitLoadEvent load_event,
-                  ::gpointer data)
+                  Tab* tab)
   {
-    auto tab = static_cast<Tab*>(data);
-    auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
+    const auto window = tab->get_main_window();
     auto& status_bar = tab->status_bar();
 
     switch (load_event)
     {
       case WEBKIT_LOAD_STARTED:
-        if (main_window)
+        if (window)
         {
-          main_window->set_tab_title(tab, "Loading...");
+          window->set_tab_title(tab, "Loading...");
         }
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
@@ -325,9 +340,9 @@ namespace selain
         break;
 
       case WEBKIT_LOAD_REDIRECTED:
-        if (main_window)
+        if (window)
         {
-          main_window->set_tab_title(tab, "Redirecting...");
+          window->set_tab_title(tab, "Redirecting...");
         }
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
@@ -352,9 +367,9 @@ namespace selain
         {
           title = "Untitled";
         }
-        if (main_window)
+        if (window)
         {
-          main_window->set_tab_title(tab, title);
+          window->set_tab_title(tab, title);
         }
         break;
       }
@@ -365,10 +380,9 @@ namespace selain
   on_decide_policy(::WebKitWebView* web_view,
                    ::WebKitPolicyDecision* decision,
                    ::WebKitPolicyDecisionType decision_type,
-                   ::gpointer data)
+                   Tab* tab)
   {
-    auto tab = static_cast<Tab*>(data);
-    auto main_window = static_cast<MainWindow*>(tab->get_toplevel());
+    const auto window = tab->get_main_window();
 
     // Open links clicked with middle mouse button in a new tab in the
     // background.
@@ -384,9 +398,9 @@ namespace selain
 
       if (::webkit_navigation_action_get_mouse_button(action) == 2 &&
           action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED &&
-          main_window)
+          window)
       {
-        main_window->open_tab(
+        window->open_tab(
           ::webkit_uri_request_get_uri(
             ::webkit_navigation_action_get_request(action)
           ),
@@ -402,10 +416,9 @@ namespace selain
   static void on_mouse_target_changed(::WebKitWebView*,
                                       ::WebKitHitTestResult* hit_test_result,
                                       ::guint,
-                                      ::gpointer data)
+                                      Tab* tab)
   {
     const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
-    auto tab = static_cast<Tab*>(data);
 
     tab->status_bar().set_status(!uri || !*uri ? Glib::ustring() : uri);
   }

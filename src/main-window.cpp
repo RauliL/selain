@@ -129,7 +129,7 @@ namespace selain
   {
     const auto tab = Glib::RefPtr<Tab>(new Tab());
 
-    m_notebook.append_page(*tab.get(), "Untitled");
+    m_notebook.append_page(*tab.get(), tab->get_tab_label());
     tab->signal_status_changed().connect(sigc::mem_fun(
       this,
       &MainWindow::on_tab_status_change
@@ -191,21 +191,6 @@ namespace selain
   MainWindow::prev_tab()
   {
     m_notebook.prev_page();
-  }
-
-  void
-  MainWindow::set_tab_title(Tab* tab, const Glib::ustring& title)
-  {
-    const auto index = m_notebook.page_num(*tab);
-
-    if (index < 0)
-    {
-      return;
-    }
-    m_notebook.set_tab_label_text(
-      *tab,
-      title.length() > 20 ? title.substr(0, 19) + U'\u2026' : title
-    );
   }
 
   void

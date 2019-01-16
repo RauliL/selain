@@ -124,8 +124,6 @@ namespace selain
     void next_tab();
     void prev_tab();
 
-    void set_tab_title(Tab* tab, const Glib::ustring& title);
-
     void add_notification(
       const Glib::ustring& text,
       NotificationType type = NotificationType::INFO,

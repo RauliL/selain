@@ -59,6 +59,22 @@ namespace selain
      */
     const MainWindow* get_main_window() const;
 
+    /**
+     * Returns the GTK widget used as label for the tab.
+     */
+    inline Gtk::Widget& get_tab_label()
+    {
+      return m_tab_label;
+    }
+
+    /**
+     * Returns the GTK widget used as label for the tab.
+     */
+    inline const Gtk::Widget& get_tab_label() const
+    {
+      return m_tab_label;
+    }
+
     Glib::ustring get_uri() const;
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
@@ -76,6 +92,8 @@ namespace selain
 
     void grab_focus();
 
+    void set_title(const Glib::ustring& title);
+
     const Glib::ustring& get_status() const;
     void set_status(const Glib::ustring& status, bool permanent = false);
 
@@ -90,6 +108,9 @@ namespace selain
     }
 
   private:
+    Gtk::Box m_tab_label;
+    Gtk::Image m_tab_label_icon;
+    Gtk::Label m_tab_label_text;
     ::WebKitWebView* m_web_view;
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;
     Glib::ustring m_status;

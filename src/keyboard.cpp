@@ -426,7 +426,7 @@ namespace selain
     clipboard->set_text(uri);
     if (const auto window = tab->get_main_window())
     {
-      window->get_status_bar().add_notification("Yanked " + uri);
+      window->add_notification("Yanked " + uri);
     }
   }
 

@@ -26,8 +26,12 @@
 #ifndef SELAIN_MAIN_WINDOW_HPP_GUARD
 #define SELAIN_MAIN_WINDOW_HPP_GUARD
 
+#include <mutex>
+#include <queue>
+
 #include <gtkmm.h>
 
+#include <selain/notification.hpp>
 #include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
 
@@ -122,11 +126,18 @@ namespace selain
 
     void set_tab_title(Tab* tab, const Glib::ustring& title);
 
+    void add_notification(
+      const Glib::ustring& text,
+      NotificationType type = NotificationType::INFO,
+      unsigned int timeout = 5
+    );
+
   private:
     bool on_command_entry_key_press(::GdkEventKey* event);
     void on_command_entry_activate();
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
     void on_tab_switch(Gtk::Widget* widget, ::guint page_number);
+    void on_notification_timeout();
 
   private:
     Mode m_mode;
@@ -134,6 +145,8 @@ namespace selain
     Gtk::Notebook m_notebook;
     StatusBar m_status_bar;
     Gtk::Entry m_command_entry;
+    std::queue<Notification> m_notification_queue;
+    std::mutex m_notification_queue_mutex;
   };
 }
 

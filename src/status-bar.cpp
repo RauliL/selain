@@ -83,39 +83,33 @@ namespace selain
   }
 
   void
-  StatusBar::add_notification(const Glib::ustring& status,
-                              NotificationType type,
-                              int timeout)
+  StatusBar::show_notification(const Notification& notification)
   {
     Gdk::RGBA background;
     Gdk::RGBA foreground;
 
-    switch (type)
+    switch (std::get<1>(notification))
     {
+      case NotificationType::INFO:
+        background = theme::status_bar_background;
+        foreground = theme::status_bar_foreground;
+        break;
+
       case NotificationType::ERROR:
         background = theme::status_bar_error_background;
         foreground = theme::status_bar_error_foreground;
-        break;
-
-      default:
-        background = theme::status_bar_background;
-        foreground = theme::status_bar_foreground;
         break;
     }
 
     m_status_label.override_background_color(background);
     m_status_label.override_color(foreground);
-    m_status_label.set_text(status);
-
-    Glib::signal_timeout().connect_once(
-      sigc::mem_fun(*this, &StatusBar::on_notification_reset),
-      timeout * 1000
-    );
+    m_status_label.set_text(std::get<0>(notification));
   }
 
   void
-  StatusBar::on_notification_reset()
+  StatusBar::reset_notification()
   {
-    set_status(Glib::ustring());
+    m_status_label.override_background_color(theme::status_bar_background);
+    m_status_label.override_color(theme::status_bar_foreground);
   }
 }

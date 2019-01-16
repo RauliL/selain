@@ -217,6 +217,10 @@ namespace selain
 
       return true;
     }
+    else if (event->keyval == GDK_KEY_Tab)
+    {
+      return true;
+    }
 
     return false;
   }

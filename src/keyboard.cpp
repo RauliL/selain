@@ -34,7 +34,7 @@ namespace selain
   static std::shared_ptr<keyboard::Mapping> top_mapping;
 
   static ::gboolean key_event_normal_mode(Tab*, ::GdkEventKey*);
-  static ::gboolean key_event_insert_mode(Tab*, ::GdkEventKey*);
+  static ::gboolean key_event_insert_mode(MainWindow*, ::GdkEventKey*);
   static void add_mapping(const std::u32string&, const keyboard::Binding&);
 
   static void bind_mode_command(Tab*);
@@ -105,13 +105,19 @@ namespace selain
     ::gboolean
     on_tab_key_press(::WebKitWebView*, ::GdkEventKey* event, Tab* tab)
     {
-      switch (tab->get_mode())
+      const auto window = tab->get_main_window();
+
+      if (!window)
+      {
+        return FALSE;
+      }
+      switch (window->get_mode())
       {
         case Mode::NORMAL:
           return key_event_normal_mode(tab, event);
 
         case Mode::INSERT:
-          return key_event_insert_mode(tab, event);
+          return key_event_insert_mode(window, event);
 
         default:
           return FALSE;
@@ -175,11 +181,11 @@ namespace selain
   }
 
   static ::gboolean
-  key_event_insert_mode(Tab* tab, ::GdkEventKey* event)
+  key_event_insert_mode(MainWindow* window, ::GdkEventKey* event)
   {
     if (event->keyval == GDK_KEY_Escape)
     {
-      tab->set_mode(Mode::NORMAL);
+      window->set_mode(Mode::NORMAL);
 
       return TRUE;
     }
@@ -239,14 +245,20 @@ namespace selain
   static void
   bind_mode_command(Tab* tab)
   {
-    tab->command_entry().set_text(":");
-    tab->set_mode(Mode::COMMAND);
+    if (const auto window = tab->get_main_window())
+    {
+      window->get_command_entry().set_text(":");
+      window->set_mode(Mode::COMMAND);
+    }
   }
 
   static void
   bind_mode_insert(Tab* tab)
   {
-    tab->set_mode(Mode::INSERT);
+    if (const auto window = tab->get_main_window())
+    {
+      window->set_mode(Mode::INSERT);
+    }
   }
 
   static void
@@ -350,15 +362,21 @@ namespace selain
   static void
   bind_complete_open(Tab* tab)
   {
-    tab->command_entry().set_text(":open ");
-    tab->set_mode(Mode::COMMAND);
+    if (const auto window = tab->get_main_window())
+    {
+      window->get_command_entry().set_text(":open ");
+      window->set_mode(Mode::COMMAND);
+    }
   }
 
   static void
   bind_complete_open_tab(Tab* tab)
   {
-    tab->command_entry().set_text(":open-tab ");
-    tab->set_mode(Mode::COMMAND);
+    if (const auto window = tab->get_main_window())
+    {
+      window->get_command_entry().set_text(":open-tab ");
+      window->set_mode(Mode::COMMAND);
+    }
   }
 
   static void
@@ -367,7 +385,7 @@ namespace selain
     const auto clipboard = Gtk::Clipboard::get();
     Glib::ustring uri;
 
-    if (!clipboard->wait_is_text_available())
+    if (!clipboard || !clipboard->wait_is_text_available())
     {
       return;
     }
@@ -401,25 +419,35 @@ namespace selain
     const auto clipboard = Gtk::Clipboard::get();
     const auto uri = tab->get_uri();
 
-    if (clipboard && !uri.empty())
+    if (!clipboard || uri.empty())
     {
-      clipboard->set_text(uri);
-      tab->status_bar().add_notification("Yanked " + uri);
+      return;
+    }
+    clipboard->set_text(uri);
+    if (const auto window = tab->get_main_window())
+    {
+      window->get_status_bar().add_notification("Yanked " + uri);
     }
   }
 
   static void
   bind_search_forwards(Tab* tab)
   {
-    tab->command_entry().set_text("/");
-    tab->set_mode(Mode::COMMAND);
+    if (const auto window = tab->get_main_window())
+    {
+      window->get_command_entry().set_text("/");
+      window->set_mode(Mode::COMMAND);
+    }
   }
 
   static void
   bind_search_backwards(Tab* tab)
   {
-    tab->command_entry().set_text("?");
-    tab->set_mode(Mode::COMMAND);
+    if (const auto window = tab->get_main_window())
+    {
+      window->get_command_entry().set_text("?");
+      window->set_mode(Mode::COMMAND);
+    }
   }
 
   static void

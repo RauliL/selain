@@ -47,9 +47,7 @@ namespace selain
     explicit StatusBar();
 
     void set_mode(Mode mode);
-
     void set_status(const Glib::ustring& status);
-    void set_permanent_status(const Glib::ustring& status);
 
     void add_notification(
       const Glib::ustring& status,
@@ -63,7 +61,6 @@ namespace selain
   private:
     Gtk::Label m_mode_label;
     Gtk::Label m_status_label;
-    Glib::ustring m_permanent_status;
   };
 }
 

@@ -31,7 +31,6 @@
 namespace selain
 {
   static void set_webkit_settings(::WebKitSettings*);
-  static void set_command_entry_style(const Glib::RefPtr<Gtk::StyleContext>&);
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
@@ -59,22 +58,9 @@ namespace selain
   }
 
   Tab::Tab()
-    : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
-    , m_mode(Mode::NORMAL)
-    , m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
+    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
-    m_command_entry.override_font(utils::get_monospace_font());
-
-    m_command_entry.signal_key_press_event().connect(sigc::mem_fun(
-      this,
-      &Tab::on_command_entry_key_press
-    ));
-    m_command_entry.signal_activate().connect(sigc::mem_fun(
-      this,
-      &Tab::on_command_received
-    ));
-
     ::g_signal_connect(
       G_OBJECT(m_web_view),
       "load-changed",
@@ -100,9 +86,7 @@ namespace selain
       static_cast<::gpointer>(this)
     );
 
-    pack_start(*m_web_view_widget.get());
-    pack_start(m_status_bar, Gtk::PACK_SHRINK);
-    pack_start(m_command_entry, Gtk::PACK_SHRINK);
+    add(*m_web_view_widget.get());
 
     override_background_color(theme::window_background);
     ::webkit_web_view_set_background_color(
@@ -111,7 +95,6 @@ namespace selain
     );
 
     set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
-    set_command_entry_style(m_command_entry.get_style_context());
   }
 
   MainWindow*
@@ -128,28 +111,6 @@ namespace selain
     const auto container = get_toplevel();
 
     return container ? static_cast<const MainWindow*>(container) : nullptr;
-  }
-
-  void
-  Tab::set_mode(Mode mode)
-  {
-    m_mode = mode;
-    m_status_bar.set_mode(mode);
-    switch (mode)
-    {
-      case Mode::COMMAND:
-        m_command_entry.show();
-        m_command_entry.grab_focus_without_selecting();
-        m_command_entry.set_position(m_command_entry.get_text().length());
-        break;
-
-      case Mode::NORMAL:
-      case Mode::INSERT:
-        m_command_entry.hide();
-        m_command_entry.set_text("");
-        m_web_view_widget->grab_focus();
-        break;
-    }
   }
 
   Glib::ustring
@@ -258,45 +219,44 @@ namespace selain
   void
   Tab::grab_focus()
   {
-    if (m_mode == Mode::COMMAND)
+    const auto window = get_main_window();
+
+    if (window && window->get_mode() == Mode::COMMAND)
     {
-      m_command_entry.grab_focus_without_selecting();
-      m_command_entry.set_position(m_command_entry.get_text().length());
+      auto& command_entry = window->get_command_entry();
+
+      command_entry.grab_focus_without_selecting();
+      command_entry.set_position(command_entry.get_text().length());
     } else {
       m_web_view_widget->grab_focus();
     }
   }
 
-  void
-  Tab::on_show()
+  const Glib::ustring&
+  Tab::get_status() const
   {
-    Gtk::Box::on_show();
-    if (m_mode == Mode::NORMAL)
-    {
-      m_command_entry.hide();
-    }
-  }
-
-  bool
-  Tab::on_command_entry_key_press(::GdkEventKey* event)
-  {
-    if (event->keyval == GDK_KEY_Escape)
-    {
-      set_mode(Mode::NORMAL);
-
-      return GDK_EVENT_STOP;
-    }
-
-    return GDK_EVENT_PROPAGATE;
+    return m_status.empty() ? m_permanent_status : m_status;
   }
 
   void
-  Tab::on_command_received()
+  Tab::set_status(const Glib::ustring& status, bool permanent)
   {
-    const auto command = m_command_entry.get_text();
-
-    set_mode(Mode::NORMAL);
-    execute_command(command);
+    if (permanent)
+    {
+      m_permanent_status = status;
+      if (m_status.empty())
+      {
+        m_signal_status_changed.emit(this, status);
+      }
+    }
+    else if (status.empty())
+    {
+      m_status.clear();
+      m_signal_status_changed.emit(this, m_permanent_status);
+    } else {
+      m_status = status;
+      m_signal_status_changed.emit(this, status);
+    }
   }
 
   static void
@@ -312,18 +272,11 @@ namespace selain
   }
 
   static void
-  set_command_entry_style(const Glib::RefPtr<Gtk::StyleContext>& context)
-  {
-    context->add_provider(theme::get_command_entry_style_provider(), 1000);
-  }
-
-  static void
   on_load_changed(::WebKitWebView* web_view,
                   ::WebKitLoadEvent load_event,
                   Tab* tab)
   {
     const auto window = tab->get_main_window();
-    auto& status_bar = tab->status_bar();
 
     switch (load_event)
     {
@@ -334,8 +287,8 @@ namespace selain
         }
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          status_bar.set_permanent_status(uri);
-          status_bar.set_status(Glib::ustring("Loading ") + uri + "...");
+          tab->set_status(uri, true);
+          tab->set_status(Glib::ustring("Loading ") + uri + U'\u2026');
         }
         break;
 
@@ -346,16 +299,14 @@ namespace selain
         }
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          status_bar.set_status(
-            Glib::ustring("Redirecting to ") + uri + "..."
-          );
+          tab->set_status(Glib::ustring("Redirecting to ") + uri + U'\u2026');
         }
         break;
 
       case WEBKIT_LOAD_COMMITTED:
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          status_bar.set_permanent_status(uri);
+          tab->set_status(uri, true);
         }
         break;
 
@@ -371,6 +322,7 @@ namespace selain
         {
           window->set_tab_title(tab, title);
         }
+        tab->set_status(Glib::ustring());
         break;
       }
     }
@@ -413,13 +365,14 @@ namespace selain
     return true;
   }
 
-  static void on_mouse_target_changed(::WebKitWebView*,
-                                      ::WebKitHitTestResult* hit_test_result,
-                                      ::guint,
-                                      Tab* tab)
+  static void
+  on_mouse_target_changed(::WebKitWebView*,
+                          ::WebKitHitTestResult* hit_test_result,
+                          ::guint,
+                          Tab* tab)
   {
     const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
 
-    tab->status_bar().set_status(!uri || !*uri ? Glib::ustring() : uri);
+    tab->set_status(!uri || !*uri ? Glib::ustring() : uri);
   }
 }

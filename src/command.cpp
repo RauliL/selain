@@ -141,10 +141,12 @@ namespace selain
         return;
       }
     }
-
-    m_status_bar.add_notification(
-      "Error: Unknown command: " + command,
-      StatusBar::NotificationType::ERROR
-    );
+    if (const auto window = get_main_window())
+    {
+      window->get_status_bar().add_notification(
+        "Error: Unknown command: " + command,
+        StatusBar::NotificationType::ERROR
+      );
+    }
   }
 }

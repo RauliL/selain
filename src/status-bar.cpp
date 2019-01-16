@@ -74,14 +74,9 @@ namespace selain
   void
   StatusBar::set_status(const Glib::ustring& status)
   {
-    m_status_label.set_text(status.empty() ? m_permanent_status : status);
-  }
-
-  void
-  StatusBar::set_permanent_status(const Glib::ustring& status)
-  {
-    m_permanent_status = status;
     m_status_label.set_text(status);
+    m_status_label.override_background_color(theme::status_bar_background);
+    m_status_label.override_color(theme::status_bar_foreground);
   }
 
   void
@@ -118,8 +113,6 @@ namespace selain
   void
   StatusBar::on_notification_reset()
   {
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
     set_status(Glib::ustring());
   }
 }

@@ -26,50 +26,43 @@
 #ifndef SELAIN_TAB_HPP_GUARD
 #define SELAIN_TAB_HPP_GUARD
 
-#include <selain/status-bar.hpp>
-
+#include <gtkmm.h>
 #include <webkit2/webkit2.h>
 
 namespace selain
 {
+  class MainWindow;
+
   /**
    * GTK widget for a browser tab.
    */
-  class Tab : public Gtk::Box
+  class Tab : public Gtk::Bin
   {
   public:
+    using status_changed_signal_type = sigc::signal<
+      void,
+      Tab*,
+      const Glib::ustring&
+    >;
+
     explicit Tab();
 
-    inline StatusBar& status_bar()
-    {
-      return m_status_bar;
-    }
+    /**
+     * Returns pointer to the main window where this tab is being displayed, or
+     * null pointer if this tab isn't being displayed on a window.
+     */
+    MainWindow* get_main_window();
 
-    inline const StatusBar& status_bar() const
-    {
-      return m_status_bar;
-    }
-
-    inline Gtk::Entry& command_entry()
-    {
-      return m_command_entry;
-    }
-
-    inline const Gtk::Entry& command_entry() const
-    {
-      return m_command_entry;
-    }
-
-    inline Mode get_mode() const
-    {
-      return m_mode;
-    }
-
-    void set_mode(Mode mode);
+    /**
+     * Returns pointer to the main window where this tab is being displayed, or
+     * null pointer if this tab isn't being displayed on a window.
+     */
+    const MainWindow* get_main_window() const;
 
     Glib::ustring get_uri() const;
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
+    void stop_loading();
 
     void execute_command(const Glib::ustring& command);
     void execute_script(const Glib::ustring& script);
@@ -83,17 +76,25 @@ namespace selain
 
     void grab_focus();
 
-  private:
-    void on_show();
-    bool on_command_entry_key_press(::GdkEventKey* event);
-    void on_command_received();
+    const Glib::ustring& get_status() const;
+    void set_status(const Glib::ustring& status, bool permanent = false);
+
+    inline status_changed_signal_type& signal_status_changed()
+    {
+      return m_signal_status_changed;
+    }
+
+    inline const status_changed_signal_type& signal_status_changed() const
+    {
+      return m_signal_status_changed;
+    }
 
   private:
-    Mode m_mode;
     ::WebKitWebView* m_web_view;
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;
-    StatusBar m_status_bar;
-    Gtk::Entry m_command_entry;
+    Glib::ustring m_status;
+    Glib::ustring m_permanent_status;
+    status_changed_signal_type m_signal_status_changed;
   };
 }
 

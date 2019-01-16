@@ -29,6 +29,7 @@ namespace selain
 {
   namespace theme
   {
+    static const auto status_bar_style_provider = Gtk::CssProvider::create();
     static const auto entry_style_provider = Gtk::CssProvider::create();
 
     const Gdk::RGBA window_background("#262626");
@@ -40,6 +41,24 @@ namespace selain
     const Gdk::RGBA mode_bar_normal_foreground("#282828");
     const Gdk::RGBA mode_bar_insert_background("#d7d75f");
     const Gdk::RGBA mode_bar_insert_foreground("#262626");
+
+    const Glib::RefPtr<Gtk::CssProvider>&
+    get_status_bar_style_provider()
+    {
+      static bool initialized = false;
+
+      if (!initialized)
+      {
+        initialized = true;
+        status_bar_style_provider->load_from_data(
+          "label {\n"
+          "  padding: 0.1em 0.4em;\n"
+          "}\n"
+        );
+      }
+
+      return status_bar_style_provider;
+    }
 
     const Glib::RefPtr<Gtk::CssProvider>&
     get_command_entry_style_provider()

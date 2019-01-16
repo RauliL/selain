@@ -26,8 +26,13 @@
 #ifndef SELAIN_MAIN_WINDOW_HPP_GUARD
 #define SELAIN_MAIN_WINDOW_HPP_GUARD
 
+#include <mutex>
+#include <queue>
+
 #include <gtkmm.h>
 
+#include <selain/notification.hpp>
+#include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
 
 namespace selain
@@ -39,6 +44,73 @@ namespace selain
   {
   public:
     explicit MainWindow();
+
+    /**
+     * Returns the current mode of the window.
+     */
+    inline Mode get_mode() const
+    {
+      return m_mode;
+    }
+
+    /**
+     * Sets the current mode of the window.
+     */
+    void set_mode(Mode mode);
+
+    /**
+     * Returns the status bar of the window.
+     */
+    inline StatusBar& get_status_bar()
+    {
+      return m_status_bar;
+    }
+
+    /**
+     * Returns the status bar of the window.
+     */
+    inline const StatusBar& get_status_bar() const
+    {
+      return m_status_bar;
+    }
+
+    /**
+     * Returns the text boxed where commands are being typed.
+     */
+    inline Gtk::Entry& get_command_entry()
+    {
+      return m_command_entry;
+    }
+
+    /**
+     * Returns the text boxed where commands are being typed.
+     */
+    inline const Gtk::Entry& get_command_entry() const
+    {
+      return m_command_entry;
+    }
+
+    /**
+     * Returns pointer to the current tab, or null pointer if no tabs are open.
+     */
+    Tab* get_current_tab();
+
+    /**
+     * Returns pointer to the current tab, or null pointer if no tabs are open.
+     */
+    const Tab* get_current_tab() const;
+
+    /**
+     * Returns pointer to tab from given index, or null pointer if given index
+     * is out of bounds.
+     */
+    Tab* get_nth_tab(int index);
+
+    /**
+     * Returns pointer to tab from given index, or null pointer if given index
+     * is out of bounds.
+     */
+    const Tab* get_nth_tab(int index) const;
 
     Glib::RefPtr<Tab> open_tab(
       const Glib::ustring& uri = Glib::ustring(),
@@ -54,8 +126,27 @@ namespace selain
 
     void set_tab_title(Tab* tab, const Glib::ustring& title);
 
+    void add_notification(
+      const Glib::ustring& text,
+      NotificationType type = NotificationType::INFO,
+      unsigned int timeout = 5
+    );
+
   private:
+    bool on_command_entry_key_press(::GdkEventKey* event);
+    void on_command_entry_activate();
+    void on_tab_status_change(Tab* tab, const Glib::ustring& status);
+    void on_tab_switch(Gtk::Widget* widget, ::guint page_number);
+    void on_notification_timeout();
+
+  private:
+    Mode m_mode;
+    Gtk::Box m_box;
     Gtk::Notebook m_notebook;
+    StatusBar m_status_bar;
+    Gtk::Entry m_command_entry;
+    std::queue<Notification> m_notification_queue;
+    std::mutex m_notification_queue_mutex;
   };
 }
 

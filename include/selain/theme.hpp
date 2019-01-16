@@ -42,6 +42,7 @@ namespace selain
     extern const Gdk::RGBA mode_bar_insert_background;
     extern const Gdk::RGBA mode_bar_insert_foreground;
 
+    const Glib::RefPtr<Gtk::CssProvider>& get_status_bar_style_provider();
     const Glib::RefPtr<Gtk::CssProvider>& get_command_entry_style_provider();
   }
 }

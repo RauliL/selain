@@ -23,34 +23,26 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_STATUS_BAR_HPP_GUARD
-#define SELAIN_STATUS_BAR_HPP_GUARD
+#ifndef SELAIN_NOTIFICATION_HPP_GUARD
+#define SELAIN_NOTIFICATION_HPP_GUARD
 
-#include <selain/mode.hpp>
-#include <selain/notification.hpp>
+#include <tuple>
 
-#include <gtkmm.h>
+#include <glibmm.h>
 
 namespace selain
 {
-  /**
-   * GTK widget for browser status bar.
-   */
-  class StatusBar : public Gtk::Box
+  enum class NotificationType
   {
-  public:
-    explicit StatusBar();
-
-    void set_mode(Mode mode);
-    void set_status(const Glib::ustring& status);
-
-    void show_notification(const Notification& notification);
-    void reset_notification();
-
-  private:
-    Gtk::Label m_mode_label;
-    Gtk::Label m_status_label;
+    INFO,
+    ERROR
   };
+
+  using Notification = std::tuple<
+    Glib::ustring,
+    NotificationType,
+    unsigned int
+  >;
 }
 
-#endif /* !SELAIN_STATUS_BAR_HPP_GUARD */
+#endif /* !SELAIN_NOTIFICATION_HPP_GUARD */

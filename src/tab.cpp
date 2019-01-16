@@ -155,6 +155,12 @@ namespace selain
   }
 
   void
+  Tab::stop_loading()
+  {
+    ::webkit_web_view_stop_loading(m_web_view);
+  }
+
+  void
   Tab::execute_script(const Glib::ustring& script)
   {
     ::webkit_web_view_run_javascript(

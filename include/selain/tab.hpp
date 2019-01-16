@@ -62,6 +62,7 @@ namespace selain
     Glib::ustring get_uri() const;
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
+    void stop_loading();
 
     void execute_command(const Glib::ustring& command);
     void execute_script(const Glib::ustring& script);

@@ -35,6 +35,15 @@ namespace selain
   using command_mapping = std::unordered_map<std::string, command_callback>;
 
   static void
+  cmd_insert_mode(Tab* tab, const Glib::ustring&)
+  {
+    if (const auto window = tab->get_main_window())
+    {
+      window->set_mode(Mode::INSERT);
+    }
+  }
+
+  static void
   cmd_open(Tab* tab, const Glib::ustring& args)
   {
     tab->load_uri(args);
@@ -65,6 +74,24 @@ namespace selain
   }
 
   static void
+  cmd_reload(Tab* tab, const Glib::ustring&)
+  {
+    tab->reload();
+  }
+
+  static void
+  cmd_reload_bang(Tab* tab, const Glib::ustring&)
+  {
+    tab->reload(true);
+  }
+
+  static void
+  cmd_stop(Tab* tab, const Glib::ustring&)
+  {
+    tab->stop_loading();
+  }
+
+  static void
   cmd_tabprevious(Tab* tab, const Glib::ustring&)
   {
     if (const auto window = tab->get_main_window())
@@ -84,6 +111,8 @@ namespace selain
 
   static const command_mapping commands =
   {
+    { "i", cmd_insert_mode },
+    { "insert", cmd_insert_mode },
     { "o", cmd_open },
     { "open", cmd_open },
     { "ot", cmd_open_tab },
@@ -91,7 +120,13 @@ namespace selain
     { "q", cmd_quit },
     { "qa", cmd_quit_all },
     { "qall", cmd_quit_all },
-    {" quit", cmd_quit },
+    { "quit", cmd_quit },
+    { "r", cmd_reload },
+    { "r!", cmd_reload_bang },
+    { "reload", cmd_reload },
+    { "reload!", cmd_reload_bang },
+    { "s", cmd_stop },
+    { "stop", cmd_stop },
     { "tn", cmd_tabnext },
     { "tabnext", cmd_tabnext },
     { "tp", cmd_tabprevious },

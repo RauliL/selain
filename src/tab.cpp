@@ -58,7 +58,9 @@ namespace selain
   }
 
   Tab::Tab()
-    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
+    : m_tab_label(Gtk::ORIENTATION_HORIZONTAL)
+    , m_tab_label_text("Untitled")
+    , m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
     ::g_signal_connect(
@@ -85,6 +87,11 @@ namespace selain
       G_CALLBACK(keyboard::on_tab_key_press),
       static_cast<::gpointer>(this)
     );
+
+    m_tab_label_icon.set_from_icon_name("gtk-file", Gtk::IconSize(16));
+    m_tab_label.pack_start(m_tab_label_icon, Gtk::PACK_SHRINK);
+    m_tab_label.pack_start(m_tab_label_text);
+    m_tab_label.show_all();
 
     add(*m_web_view_widget.get());
 
@@ -238,6 +245,16 @@ namespace selain
     }
   }
 
+  void
+  Tab::set_title(const Glib::ustring& title)
+  {
+    const auto length = title.length();
+
+    m_tab_label_text.set_text(
+      length > 20 ? title.substr(0, 19) + U'\u2026' : title
+    );
+  }
+
   const Glib::ustring&
   Tab::get_status() const
   {
@@ -282,15 +299,10 @@ namespace selain
                   ::WebKitLoadEvent load_event,
                   Tab* tab)
   {
-    const auto window = tab->get_main_window();
-
     switch (load_event)
     {
       case WEBKIT_LOAD_STARTED:
-        if (window)
-        {
-          window->set_tab_title(tab, "Loading...");
-        }
+        tab->set_title("Loading\xe2\x80\xa6");
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
           tab->set_status(uri, true);
@@ -299,10 +311,7 @@ namespace selain
         break;
 
       case WEBKIT_LOAD_REDIRECTED:
-        if (window)
-        {
-          window->set_tab_title(tab, "Redirecting...");
-        }
+        tab->set_title("Redirecting\xe2\x80\xa6");
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
           tab->set_status(Glib::ustring("Redirecting to ") + uri + U'\u2026');
@@ -318,16 +327,9 @@ namespace selain
 
       case WEBKIT_LOAD_FINISHED:
       {
-        auto title = ::webkit_web_view_get_title(web_view);
+        const auto title = ::webkit_web_view_get_title(web_view);
 
-        if (!title || !*title)
-        {
-          title = "Untitled";
-        }
-        if (window)
-        {
-          window->set_tab_title(tab, title);
-        }
+        tab->set_title(title && *title ? title : "Untitled");
         tab->set_status(Glib::ustring());
         break;
       }

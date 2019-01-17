@@ -31,12 +31,12 @@ namespace selain
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
     , m_text("Untitled")
   {
-    m_icon.set_from_icon_name("gtk-file", Gtk::ICON_SIZE_BUTTON);
+    m_icon.set_from_icon_name("text-x-generic", Gtk::ICON_SIZE_BUTTON);
 
     m_close_button.set_relief(Gtk::RELIEF_NONE);
     m_close_button.set_focus_on_click(false);
     m_close_button.set_image_from_icon_name(
-      "gtk-close",
+      "window-close",
       Gtk::ICON_SIZE_BUTTON
     );
 
@@ -61,7 +61,7 @@ namespace selain
     {
       m_icon.set(icon);
     } else {
-      m_icon.set_from_icon_name("gtk-file", Gtk::ICON_SIZE_BUTTON);
+      m_icon.set_from_icon_name("text-x-generic", Gtk::ICON_SIZE_BUTTON);
     }
   }
 }

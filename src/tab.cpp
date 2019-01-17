@@ -25,12 +25,12 @@
  */
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
-#include <selain/utils.hpp>
 #include <selain/version.hpp>
 
 namespace selain
 {
   static void set_webkit_settings(::WebKitSettings*);
+  static void set_webkit_context(::WebKitWebContext*);
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
@@ -48,6 +48,16 @@ namespace selain
     ::guint,
     Tab*
   );
+  static void on_notify_title(
+    ::WebKitWebView*,
+    ::GParamSpec*,
+    Tab*
+  );
+  static void on_notify_favicon(
+    ::WebKitWebView*,
+    ::GParamSpec*,
+    Tab*
+  );
 
   namespace keyboard
   {
@@ -58,11 +68,13 @@ namespace selain
   }
 
   Tab::Tab()
-    : m_tab_label(Gtk::ORIENTATION_HORIZONTAL)
-    , m_tab_label_text("Untitled")
-    , m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
+    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
+    m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(
+      this,
+      &Tab::on_close_button_clicked
+    ));
     ::g_signal_connect(
       G_OBJECT(m_web_view),
       "load-changed",
@@ -87,11 +99,18 @@ namespace selain
       G_CALLBACK(keyboard::on_tab_key_press),
       static_cast<::gpointer>(this)
     );
-
-    m_tab_label_icon.set_from_icon_name("gtk-file", Gtk::IconSize(16));
-    m_tab_label.pack_start(m_tab_label_icon, Gtk::PACK_SHRINK);
-    m_tab_label.pack_start(m_tab_label_text);
-    m_tab_label.show_all();
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "notify::title",
+      G_CALLBACK(on_notify_title),
+      static_cast<::gpointer>(this)
+    );
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "notify::favicon",
+      G_CALLBACK(on_notify_favicon),
+      static_cast<::gpointer>(this)
+    );
 
     add(*m_web_view_widget.get());
 
@@ -102,6 +121,7 @@ namespace selain
     );
 
     set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
+    set_webkit_context(::webkit_web_view_get_context(m_web_view));
   }
 
   MainWindow*
@@ -236,23 +256,10 @@ namespace selain
 
     if (window && window->get_mode() == Mode::COMMAND)
     {
-      auto& command_entry = window->get_command_entry();
-
-      command_entry.grab_focus_without_selecting();
-      command_entry.set_position(command_entry.get_text().length());
+      window->get_command_entry().grab_focus();
     } else {
       m_web_view_widget->grab_focus();
     }
-  }
-
-  void
-  Tab::set_title(const Glib::ustring& title)
-  {
-    const auto length = title.length();
-
-    m_tab_label_text.set_text(
-      length > 20 ? title.substr(0, 19) + U'\u2026' : title
-    );
   }
 
   const Glib::ustring&
@@ -282,6 +289,17 @@ namespace selain
     }
   }
 
+  void
+  Tab::on_close_button_clicked()
+  {
+    if (const auto window = get_main_window())
+    {
+      window->close_tab(this);
+    }
+  }
+
+  // TODO: Create shared instance of `WebKitSettings` during application
+  // startup and use that instead.
   static void
   set_webkit_settings(::WebKitSettings* settings)
   {
@@ -294,6 +312,16 @@ namespace selain
     );
   }
 
+  // TODO: Create shared instance of `WebKitWebContext` during application
+  // startup and use that instead.
+  static void
+  set_webkit_context(::WebKitWebContext* context)
+  {
+    // Enable favicons by setting the favicon database directory to NULL, which
+    // tells WebKit to use the default user cache directory.
+    ::webkit_web_context_set_favicon_database_directory(context, nullptr);
+  }
+
   static void
   on_load_changed(::WebKitWebView* web_view,
                   ::WebKitLoadEvent load_event,
@@ -302,7 +330,7 @@ namespace selain
     switch (load_event)
     {
       case WEBKIT_LOAD_STARTED:
-        tab->set_title("Loading\xe2\x80\xa6");
+        tab->get_tab_label().set_text("Loading\xe2\x80\xa6");
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
           tab->set_status(uri, true);
@@ -311,7 +339,7 @@ namespace selain
         break;
 
       case WEBKIT_LOAD_REDIRECTED:
-        tab->set_title("Redirecting\xe2\x80\xa6");
+        tab->get_tab_label().set_text("Redirecting\xe2\x80\xa6");
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
           tab->set_status(Glib::ustring("Redirecting to ") + uri + U'\u2026');
@@ -326,13 +354,8 @@ namespace selain
         break;
 
       case WEBKIT_LOAD_FINISHED:
-      {
-        const auto title = ::webkit_web_view_get_title(web_view);
-
-        tab->set_title(title && *title ? title : "Untitled");
         tab->set_status(Glib::ustring());
         break;
-      }
     }
   }
 
@@ -382,5 +405,41 @@ namespace selain
     const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
 
     tab->set_status(!uri || !*uri ? Glib::ustring() : uri);
+  }
+
+  static void
+  on_notify_title(::WebKitWebView* web_view, ::GParamSpec*, Tab* tab)
+  {
+    const auto title = ::webkit_web_view_get_title(web_view);
+
+    tab->get_tab_label().set_text(title && *title ? title : "Untitled");
+  }
+
+  static void
+  on_notify_favicon(::WebKitWebView* web_view, ::GParamSpec*, Tab* tab)
+  {
+    auto& tab_label = tab->get_tab_label();
+    const auto surface = ::webkit_web_view_get_favicon(web_view);
+    int width;
+    int height;
+
+    if (surface && Gtk::IconSize::lookup(Gtk::ICON_SIZE_BUTTON, width, height))
+    {
+      const auto pixbuf = Gdk::Pixbuf::create(
+        Cairo::RefPtr<Cairo::Surface>(new Cairo::Surface(surface)),
+        0,
+        0,
+        ::cairo_image_surface_get_width(surface),
+        ::cairo_image_surface_get_height(surface)
+      );
+
+      tab_label.set_icon(pixbuf->scale_simple(
+        width,
+        height,
+        Gdk::INTERP_BILINEAR
+      ));
+    } else {
+      tab_label.set_icon(Glib::RefPtr<Gdk::Pixbuf>());
+    }
   }
 }

@@ -25,7 +25,6 @@
  */
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
-#include <selain/utils.hpp>
 
 namespace selain
 {
@@ -54,17 +53,12 @@ namespace selain
       this,
       &MainWindow::on_command_entry_key_press
     ));
-    m_command_entry.signal_activate().connect(sigc::mem_fun(
+    m_command_entry.signal_command_received().connect(sigc::mem_fun(
       this,
-      &MainWindow::on_command_entry_activate
+      &MainWindow::on_command_received
     ));
 
     m_box.override_background_color(theme::window_background);
-    m_command_entry.override_font(utils::get_monospace_font());
-    m_command_entry.get_style_context()->add_provider(
-      theme::get_command_entry_style_provider(),
-      1000
-    );
 
     show_all();
     maximize();
@@ -79,8 +73,7 @@ namespace selain
     switch (m_mode = mode)
     {
       case Mode::COMMAND:
-        m_command_entry.grab_focus_without_selecting();
-        m_command_entry.set_position(m_command_entry.get_text().length());
+        m_command_entry.grab_focus();
         break;
 
       default:
@@ -232,10 +225,8 @@ namespace selain
   }
 
   void
-  MainWindow::on_command_entry_activate()
+  MainWindow::on_command_received(const Glib::ustring& command)
   {
-    const auto command = m_command_entry.get_text();
-
     set_mode(Mode::NORMAL);
     if (const auto tab = get_current_tab())
     {

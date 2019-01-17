@@ -9,12 +9,14 @@ PKG_CHECK_MODULES(WEBKITGTK webkit2gtk-4.0 REQUIRED)
 ADD_EXECUTABLE(
   selain
   src/command.cpp
+  src/command-entry.cpp
   src/keyboard.cpp
   src/main.cpp
   src/main-window.cpp
   src/mode.cpp
   src/status-bar.cpp
   src/tab.cpp
+  src/tab-label.cpp
   src/theme.cpp
   src/utils.cpp
 )

@@ -30,6 +30,7 @@
 namespace selain
 {
   static void set_webkit_settings(::WebKitSettings*);
+  static void set_webkit_context(::WebKitWebContext*);
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
@@ -120,6 +121,7 @@ namespace selain
     );
 
     set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
+    set_webkit_context(::webkit_web_view_get_context(m_web_view));
   }
 
   MainWindow*
@@ -296,6 +298,8 @@ namespace selain
     }
   }
 
+  // TODO: Create shared instance of `WebKitSettings` during application
+  // startup and use that instead.
   static void
   set_webkit_settings(::WebKitSettings* settings)
   {
@@ -306,6 +310,16 @@ namespace selain
       "Selain",
       SELAIN_VERSION
     );
+  }
+
+  // TODO: Create shared instance of `WebKitWebContext` during application
+  // startup and use that instead.
+  static void
+  set_webkit_context(::WebKitWebContext* context)
+  {
+    // Enable favicons by setting the favicon database directory to NULL, which
+    // tells WebKit to use the default user cache directory.
+    ::webkit_web_context_set_favicon_database_directory(context, nullptr);
   }
 
   static void
@@ -406,15 +420,23 @@ namespace selain
   {
     auto& tab_label = tab->get_tab_label();
     const auto surface = ::webkit_web_view_get_favicon(web_view);
+    int width;
+    int height;
 
-    if (surface)
+    if (surface && Gtk::IconSize::lookup(Gtk::ICON_SIZE_BUTTON, width, height))
     {
-      tab_label.set_icon(Gdk::Pixbuf::create(
+      const auto pixbuf = Gdk::Pixbuf::create(
         Cairo::RefPtr<Cairo::Surface>(new Cairo::Surface(surface)),
         0,
         0,
         ::cairo_image_surface_get_width(surface),
         ::cairo_image_surface_get_height(surface)
+      );
+
+      tab_label.set_icon(pixbuf->scale_simple(
+        width,
+        height,
+        Gdk::INTERP_BILINEAR
       ));
     } else {
       tab_label.set_icon(Glib::RefPtr<Gdk::Pixbuf>());

@@ -47,6 +47,16 @@ namespace selain
     ::guint,
     Tab*
   );
+  static void on_notify_title(
+    ::WebKitWebView*,
+    ::GParamSpec*,
+    Tab*
+  );
+  static void on_notify_favicon(
+    ::WebKitWebView*,
+    ::GParamSpec*,
+    Tab*
+  );
 
   namespace keyboard
   {
@@ -86,6 +96,18 @@ namespace selain
       G_OBJECT(m_web_view),
       "key-press-event",
       G_CALLBACK(keyboard::on_tab_key_press),
+      static_cast<::gpointer>(this)
+    );
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "notify::title",
+      G_CALLBACK(on_notify_title),
+      static_cast<::gpointer>(this)
+    );
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "notify::favicon",
+      G_CALLBACK(on_notify_favicon),
       static_cast<::gpointer>(this)
     );
 
@@ -318,13 +340,8 @@ namespace selain
         break;
 
       case WEBKIT_LOAD_FINISHED:
-      {
-        const auto title = ::webkit_web_view_get_title(web_view);
-
-        tab->get_tab_label().set_text(title && *title ? title : "Untitled");
         tab->set_status(Glib::ustring());
         break;
-      }
     }
   }
 
@@ -374,5 +391,33 @@ namespace selain
     const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
 
     tab->set_status(!uri || !*uri ? Glib::ustring() : uri);
+  }
+
+  static void
+  on_notify_title(::WebKitWebView* web_view, ::GParamSpec*, Tab* tab)
+  {
+    const auto title = ::webkit_web_view_get_title(web_view);
+
+    tab->get_tab_label().set_text(title && *title ? title : "Untitled");
+  }
+
+  static void
+  on_notify_favicon(::WebKitWebView* web_view, ::GParamSpec*, Tab* tab)
+  {
+    auto& tab_label = tab->get_tab_label();
+    const auto surface = ::webkit_web_view_get_favicon(web_view);
+
+    if (surface)
+    {
+      tab_label.set_icon(Gdk::Pixbuf::create(
+        Cairo::RefPtr<Cairo::Surface>(new Cairo::Surface(surface)),
+        0,
+        0,
+        ::cairo_image_surface_get_width(surface),
+        ::cairo_image_surface_get_height(surface)
+      ));
+    } else {
+      tab_label.set_icon(Glib::RefPtr<Gdk::Pixbuf>());
+    }
   }
 }

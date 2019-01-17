@@ -39,6 +39,8 @@ namespace selain
 
     void set_text(const Glib::ustring& text);
 
+    void set_icon(const Glib::RefPtr<Gdk::Pixbuf>& icon);
+
     inline signal_clicked_type signal_close_button_clicked()
     {
       return m_close_button.signal_clicked();

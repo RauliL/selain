@@ -53,4 +53,15 @@ namespace selain
 
     m_text.set_text(length > 20 ? text.substr(0, 19) + U'\u2026' : text);
   }
+
+  void
+  TabLabel::set_icon(const Glib::RefPtr<Gdk::Pixbuf>& icon)
+  {
+    if (icon)
+    {
+      m_icon.set(icon);
+    } else {
+      m_icon.set_from_icon_name("gtk-file", Gtk::ICON_SIZE_BUTTON);
+    }
+  }
 }

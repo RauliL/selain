@@ -26,7 +26,8 @@
 #ifndef SELAIN_TAB_HPP_GUARD
 #define SELAIN_TAB_HPP_GUARD
 
-#include <gtkmm.h>
+#include <selain/tab-label.hpp>
+
 #include <webkit2/webkit2.h>
 
 namespace selain
@@ -62,7 +63,7 @@ namespace selain
     /**
      * Returns the GTK widget used as label for the tab.
      */
-    inline Gtk::Widget& get_tab_label()
+    inline TabLabel& get_tab_label()
     {
       return m_tab_label;
     }
@@ -70,7 +71,7 @@ namespace selain
     /**
      * Returns the GTK widget used as label for the tab.
      */
-    inline const Gtk::Widget& get_tab_label() const
+    inline const TabLabel& get_tab_label() const
     {
       return m_tab_label;
     }
@@ -92,8 +93,6 @@ namespace selain
 
     void grab_focus();
 
-    void set_title(const Glib::ustring& title);
-
     const Glib::ustring& get_status() const;
     void set_status(const Glib::ustring& status, bool permanent = false);
 
@@ -108,9 +107,10 @@ namespace selain
     }
 
   private:
-    Gtk::Box m_tab_label;
-    Gtk::Image m_tab_label_icon;
-    Gtk::Label m_tab_label_text;
+    void on_close_button_clicked();
+
+  private:
+    TabLabel m_tab_label;
     ::WebKitWebView* m_web_view;
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;
     Glib::ustring m_status;

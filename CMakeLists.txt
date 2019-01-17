@@ -16,6 +16,7 @@ ADD_EXECUTABLE(
   src/mode.cpp
   src/status-bar.cpp
   src/tab.cpp
+  src/tab-label.cpp
   src/theme.cpp
   src/utils.cpp
 )

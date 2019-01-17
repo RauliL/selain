@@ -236,10 +236,7 @@ namespace selain
 
     if (window && window->get_mode() == Mode::COMMAND)
     {
-      auto& command_entry = window->get_command_entry();
-
-      command_entry.grab_focus_without_selecting();
-      command_entry.set_position(command_entry.get_text().length());
+      window->get_command_entry().grab_focus();
     } else {
       m_web_view_widget->grab_focus();
     }

@@ -31,6 +31,7 @@
 
 #include <gtkmm.h>
 
+#include <selain/command-entry.hpp>
 #include <selain/notification.hpp>
 #include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
@@ -77,7 +78,7 @@ namespace selain
     /**
      * Returns the text boxed where commands are being typed.
      */
-    inline Gtk::Entry& get_command_entry()
+    inline CommandEntry& get_command_entry()
     {
       return m_command_entry;
     }
@@ -85,7 +86,7 @@ namespace selain
     /**
      * Returns the text boxed where commands are being typed.
      */
-    inline const Gtk::Entry& get_command_entry() const
+    inline const CommandEntry& get_command_entry() const
     {
       return m_command_entry;
     }
@@ -132,7 +133,7 @@ namespace selain
 
   private:
     bool on_command_entry_key_press(::GdkEventKey* event);
-    void on_command_entry_activate();
+    void on_command_received(const Glib::ustring& command);
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
     void on_tab_switch(Gtk::Widget* widget, ::guint page_number);
     void on_notification_timeout();
@@ -142,7 +143,7 @@ namespace selain
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;
     StatusBar m_status_bar;
-    Gtk::Entry m_command_entry;
+    CommandEntry m_command_entry;
     std::queue<Notification> m_notification_queue;
     std::mutex m_notification_queue_mutex;
   };

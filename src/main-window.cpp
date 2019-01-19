@@ -69,6 +69,16 @@ namespace selain
   void
   MainWindow::set_mode(Mode mode)
   {
+    const auto tab = get_current_tab();
+
+    if (m_mode == Mode::HINT && tab)
+    {
+      if (auto& context = tab->get_hint_context())
+      {
+        context->uninstall(tab);
+        context.reset();
+      }
+    }
     m_status_bar.set_mode(mode);
     switch (m_mode = mode)
     {
@@ -76,9 +86,15 @@ namespace selain
         m_command_entry.grab_focus();
         break;
 
+      case Mode::HINT:
+        if (tab)
+        {
+          tab->set_hint_context(HintContext::create());
+        }
+
       default:
         m_command_entry.set_text(Glib::ustring());
-        if (const auto tab = get_current_tab())
+        if (tab)
         {
           tab->grab_focus();
         }

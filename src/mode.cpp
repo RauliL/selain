@@ -40,6 +40,9 @@ namespace selain
 
       case Mode::COMMAND:
         return "COMMAND";
+
+      case Mode::HINT:
+        return "HINT";
     }
 
     return "UNKNOWN";

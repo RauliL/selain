@@ -26,9 +26,8 @@
 #ifndef SELAIN_TAB_HPP_GUARD
 #define SELAIN_TAB_HPP_GUARD
 
+#include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
-
-#include <webkit2/webkit2.h>
 
 namespace selain
 {
@@ -47,6 +46,18 @@ namespace selain
     >;
 
     explicit Tab();
+
+    inline Glib::RefPtr<HintContext>& get_hint_context()
+    {
+      return m_hint_context;
+    }
+
+    inline Glib::RefPtr<const HintContext> get_hint_context() const
+    {
+      return m_hint_context;
+    }
+
+    void set_hint_context(const Glib::RefPtr<HintContext>& hint_context);
 
     /**
      * Returns pointer to the main window where this tab is being displayed, or
@@ -82,7 +93,12 @@ namespace selain
     void stop_loading();
 
     void execute_command(const Glib::ustring& command);
-    void execute_script(const Glib::ustring& script);
+    void execute_script(
+      const Glib::ustring& script,
+      ::GCancellable* cancellable = nullptr,
+      ::GAsyncReadyCallback callback = nullptr,
+      void* user_data = nullptr
+    );
 
     void go_back();
     void go_forward();
@@ -110,6 +126,7 @@ namespace selain
     void on_close_button_clicked();
 
   private:
+    Glib::RefPtr<HintContext> m_hint_context;
     TabLabel m_tab_label;
     ::WebKitWebView* m_web_view;
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;

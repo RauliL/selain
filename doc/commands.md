@@ -4,6 +4,7 @@ Selain currently supports following commands:
 
 |Command    |Shortcut|                                       |
 |-----------|--------|---------------------------------------|
+|`:hint`    |`:h`    |Switches to hint mode.                 |
 |`:insert`  |`:i`    |Switches to insert mode.               |
 |`:open`    |`:o`    |Opens URI given as argument.           |
 |`:open-tab`|`:ot`   |Opens URI given as argument in new tab.|

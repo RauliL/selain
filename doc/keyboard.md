@@ -25,6 +25,7 @@ all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
 
 |Key|                                     |
 |---|-------------------------------------|
+|`f`|Open link in current tab.            |
 |`k`|Scroll up.                           |
 |`j`|Scroll down.                         |
 |`h`|Scroll left.                         |

@@ -10,6 +10,7 @@ ADD_EXECUTABLE(
   selain
   src/command.cpp
   src/command-entry.cpp
+  src/hint-context.cpp
   src/keyboard.cpp
   src/main.cpp
   src/main-window.cpp

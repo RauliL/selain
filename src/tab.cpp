@@ -124,6 +124,20 @@ namespace selain
     set_webkit_context(::webkit_web_view_get_context(m_web_view));
   }
 
+  void
+  Tab::set_hint_context(const Glib::RefPtr<HintContext>& hint_context)
+  {
+    if (m_hint_context)
+    {
+      m_hint_context->uninstall(this);
+      m_hint_context.reset();
+    }
+    if ((m_hint_context = hint_context))
+    {
+      m_hint_context->install(this);
+    }
+  }
+
   MainWindow*
   Tab::get_main_window()
   {
@@ -188,14 +202,17 @@ namespace selain
   }
 
   void
-  Tab::execute_script(const Glib::ustring& script)
+  Tab::execute_script(const Glib::ustring& script,
+                      ::GCancellable* cancellable,
+                      ::GAsyncReadyCallback callback,
+                      void* user_data)
   {
     ::webkit_web_view_run_javascript(
       m_web_view,
       script.c_str(),
-      nullptr,
-      nullptr,
-      nullptr
+      cancellable,
+      callback,
+      static_cast<::gpointer>(user_data)
     );
   }
 

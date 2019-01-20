@@ -30,6 +30,8 @@ all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
 |`j`|Scroll down.                         |
 |`h`|Scroll left.                         |
 |`l`|Scroll right.                        |
+|`d`|Scroll a half page down.             |
+|`u`|Scroll a half page up.               |
 |`gg`|Scroll to top of the page.          |
 |`G`|Scroll to bottom of the page.        |
 |`p`|Open URI from clipboard.             |

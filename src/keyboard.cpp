@@ -50,6 +50,8 @@ namespace selain
   static void bind_scroll_left(Tab*);
   static void bind_scroll_down(Tab*);
   static void bind_scroll_up(Tab*);
+  static void bind_scroll_page_down(Tab*);
+  static void bind_scroll_page_up(Tab*);
   static void bind_scroll_right(Tab*);
   static void bind_scroll_top(Tab*);
   static void bind_scroll_bottom(Tab*);
@@ -84,6 +86,7 @@ namespace selain
       add_mapping(U"K", bind_tab_next);
 
       // Navigation.
+      add_mapping(U"d", bind_scroll_page_down);
       add_mapping(U"h", bind_scroll_left);
       add_mapping(U"j", bind_scroll_down);
       add_mapping(U"k", bind_scroll_up);
@@ -96,6 +99,7 @@ namespace selain
       add_mapping(U"O", bind_complete_open_tab);
       add_mapping(U"p", bind_paste);
       add_mapping(U"P", bind_paste_open_tab);
+      add_mapping(U"u", bind_scroll_page_up);
       add_mapping(U"yy", bind_yank);
 
       // Searching.
@@ -387,6 +391,18 @@ namespace selain
   bind_scroll_down(Tab* tab)
   {
     tab->execute_script("window.scrollBy({ top: 100 });");
+  }
+
+  static void
+  bind_scroll_page_up(Tab* tab)
+  {
+    tab->execute_script("window.scrollBy({ top: -(window.innerHeight/2) });");
+  }
+
+  static void
+  bind_scroll_page_down(Tab* tab)
+  {
+    tab->execute_script("window.scrollBy({ top: window.innerHeight / 2 });");
   }
 
   static void

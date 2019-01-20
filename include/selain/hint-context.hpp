@@ -23,30 +23,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_MODE_HPP_GUARD
-#define SELAIN_MODE_HPP_GUARD
+#ifndef SELAIN_HINT_CONTEXT_HPP_GUARD
+#define SELAIN_HINT_CONTEXT_HPP_GUARD
+
+#include <glibmm.h>
+#include <webkit2/webkit2.h>
 
 namespace selain
 {
-  /**
-   * Enumeration of different modes.
-   */
-  enum class Mode
-  {
-    /** Normal mode where Vi key bindings are accepted. */
-    NORMAL,
-    /** Insert mode where Vi key bindings are disabled. */
-    INSERT,
-    /** Command line mode. */
-    COMMAND,
-    /** Hint mode where user can click elements with keyboard shortcuts. */
-    HINT,
-  };
+  class Tab;
 
-  /**
-   * Returns name of the given editing mode as text.
-   */
-  const char* get_mode_text(Mode mode);
+  class HintContext : public Glib::Object
+  {
+  public:
+    static Glib::RefPtr<HintContext> create();
+
+    void install(Tab* tab);
+    void uninstall(Tab* tab);
+
+    void add_digit(Tab* tab, int digit);
+    void remove_digit(Tab* tab);
+    void activate_current_match(Tab* tab);
+
+  private:
+    explicit HintContext();
+
+  private:
+    Glib::ustring m_sequence;
+  };
 }
 
-#endif /* !SELAIN_MODE_HPP_GUARD */
+#endif /* !SELAIN_HINT_CONTEXT_HPP_GUARD */

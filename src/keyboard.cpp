@@ -35,10 +35,12 @@ namespace selain
 
   static ::gboolean key_event_normal_mode(Tab*, ::GdkEventKey*);
   static ::gboolean key_event_insert_mode(MainWindow*, ::GdkEventKey*);
+  static ::gboolean key_event_hint_mode(MainWindow*, Tab*, ::GdkEventKey*);
   static void add_mapping(const std::u32string&, const keyboard::Binding&);
 
   static void bind_mode_command(Tab*);
   static void bind_mode_insert(Tab*);
+  static void bind_mode_hint(Tab*);
   static void bind_tab_reload(Tab*);
   static void bind_tab_reload_bypass_cache(Tab*);
   static void bind_tab_open(Tab*);
@@ -71,6 +73,7 @@ namespace selain
       // Switching between modes.
       add_mapping(U":", bind_mode_command);
       add_mapping(U"i", bind_mode_insert);
+      add_mapping(U"f", bind_mode_hint);
 
       // Tab management.
       add_mapping(U"r", bind_tab_reload);
@@ -118,6 +121,9 @@ namespace selain
 
         case Mode::INSERT:
           return key_event_insert_mode(window, event);
+
+        case Mode::HINT:
+          return key_event_hint_mode(window, tab, event);
 
         default:
           return FALSE;
@@ -193,6 +199,47 @@ namespace selain
     return FALSE;
   }
 
+  static ::gboolean
+  key_event_hint_mode(MainWindow* window, Tab* tab, ::GdkEventKey* event)
+  {
+    const auto& context = tab->get_hint_context();
+
+    if (event->keyval == GDK_KEY_Escape)
+    {
+      if (context)
+      {
+        context->uninstall(tab);
+      }
+      window->set_mode(Mode::NORMAL);
+    }
+    else if (event->keyval == GDK_KEY_BackSpace)
+    {
+      if (context)
+      {
+        context->remove_digit(tab);
+      }
+    }
+    else if (event->keyval == GDK_KEY_Return ||
+             event->keyval == GDK_KEY_KP_Enter)
+    {
+      if (context)
+      {
+        context->activate_current_match(tab);
+      }
+    }
+    else if (!(event->state & GDK_CONTROL_MASK))
+    {
+      const auto c = ::gdk_keyval_to_unicode(event->keyval);
+
+      if (std::isdigit(c) && context)
+      {
+        context->add_digit(tab, c - '0');
+      }
+    }
+
+    return TRUE;
+  }
+
   static void
   add_mapping(const std::u32string& sequence, const keyboard::Binding& binding)
   {
@@ -258,6 +305,15 @@ namespace selain
     if (const auto window = tab->get_main_window())
     {
       window->set_mode(Mode::INSERT);
+    }
+  }
+
+  static void
+  bind_mode_hint(Tab* tab)
+  {
+    if (const auto window = tab->get_main_window())
+    {
+      window->set_mode(Mode::HINT);
     }
   }
 

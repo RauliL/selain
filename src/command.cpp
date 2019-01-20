@@ -35,6 +35,15 @@ namespace selain
   using command_mapping = std::unordered_map<std::string, command_callback>;
 
   static void
+  cmd_hint_mode(Tab* tab, const Glib::ustring&)
+  {
+    if (const auto window = tab->get_main_window())
+    {
+      window->set_mode(Mode::HINT);
+    }
+  }
+
+  static void
   cmd_insert_mode(Tab* tab, const Glib::ustring&)
   {
     if (const auto window = tab->get_main_window())
@@ -111,6 +120,8 @@ namespace selain
 
   static const command_mapping commands =
   {
+    { "h", cmd_hint_mode },
+    { "hint", cmd_hint_mode },
     { "i", cmd_insert_mode },
     { "insert", cmd_insert_mode },
     { "o", cmd_open },

@@ -37,7 +37,7 @@ namespace selain
 
   namespace keyboard
   {
-    using Binding = std::function<void(Tab*)>;
+    using Binding = std::function<void(Tab&)>;
 
     struct Mapping
     {

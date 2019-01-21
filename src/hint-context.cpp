@@ -42,19 +42,19 @@ namespace selain
   HintContext::HintContext() {}
 
   void
-  HintContext::install(Tab* tab)
+  HintContext::install(Tab& tab)
   {
-    tab->execute_script(hint_mode_source_code);
+    tab.execute_script(hint_mode_source_code);
   }
 
   void
-  HintContext::uninstall(Tab* tab)
+  HintContext::uninstall(Tab& tab)
   {
-    tab->execute_script("window.SelainHintMode.uninstall();");
+    tab.execute_script("window.SelainHintMode.uninstall();");
   }
 
   static void
-  add_digit_callback(::GObject* web_view_object,
+  hint_mode_callback(::GObject* web_view_object,
                      ::GAsyncResult* result,
                      ::gpointer tab_data)
   {
@@ -111,34 +111,34 @@ namespace selain
   }
 
   void
-  HintContext::add_digit(Tab* tab, int digit)
+  HintContext::add_digit(Tab& tab, int digit)
   {
     if (digit < 0 || digit > 9)
     {
       return;
     }
-    tab->execute_script(
+    tab.execute_script(
       Glib::ustring::compose("window.SelainHintMode.addDigit(%1);", digit),
       nullptr,
-      add_digit_callback,
-      static_cast<void*>(tab)
+      hint_mode_callback,
+      static_cast<void*>(&tab)
     );
   }
 
   void
-  HintContext::remove_digit(Tab* tab)
+  HintContext::remove_digit(Tab& tab)
   {
-    tab->execute_script("window.SelainHintMode.removeDigit();");
+    tab.execute_script("window.SelainHintMode.removeDigit();");
   }
 
   void
-  HintContext::activate_current_match(Tab* tab)
+  HintContext::activate_current_match(Tab& tab)
   {
-    tab->execute_script(
+    tab.execute_script(
       "window.SelainHintMode.activateCurrentMatch();",
       nullptr,
-      add_digit_callback,
-      static_cast<void*>(tab)
+      hint_mode_callback,
+      static_cast<void*>(&tab)
     );
   }
 }

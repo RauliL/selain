@@ -118,7 +118,7 @@ namespace selain
       bool focus = true
     );
 
-    void close_tab(const Tab* tab);
+    void close_tab(const Tab& tab);
     void close_tab(const Glib::RefPtr<Tab>& tab);
 
     void set_current_tab(const Glib::RefPtr<Tab>& tab);

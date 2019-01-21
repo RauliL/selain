@@ -75,7 +75,7 @@ namespace selain
     {
       if (auto& context = tab->get_hint_context())
       {
-        context->uninstall(tab);
+        context->uninstall(*tab);
         context.reset();
       }
     }
@@ -159,9 +159,9 @@ namespace selain
   }
 
   void
-  MainWindow::close_tab(const Tab* tab)
+  MainWindow::close_tab(const Tab& tab)
   {
-    const auto index = m_notebook.page_num(*tab);
+    const auto index = m_notebook.page_num(tab);
 
     if (index < 0)
     {
@@ -177,7 +177,10 @@ namespace selain
   void
   MainWindow::close_tab(const Glib::RefPtr<Tab>& tab)
   {
-    close_tab(tab.get());
+    if (tab)
+    {
+      close_tab(*tab.get());
+    }
   }
 
   void

@@ -129,12 +129,12 @@ namespace selain
   {
     if (m_hint_context)
     {
-      m_hint_context->uninstall(this);
+      m_hint_context->uninstall(*this);
       m_hint_context.reset();
     }
     if ((m_hint_context = hint_context))
     {
-      m_hint_context->install(this);
+      m_hint_context->install(*this);
     }
   }
 
@@ -311,7 +311,7 @@ namespace selain
   {
     if (const auto window = get_main_window())
     {
-      window->close_tab(this);
+      window->close_tab(*this);
     }
   }
 

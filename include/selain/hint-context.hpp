@@ -38,12 +38,12 @@ namespace selain
   public:
     static Glib::RefPtr<HintContext> create();
 
-    void install(Tab* tab);
-    void uninstall(Tab* tab);
+    void install(Tab& tab);
+    void uninstall(Tab& tab);
 
-    void add_digit(Tab* tab, int digit);
-    void remove_digit(Tab* tab);
-    void activate_current_match(Tab* tab);
+    void add_digit(Tab& tab, int digit);
+    void remove_digit(Tab& tab);
+    void activate_current_match(Tab& tab);
 
   private:
     explicit HintContext();

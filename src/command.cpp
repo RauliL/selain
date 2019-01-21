@@ -31,88 +31,89 @@
 
 namespace selain
 {
-  using command_callback = std::function<void(Tab*, const Glib::ustring&)>;
+  using command_callback = std::function<void(Tab&, const Glib::ustring&)>;
   using command_mapping = std::unordered_map<std::string, command_callback>;
 
   static void
-  cmd_hint_mode(Tab* tab, const Glib::ustring&)
+  cmd_hint_mode(Tab& tab, const Glib::ustring&)
   {
-    if (const auto window = tab->get_main_window())
+    if (const auto window = tab.get_main_window())
     {
       window->set_mode(Mode::HINT);
     }
   }
 
   static void
-  cmd_insert_mode(Tab* tab, const Glib::ustring&)
+  cmd_insert_mode(Tab& tab, const Glib::ustring&)
   {
-    if (const auto window = tab->get_main_window())
+    if (const auto window = tab.get_main_window())
     {
       window->set_mode(Mode::INSERT);
     }
   }
 
   static void
-  cmd_open(Tab* tab, const Glib::ustring& args)
+  cmd_open(Tab& tab, const Glib::ustring& args)
   {
-    tab->load_uri(args);
+    tab.load_uri(args);
   }
 
   static void
-  cmd_open_tab(Tab* tab, const Glib::ustring& args)
+  cmd_open_tab(Tab& tab, const Glib::ustring& args)
   {
-    if (const auto window = tab->get_main_window())
+    if (const auto window = tab.get_main_window())
     {
       window->open_tab(args);
     }
   }
 
   static void
-  cmd_quit(Tab* tab, const Glib::ustring&)
+  cmd_quit(Tab& tab, const Glib::ustring&)
   {
-    if (const auto window = tab->get_main_window())
+    if (const auto window = tab.get_main_window())
     {
       window->close_tab(tab);
     }
   }
 
   static void
-  cmd_quit_all(Tab*, const Glib::ustring&)
+  cmd_quit_all(Tab&, const Glib::ustring&)
   {
+    // TODO: Close the main window instead.
     std::exit(EXIT_SUCCESS);
   }
 
   static void
-  cmd_reload(Tab* tab, const Glib::ustring&)
+  cmd_reload(Tab& tab, const Glib::ustring&)
   {
-    tab->reload();
+    tab.reload();
   }
 
   static void
-  cmd_reload_bang(Tab* tab, const Glib::ustring&)
+  cmd_reload_bang(Tab& tab, const Glib::ustring&)
   {
-    tab->reload(true);
+    tab.reload(true);
   }
 
   static void
-  cmd_stop(Tab* tab, const Glib::ustring&)
+  cmd_stop(Tab& tab, const Glib::ustring&)
   {
-    tab->stop_loading();
+    tab.stop_loading();
   }
 
   static void
-  cmd_tabprevious(Tab* tab, const Glib::ustring&)
+  cmd_tabprevious(Tab& tab, const Glib::ustring&)
   {
-    if (const auto window = tab->get_main_window())
+    if (const auto window = tab.get_main_window())
     {
       window->prev_tab();
     }
   }
 
   static void
-  cmd_tabnext(Tab* tab, const Glib::ustring&)
+  cmd_tabnext(Tab& tab, const Glib::ustring&)
   {
-    if (const auto window = tab->get_main_window())
+    if (const auto window = tab.get_main_window())
     {
       window->next_tab();
     }
@@ -183,7 +184,7 @@ namespace selain
       entry = commands.find(command_name.c_str());
       if (entry != std::end(commands))
       {
-        entry->second(this, command_args);
+        entry->second(*this, command_args);
         return;
       }
     }

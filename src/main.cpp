@@ -30,7 +30,7 @@ int
 main(int argc, char** argv)
 {
   const auto app = Gtk::Application::create("pw.rauli.selain");
-  selain::MainWindow window;
+  selain::MainWindow window(app);
 
   selain::keyboard::initialize();
 

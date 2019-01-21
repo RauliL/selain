@@ -31,8 +31,9 @@ namespace selain
   static const int DEFAULT_WIDTH = 640;
   static const int DEFAULT_HEIGHT = 480;
 
-  MainWindow::MainWindow()
-    : m_mode(Mode::NORMAL)
+  MainWindow::MainWindow(const Glib::RefPtr<Gtk::Application>& application)
+    : Gtk::ApplicationWindow(application)
+    , m_mode(Mode::NORMAL)
     , m_box(Gtk::ORIENTATION_VERTICAL)
   {
     set_title("Selain");

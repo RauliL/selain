@@ -41,10 +41,10 @@ namespace selain
   /**
    * Main window for the browser.
    */
-  class MainWindow : public Gtk::Window
+  class MainWindow : public Gtk::ApplicationWindow
   {
   public:
-    explicit MainWindow();
+    explicit MainWindow(const Glib::RefPtr<Gtk::Application>& application);
 
     /**
      * Returns the current mode of the window.

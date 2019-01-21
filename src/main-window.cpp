@@ -63,8 +63,6 @@ namespace selain
 
     show_all();
     maximize();
-
-    open_tab("https://duckduckgo.com");
   }
 
   void

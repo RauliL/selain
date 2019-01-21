@@ -26,13 +26,62 @@
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
 
+#include <iostream>
+
+static int on_command_line(
+  const Glib::RefPtr<Gio::ApplicationCommandLine>&,
+  const Glib::RefPtr<Gtk::Application>&,
+  selain::MainWindow*
+);
+
 int
 main(int argc, char** argv)
 {
-  const auto app = Gtk::Application::create("pw.rauli.selain");
+  const auto app = Gtk::Application::create(
+    "pw.rauli.selain",
+    Gio::APPLICATION_HANDLES_COMMAND_LINE
+  );
   selain::MainWindow window(app);
+
+  app->signal_command_line().connect(
+    sigc::bind(sigc::ptr_fun(&on_command_line), app, &window),
+    false
+  );
+
+  return app->run(window, argc, argv);
+}
+
+static int
+on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
+                const Glib::RefPtr<Gtk::Application>& app,
+                selain::MainWindow* window)
+{
+  int argc;
+  auto argv = command_line->get_arguments(argc);
+  Glib::OptionContext context;
+  Glib::OptionGroup gtk_group(::gtk_get_option_group(true));
+
+  context.add_group(gtk_group);
+
+  if (!context.parse(argc, argv))
+  {
+    std::exit(EXIT_FAILURE);
+  }
+
+  app->activate();
 
   selain::keyboard::initialize();
 
-  return app->run(window, argc, argv);
+  for (int i = 1; i < argc; ++i)
+  {
+    window->open_tab(argv[i]);
+  }
+
+  if (argc == 1)
+  {
+    // TODO: Make the initial home page URL customizable through settings.
+    window->open_tab("https://duckduckgo.com");
+  }
+
+  return EXIT_SUCCESS;
 }

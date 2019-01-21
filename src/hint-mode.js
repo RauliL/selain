@@ -163,10 +163,6 @@ SELAIN_JS_STRINGIFY((() => {
     window.SelainHintMode = original;
   };
 
-  const getNearestMatches = () => hints.filter(
-    (hint) => `${hint.number}`.startsWith(`${currentSequence}`)
-  );
-
   const activateHint = (hint) => {
     if (!hint || typeof hint.element === 'undefined') {
       return 'ignore';
@@ -191,25 +187,78 @@ SELAIN_JS_STRINGIFY((() => {
     return 'mode::normal';
   };
 
+  const splitHints = () => {
+    const matches = [];
+    const nonMatches = [];
+
+    if (currentSequence > 0) {
+      hints.forEach((hint) => {
+        if (`${hint.number}`.startsWith(`${currentSequence}`)) {
+          matches.push(hint);
+        } else {
+          nonMatches.push(hint);
+        }
+      });
+    } else {
+      nonMatches.push(...hints);
+    }
+
+    return [matches, nonMatches];
+  };
+
+  const updateMatches = (matches, nonMatches) => {
+    if (currentSequence > 0) {
+      matches.forEach((hint) => {
+        const { number, span } = hint;
+        const matchingPart = span.ownerDocument.createElement('span');
+        const nonMatchingPart = span.ownerDocument.createElement('span');
+
+        if (span.style.visibility !== 'visible') {
+          span.style.visibility = 'visible';
+        }
+
+        matchingPart.innerText = `${currentSequence}`;
+        nonMatchingPart.innerText = `${number}`.substr(matchingPart.innerText.length);
+
+        matchingPart.style.color = '#a07555';
+
+        span.innerHTML = '';
+        span.appendChild(matchingPart);
+        span.appendChild(nonMatchingPart);
+      });
+      nonMatches.forEach((hint) => {
+        const { span } = hint;
+
+        if (span.style.visibility !== 'hidden') {
+          span.style.visibility = 'hidden';
+        }
+      });
+    } else {
+      [...matches, ...nonMatches].forEach((hint) => {
+        const { span, number } = hint;
+
+        if (span.style.visibility !== 'visible') {
+          span.style.visibility = 'visible';
+        }
+        span.innerText = `${number}`;
+      });
+    }
+  };
+
   const addDigit = (digit) => {
     if (typeof digit !== 'number' || digit < 0 || digit > 9) {
-      return;
+      return 'ignore';
     }
 
     currentSequence = (currentSequence * 10) + digit;
 
-    hints
-      .filter((hint) => hint.span.style.visiblity !== 'hidden')
-      .filter((hint) => !`${hint.number}`.startsWith(`${currentSequence}`))
-      .forEach((hint) => {
-        hint.span.style.visibility = 'hidden';
-      });
+    const [matches, nonMatches] = splitHints();
 
-    const nearestMatches = getNearestMatches();
-
-    if (nearestMatches.length === 1) {
-      return activateHint(nearestMatches[0]);
+    if (matches.length === 1) {
+      return activateHint(matches[0]);
     }
+
+    updateMatches(matches, nonMatches);
 
     return 'ignore';
   };
@@ -220,19 +269,7 @@ SELAIN_JS_STRINGIFY((() => {
     }
 
     currentSequence = Math.floor(currentSequence / 10);
-
-    let hintsToBeShown = hints
-      .filter((hint) => hint.span.style.visibility === 'hidden');
-
-    if (currentSequence > 0) {
-      hintsToBeShown = hintsToBeShown.filter(
-        (hint) => `${hint.number}`.startsWith(`${currentSequence}`)
-      );
-    }
-
-    hintsToBeShown.forEach((hint) => {
-      hint.span.style.visibility = 'visible';
-    });
+    updateMatches(...splitHints());
   };
 
   const activateCurrentMatch = () => {
@@ -244,11 +281,7 @@ SELAIN_JS_STRINGIFY((() => {
       (hint) => `${hint.number}` === `${currentSequence}`
     );
 
-    if (match) {
-      return activateHint(match);
-    }
-
-    return 'ignore';
+    return match ? activateHint(match) : 'ignore';
   };
 
   install();

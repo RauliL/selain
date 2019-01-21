@@ -141,4 +141,10 @@ namespace selain
       static_cast<void*>(&tab)
     );
   }
+
+  void
+  HintContext::set_open_to_new_tab(Tab& tab)
+  {
+    tab.execute_script("window.SelainHintMode.setOpenToNewTab();");
+  }
 }

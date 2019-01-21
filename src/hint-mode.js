@@ -7,6 +7,7 @@ SELAIN_JS_STRINGIFY((() => {
   const hints = [];
   let hintContainer = null;
   let currentSequence = 0;
+  let openToNewTab = false;
 
   const install = () => {
     const topWindow = window;
@@ -179,8 +180,13 @@ SELAIN_JS_STRINGIFY((() => {
       return 'mode::insert';
     } else if (['frame', 'iframe'].indexOf(tagName) >= 0) {
       element.focus();
+    } else if (openToNewTab) {
+      const oldTarget = element.getAttribute('target');
+
+      element.setAttribute('target', '_blank');
+      element.click();
+      element.setAttribute('target', oldTarget);
     } else {
-      // TODO: Add support for the "open in new tab" -feature.
       element.click();
     }
 
@@ -284,12 +290,17 @@ SELAIN_JS_STRINGIFY((() => {
     return match ? activateHint(match) : 'ignore';
   };
 
+  const setOpenToNewTab = () => {
+    openToNewTab = true;
+  };
+
   install();
 
   window.SelainHintMode = {
     activateCurrentMatch,
     addDigit,
     removeDigit,
+    setOpenToNewTab,
     uninstall
   };
 })();)

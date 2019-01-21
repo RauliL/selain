@@ -41,6 +41,7 @@ namespace selain
   static void bind_mode_command(Tab&);
   static void bind_mode_insert(Tab&);
   static void bind_mode_hint(Tab&);
+  static void bind_mode_hint_new_tab(Tab&);
   static void bind_tab_reload(Tab&);
   static void bind_tab_reload_bypass_cache(Tab&);
   static void bind_tab_open(Tab&);
@@ -76,6 +77,7 @@ namespace selain
       add_mapping(U":", bind_mode_command);
       add_mapping(U"i", bind_mode_insert);
       add_mapping(U"f", bind_mode_hint);
+      add_mapping(U"F", bind_mode_hint_new_tab);
 
       // Tab management.
       add_mapping(U"r", bind_tab_reload);
@@ -318,6 +320,19 @@ namespace selain
     if (const auto window = tab.get_main_window())
     {
       window->set_mode(Mode::HINT);
+    }
+  }
+
+  static void
+  bind_mode_hint_new_tab(Tab& tab)
+  {
+    if (const auto window = tab.get_main_window())
+    {
+      window->set_mode(Mode::HINT);
+      if (const auto context = tab.get_hint_context())
+      {
+        context->set_open_to_new_tab(tab);
+      }
     }
   }
 

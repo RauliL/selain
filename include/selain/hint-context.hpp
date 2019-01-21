@@ -44,6 +44,7 @@ namespace selain
     void add_digit(Tab& tab, int digit);
     void remove_digit(Tab& tab);
     void activate_current_match(Tab& tab);
+    void set_open_to_new_tab(Tab& tab);
 
   private:
     explicit HintContext();

@@ -409,6 +409,28 @@ namespace selain
         ::webkit_policy_decision_ignore(decision);
       }
     }
+    // Open new windows into tabs.
+    else if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
+    {
+      auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
+      auto action = ::webkit_navigation_policy_decision_get_navigation_action(
+        navigation_decision
+      );
+      auto action_type = ::webkit_navigation_action_get_navigation_type(
+        action
+      );
+
+      if (action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED && window)
+      {
+        window->open_tab(
+          ::webkit_uri_request_get_uri(
+            ::webkit_navigation_action_get_request(action)
+          ),
+          false
+        );
+        ::webkit_policy_decision_ignore(decision);
+      }
+    }
 
     return true;
   }

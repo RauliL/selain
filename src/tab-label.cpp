@@ -32,6 +32,7 @@ namespace selain
     , m_text("Untitled")
   {
     m_icon.set_from_icon_name("text-x-generic", Gtk::ICON_SIZE_BUTTON);
+    m_icon.set_margin_end(5);
 
     m_close_button.set_relief(Gtk::RELIEF_NONE);
     m_close_button.set_focus_on_click(false);
@@ -39,6 +40,7 @@ namespace selain
       "window-close",
       Gtk::ICON_SIZE_BUTTON
     );
+    m_close_button.set_margin_start(5);
 
     pack_start(m_icon, Gtk::PACK_SHRINK);
     pack_start(m_text);

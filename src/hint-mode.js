@@ -86,20 +86,7 @@ SELAIN_JS_STRINGIFY((() => {
         const leftPos = Math.max(rectangle.left + scrollX, scrollX);
         const topPos = Math.max(rectangle.top + scrollY, scrollY);
 
-        let hintNumber = hintCount;
-        if (element.nodeName.toLowerCase() === 'a') {
-          for (let j = 0; j < hints.length; ++j) {
-            const existingHint = hints[j];
-
-            if (existingHint.element.nodeName.toLowerCase() !== 'a') {
-              continue;
-            }
-            if (existingHint.element.href === element.href) {
-              hintNumber = existingHint.number - 1;
-              break;
-            }
-          }
-        }
+        const hintNumber = hintCount;
 
         const hint = hintSpan.cloneNode(false);
         hint.style.left = `${leftPos}px`;

@@ -174,7 +174,8 @@ SELAIN_JS_STRINGIFY((() => {
 
     uninstall();
 
-    if (['input', 'select', 'textarea'].indexOf(tagName) >= 0) {
+    if (['input', 'select', 'textarea'].indexOf(tagName) >= 0 &&
+        ['button', 'submit'].indexOf(element.type) < 0) {
       element.focus();
 
       return 'mode::insert';

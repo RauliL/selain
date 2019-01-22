@@ -4,10 +4,15 @@ SELAIN_JS_STRINGIFY((() => {
     '@onmouseup or @oncommand or @href] | //input[not(@type="hidden")] | ' +
     '//a[href] | //area | //textarea | //button | //select';
   const maxAllowedHints = 500;
+  const hintChars = Array.from('sadfjklewc'.toUpperCase());
   const hints = [];
   let hintContainer = null;
-  let currentSequence = 0;
+  let currentSequence = '';
   let openToNewTab = false;
+
+  const numberToSequence = (number) => Array
+    .from(`${number}`)
+    .map((ch) => hintChars[parseInt(ch, 10)]).join('');
 
   const install = () => {
     const topWindow = window;
@@ -86,25 +91,15 @@ SELAIN_JS_STRINGIFY((() => {
         const leftPos = Math.max(rectangle.left + scrollX, scrollX);
         const topPos = Math.max(rectangle.top + scrollY, scrollY);
 
-        const hintNumber = hintCount;
+        const sequence = numberToSequence(++hintCount);
 
         const hint = hintSpan.cloneNode(false);
         hint.style.left = `${leftPos}px`;
         hint.style.top = `${topPos}px`;
-        hint.innerText = `${hintNumber + 1}`;
+        hint.innerText = sequence;
         hintContainer.appendChild(hint);
 
-        if (hintNumber === hintCount) {
-          ++hintCount;
-        } else {
-          hintNumber = -2;
-        }
-
-        hints.push({
-          element,
-          number: hintNumber + 1,
-          span: hint,
-        });
+        hints.push({ element, sequence, span: hint });
       }
 
       doc.documentElement.appendChild(hintContainer);
@@ -185,9 +180,9 @@ SELAIN_JS_STRINGIFY((() => {
     const matches = [];
     const nonMatches = [];
 
-    if (currentSequence > 0) {
+    if (currentSequence.length > 0) {
       hints.forEach((hint) => {
-        if (`${hint.number}`.startsWith(`${currentSequence}`)) {
+        if (hint.sequence.startsWith(currentSequence)) {
           matches.push(hint);
         } else {
           nonMatches.push(hint);
@@ -201,9 +196,9 @@ SELAIN_JS_STRINGIFY((() => {
   };
 
   const updateMatches = (matches, nonMatches) => {
-    if (currentSequence > 0) {
+    if (currentSequence.length > 0) {
       matches.forEach((hint) => {
-        const { number, span } = hint;
+        const { sequence, span } = hint;
         const matchingPart = span.ownerDocument.createElement('span');
         const nonMatchingPart = span.ownerDocument.createElement('span');
 
@@ -211,8 +206,8 @@ SELAIN_JS_STRINGIFY((() => {
           span.style.visibility = 'visible';
         }
 
-        matchingPart.innerText = `${currentSequence}`;
-        nonMatchingPart.innerText = `${number}`.substr(matchingPart.innerText.length);
+        matchingPart.innerText = currentSequence;
+        nonMatchingPart.innerText = sequence.substr(currentSequence.length);
 
         matchingPart.style.color = '#a07555';
 
@@ -229,22 +224,24 @@ SELAIN_JS_STRINGIFY((() => {
       });
     } else {
       [...matches, ...nonMatches].forEach((hint) => {
-        const { span, number } = hint;
+        const { sequence, span } = hint;
 
         if (span.style.visibility !== 'visible') {
           span.style.visibility = 'visible';
         }
-        span.innerText = `${number}`;
+        span.innerText = sequence;
       });
     }
   };
 
-  const addDigit = (digit) => {
-    if (typeof digit !== 'number' || digit < 0 || digit > 9) {
+  const addChar = (ch) => {
+    if (typeof ch !== 'string' ||
+        ch.length !== 1 ||
+        hintChars.indexOf(ch.toUpperCase()) < 0) {
       return 'ignore';
     }
 
-    currentSequence = (currentSequence * 10) + digit;
+    currentSequence += ch.toUpperCase();
 
     const [matches, nonMatches] = splitHints();
 
@@ -257,23 +254,19 @@ SELAIN_JS_STRINGIFY((() => {
     return 'ignore';
   };
 
-  const removeDigit = () => {
-    if (currentSequence <= 0) {
-      return;
+  const removeChar = () => {
+    if (currentSequence.length > 0) {
+      currentSequence = currentSequence.substr(0, currentSequence.length - 1);
+      updateMatches(...splitHints());
     }
-
-    currentSequence = Math.floor(currentSequence / 10);
-    updateMatches(...splitHints());
   };
 
   const activateCurrentMatch = () => {
-    if (currentSequence <= 0) {
+    if (currentSequence.length <= 0) {
       return 'ignore';
     }
 
-    const match = hints.find(
-      (hint) => `${hint.number}` === `${currentSequence}`
-    );
+    const match = hints.find((hint) => hint.sequence === currentSequence);
 
     return match ? activateHint(match) : 'ignore';
   };
@@ -286,8 +279,8 @@ SELAIN_JS_STRINGIFY((() => {
 
   window.SelainHintMode = {
     activateCurrentMatch,
-    addDigit,
-    removeDigit,
+    addChar,
+    removeChar,
     setOpenToNewTab,
     uninstall
   };

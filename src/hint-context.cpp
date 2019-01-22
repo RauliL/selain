@@ -111,14 +111,17 @@ namespace selain
   }
 
   void
-  HintContext::add_digit(Tab& tab, int digit)
+  HintContext::add_char(Tab& tab, Glib::ustring::value_type ch)
   {
-    if (digit < 0 || digit > 9)
+    char buffer[7];
+
+    if (!std::isalnum(ch))
     {
       return;
     }
+    std::snprintf(buffer, 7, "\\u%04x", static_cast<int>(ch));
     tab.execute_script(
-      Glib::ustring::compose("window.SelainHintMode.addDigit(%1);", digit),
+      Glib::ustring::compose("window.SelainHintMode.addChar('%1');", buffer),
       nullptr,
       hint_mode_callback,
       static_cast<void*>(&tab)
@@ -126,9 +129,9 @@ namespace selain
   }
 
   void
-  HintContext::remove_digit(Tab& tab)
+  HintContext::remove_char(Tab& tab)
   {
-    tab.execute_script("window.SelainHintMode.removeDigit();");
+    tab.execute_script("window.SelainHintMode.removeChar();");
   }
 
   void

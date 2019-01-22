@@ -41,8 +41,8 @@ namespace selain
     void install(Tab& tab);
     void uninstall(Tab& tab);
 
-    void add_digit(Tab& tab, int digit);
-    void remove_digit(Tab& tab);
+    void add_char(Tab& tab, Glib::ustring::value_type ch);
+    void remove_char(Tab& tab);
     void activate_current_match(Tab& tab);
     void set_open_to_new_tab(Tab& tab);
 

@@ -322,6 +322,7 @@ namespace selain
   {
     ::webkit_settings_set_enable_java(settings, false);
     ::webkit_settings_set_enable_plugins(settings, false);
+    ::webkit_settings_set_enable_developer_extras(settings, true);
     ::webkit_settings_set_user_agent_with_application_details(
       settings,
       "Selain",

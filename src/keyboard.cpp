@@ -222,7 +222,7 @@ namespace selain
     {
       if (context)
       {
-        context->remove_digit(tab);
+        context->remove_char(tab);
       }
     }
     else if (event->keyval == GDK_KEY_Return ||
@@ -237,9 +237,9 @@ namespace selain
     {
       const auto c = ::gdk_keyval_to_unicode(event->keyval);
 
-      if (std::isdigit(c) && context)
+      if (context && std::isalnum(c))
       {
-        context->add_digit(tab, c - '0');
+        context->add_char(tab, c);
       }
     }
 

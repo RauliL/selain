@@ -34,6 +34,7 @@ namespace selain
   MainWindow::MainWindow(const Glib::RefPtr<Gtk::Application>& application)
     : Gtk::ApplicationWindow(application)
     , m_web_context(WebContext::create())
+    , m_web_settings(WebSettings::create())
     , m_mode(Mode::NORMAL)
     , m_box(Gtk::ORIENTATION_VERTICAL)
   {
@@ -137,7 +138,7 @@ namespace selain
   Glib::RefPtr<Tab>
   MainWindow::open_tab(const Glib::ustring& uri, bool focus)
   {
-    const auto tab = Glib::RefPtr<Tab>(new Tab(m_web_context));
+    const auto tab = Glib::RefPtr<Tab>(new Tab(m_web_context, m_web_settings));
 
     m_notebook.append_page(*tab.get(), tab->get_tab_label());
     tab->signal_status_changed().connect(sigc::mem_fun(

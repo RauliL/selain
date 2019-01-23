@@ -21,6 +21,7 @@ ADD_EXECUTABLE(
   src/theme.cpp
   src/utils.cpp
   src/web-context.cpp
+  src/web-settings.cpp
 )
 
 TARGET_COMPILE_FEATURES(

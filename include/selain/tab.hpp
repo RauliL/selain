@@ -28,6 +28,7 @@
 
 #include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
+#include <selain/web-context.hpp>
 
 namespace selain
 {
@@ -45,7 +46,7 @@ namespace selain
       const Glib::ustring&
     >;
 
-    explicit Tab();
+    explicit Tab(const Glib::RefPtr<WebContext>& context);
 
     inline Glib::RefPtr<HintContext>& get_hint_context()
     {

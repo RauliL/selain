@@ -23,10 +23,30 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/main-window.hpp>
+#include <selain/web-context.hpp>
 
 namespace selain
 {
+  static ::WebKitWebContext* create_web_context();
+
+  Glib::RefPtr<WebContext>
+  WebContext::create()
+  {
+    return Glib::RefPtr<WebContext>(new WebContext());
+  }
+
+  WebContext::WebContext()
+    : m_context(create_web_context())
+  {
+    initialize(G_OBJECT(m_context));
+  }
+
+  ::WebKitWebView*
+  WebContext::create_web_view()
+  {
+    return WEBKIT_WEB_VIEW(::webkit_web_view_new_with_context(m_context));
+  }
+
   static inline void
   free_string(::gchar* str)
   {
@@ -36,7 +56,7 @@ namespace selain
     }
   }
 
-  ::WebKitWebContext*
+  static ::WebKitWebContext*
   create_web_context()
   {
     ::gchar* base_cache_dir = nullptr;

@@ -139,6 +139,7 @@ namespace selain
     void on_notification_timeout();
 
   private:
+    Glib::RefPtr<WebContext> m_web_context;
     Mode m_mode;
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;

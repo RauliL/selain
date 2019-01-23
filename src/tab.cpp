@@ -29,8 +29,6 @@
 
 namespace selain
 {
-  ::WebKitWebContext* create_web_context();
-
   static void set_webkit_settings(::WebKitSettings*);
   static void on_load_changed(
     ::WebKitWebView*,
@@ -68,10 +66,8 @@ namespace selain
     ::gboolean on_tab_key_press(::WebKitWebView*, ::GdkEventKey*, Tab*);
   }
 
-  Tab::Tab()
-    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new_with_context(
-        create_web_context()
-      )))
+  Tab::Tab(const Glib::RefPtr<WebContext>& context)
+    : m_web_view(context->create_web_view())
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
     m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(

@@ -20,6 +20,7 @@ ADD_EXECUTABLE(
   src/tab-label.cpp
   src/theme.cpp
   src/utils.cpp
+  src/web-context.cpp
 )
 
 TARGET_COMPILE_FEATURES(

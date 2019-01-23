@@ -29,8 +29,9 @@
 
 namespace selain
 {
+  ::WebKitWebContext* create_web_context();
+
   static void set_webkit_settings(::WebKitSettings*);
-  static void set_webkit_context(::WebKitWebContext*);
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
@@ -68,7 +69,9 @@ namespace selain
   }
 
   Tab::Tab()
-    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new()))
+    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new_with_context(
+        create_web_context()
+      )))
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
     m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(
@@ -121,7 +124,6 @@ namespace selain
     );
 
     set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
-    set_webkit_context(::webkit_web_view_get_context(m_web_view));
   }
 
   void
@@ -328,16 +330,6 @@ namespace selain
       "Selain",
       SELAIN_VERSION
     );
-  }
-
-  // TODO: Create shared instance of `WebKitWebContext` during application
-  // startup and use that instead.
-  static void
-  set_webkit_context(::WebKitWebContext* context)
-  {
-    // Enable favicons by setting the favicon database directory to NULL, which
-    // tells WebKit to use the default user cache directory.
-    ::webkit_web_context_set_favicon_database_directory(context, nullptr);
   }
 
   static void

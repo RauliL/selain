@@ -25,13 +25,9 @@
  */
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
-#include <selain/version.hpp>
 
 namespace selain
 {
-  ::WebKitWebContext* create_web_context();
-
-  static void set_webkit_settings(::WebKitSettings*);
   static void on_load_changed(
     ::WebKitWebView*,
     ::WebKitLoadEvent,
@@ -68,10 +64,9 @@ namespace selain
     ::gboolean on_tab_key_press(::WebKitWebView*, ::GdkEventKey*, Tab*);
   }
 
-  Tab::Tab()
-    : m_web_view(WEBKIT_WEB_VIEW(::webkit_web_view_new_with_context(
-        create_web_context()
-      )))
+  Tab::Tab(const Glib::RefPtr<WebContext>& context,
+           const Glib::RefPtr<WebSettings>& settings)
+    : m_web_view(context->create_web_view())
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
     m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(
@@ -123,7 +118,7 @@ namespace selain
       theme::window_background.gobj()
     );
 
-    set_webkit_settings(::webkit_web_view_get_settings(m_web_view));
+    settings->install(m_web_view);
   }
 
   void
@@ -315,21 +310,6 @@ namespace selain
     {
       window->close_tab(*this);
     }
-  }
-
-  // TODO: Create shared instance of `WebKitSettings` during application
-  // startup and use that instead.
-  static void
-  set_webkit_settings(::WebKitSettings* settings)
-  {
-    ::webkit_settings_set_enable_java(settings, false);
-    ::webkit_settings_set_enable_plugins(settings, false);
-    ::webkit_settings_set_enable_developer_extras(settings, true);
-    ::webkit_settings_set_user_agent_with_application_details(
-      settings,
-      "Selain",
-      SELAIN_VERSION
-    );
   }
 
   static void

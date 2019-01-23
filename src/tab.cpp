@@ -171,14 +171,13 @@ namespace selain
     {
       return;
     }
-    ::webkit_web_view_load_uri(
-      m_web_view,
-      (
-        uri.find("://") == Glib::ustring::npos
-          ? "http://" + uri
-          : uri
-      ).c_str()
-    );
+    if (auto scheme = ::g_uri_parse_scheme(uri.c_str()))
+    {
+      ::webkit_web_view_load_uri(m_web_view, uri.c_str());
+      ::g_free(scheme);
+    } else {
+      ::webkit_web_view_load_uri(m_web_view, ("http://" + uri).c_str());
+    }
   }
 
   void

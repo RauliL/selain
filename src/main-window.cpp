@@ -38,6 +38,8 @@ namespace selain
     , m_mode(Mode::NORMAL)
     , m_box(Gtk::ORIENTATION_VERTICAL)
   {
+    initialize_commands();
+
     set_title("Selain");
     set_icon_name("selain");
     set_border_width(0);

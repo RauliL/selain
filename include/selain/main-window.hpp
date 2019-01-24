@@ -28,9 +28,11 @@
 
 #include <mutex>
 #include <queue>
+#include <unordered_map>
 
 #include <gtkmm.h>
 
+#include <selain/command.hpp>
 #include <selain/command-entry.hpp>
 #include <selain/notification.hpp>
 #include <selain/status-bar.hpp>
@@ -44,7 +46,25 @@ namespace selain
   class MainWindow : public Gtk::ApplicationWindow
   {
   public:
+    using command_mapping_type = std::unordered_map<std::string, Command>;
+
     explicit MainWindow(const Glib::RefPtr<Gtk::Application>& application);
+
+    /**
+     * Returns the mapping of all known browser commands.
+     */
+    inline command_mapping_type& get_command_mapping()
+    {
+      return m_command_mapping;
+    }
+
+    /**
+     * Returns the mapping of all known browser commands.
+     */
+    inline const command_mapping_type& get_command_mapping() const
+    {
+      return m_command_mapping;
+    }
 
     /**
      * Returns the current mode of the window.
@@ -132,6 +152,8 @@ namespace selain
     );
 
   private:
+    void initialize_commands();
+
     bool on_command_entry_key_press(::GdkEventKey* event);
     void on_command_received(const Glib::ustring& command);
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
@@ -139,6 +161,7 @@ namespace selain
     void on_notification_timeout();
 
   private:
+    command_mapping_type m_command_mapping;
     Glib::RefPtr<WebContext> m_web_context;
     Glib::RefPtr<WebSettings> m_web_settings;
     Mode m_mode;

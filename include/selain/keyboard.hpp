@@ -33,11 +33,12 @@
 
 namespace selain
 {
+  class MainWindow;
   class Tab;
 
   namespace keyboard
   {
-    using Binding = std::function<void(Tab&)>;
+    using BindingCallback = std::function<void(MainWindow&, Tab&)>;
 
     struct Mapping
     {
@@ -47,7 +48,7 @@ namespace selain
       >;
 
       std::uint32_t value;
-      Binding binding;
+      BindingCallback callback;
       mapping_type mapping;
       mapping_type control_mapping;
     };

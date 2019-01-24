@@ -33,40 +33,43 @@ namespace selain
   static const int keypress_timeout = 2;
   static std::shared_ptr<keyboard::Mapping> top_mapping;
 
-  static ::gboolean key_event_normal_mode(Tab&, ::GdkEventKey*);
+  static ::gboolean key_event_normal_mode(MainWindow&, Tab&, ::GdkEventKey*);
   static ::gboolean key_event_insert_mode(MainWindow&, ::GdkEventKey*);
   static ::gboolean key_event_hint_mode(MainWindow&, Tab&, ::GdkEventKey*);
-  static void add_mapping(const std::u32string&, const keyboard::Binding&);
+  static void add_mapping(
+    const std::u32string&,
+    const keyboard::BindingCallback&
+  );
 
-  static void bind_mode_command(Tab&);
-  static void bind_mode_insert(Tab&);
-  static void bind_mode_hint(Tab&);
-  static void bind_mode_hint_new_tab(Tab&);
-  static void bind_tab_reload(Tab&);
-  static void bind_tab_reload_bypass_cache(Tab&);
-  static void bind_tab_open(Tab&);
-  static void bind_tab_close(Tab&);
-  static void bind_tab_prev(Tab&);
-  static void bind_tab_next(Tab&);
-  static void bind_scroll_left(Tab&);
-  static void bind_scroll_down(Tab&);
-  static void bind_scroll_up(Tab&);
-  static void bind_scroll_page_down(Tab&);
-  static void bind_scroll_page_up(Tab&);
-  static void bind_scroll_right(Tab&);
-  static void bind_scroll_top(Tab&);
-  static void bind_scroll_bottom(Tab&);
-  static void bind_history_prev(Tab&);
-  static void bind_history_next(Tab&);
-  static void bind_complete_open(Tab&);
-  static void bind_complete_open_tab(Tab&);
-  static void bind_paste(Tab&);
-  static void bind_paste_open_tab(Tab&);
-  static void bind_yank(Tab&);
-  static void bind_search_forwards(Tab&);
-  static void bind_search_backwards(Tab&);
-  static void bind_search_next(Tab&);
-  static void bind_search_prev(Tab&);
+  static void bind_mode_command(MainWindow&, Tab&);
+  static void bind_mode_insert(MainWindow&, Tab&);
+  static void bind_mode_hint(MainWindow&, Tab&);
+  static void bind_mode_hint_new_tab(MainWindow&, Tab&);
+  static void bind_tab_reload(MainWindow&, Tab&);
+  static void bind_tab_reload_bypass_cache(MainWindow&, Tab&);
+  static void bind_tab_open(MainWindow&, Tab&);
+  static void bind_tab_close(MainWindow&, Tab&);
+  static void bind_tab_prev(MainWindow&, Tab&);
+  static void bind_tab_next(MainWindow&, Tab&);
+  static void bind_scroll_left(MainWindow&, Tab&);
+  static void bind_scroll_down(MainWindow&, Tab&);
+  static void bind_scroll_up(MainWindow&, Tab&);
+  static void bind_scroll_page_down(MainWindow&, Tab&);
+  static void bind_scroll_page_up(MainWindow&, Tab&);
+  static void bind_scroll_right(MainWindow&, Tab&);
+  static void bind_scroll_top(MainWindow&, Tab&);
+  static void bind_scroll_bottom(MainWindow&, Tab&);
+  static void bind_history_prev(MainWindow&, Tab&);
+  static void bind_history_next(MainWindow&, Tab&);
+  static void bind_complete_open(MainWindow&, Tab&);
+  static void bind_complete_open_tab(MainWindow&, Tab&);
+  static void bind_paste(MainWindow&, Tab&);
+  static void bind_paste_open_tab(MainWindow&, Tab&);
+  static void bind_yank(MainWindow&, Tab&);
+  static void bind_search_forwards(MainWindow&, Tab&);
+  static void bind_search_backwards(MainWindow&, Tab&);
+  static void bind_search_next(MainWindow&, Tab&);
+  static void bind_search_prev(MainWindow&, Tab&);
 
   namespace keyboard
   {
@@ -123,7 +126,7 @@ namespace selain
       switch (window->get_mode())
       {
         case Mode::NORMAL:
-          return key_event_normal_mode(*tab, event);
+          return key_event_normal_mode(*window, *tab, event);
 
         case Mode::INSERT:
           return key_event_insert_mode(*window, event);
@@ -138,7 +141,7 @@ namespace selain
   }
 
   static ::gboolean
-  key_event_normal_mode(Tab& tab, ::GdkEventKey* event)
+  key_event_normal_mode(MainWindow& window, Tab& tab, ::GdkEventKey* event)
   {
     static std::shared_ptr<keyboard::Mapping> last_mapping;
     static std::chrono::time_point<std::chrono::system_clock> last_keypress;
@@ -179,9 +182,9 @@ namespace selain
       }
     }
 
-    if (entry->second->binding)
+    if (entry->second->callback)
     {
-      entry->second->binding(tab);
+      entry->second->callback(window, tab);
       last_mapping.reset();
     }
     else if (!entry->second->mapping.empty())
@@ -247,7 +250,8 @@ namespace selain
   }
 
   static void
-  add_mapping(const std::u32string& sequence, const keyboard::Binding& binding)
+  add_mapping(const std::u32string& sequence,
+              const keyboard::BindingCallback& callback)
   {
     const auto length = sequence.length();
     std::shared_ptr<keyboard::Mapping> current_mapping;
@@ -292,142 +296,118 @@ namespace selain
       }
     }
 
-    current_mapping->binding = binding;
+    current_mapping->callback = callback;
   }
 
   static void
-  bind_mode_command(Tab& tab)
+  bind_mode_command(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
+    window.get_command_entry().set_text(":");
+    window.set_mode(Mode::COMMAND);
+  }
+
+  static void
+  bind_mode_insert(MainWindow& window, Tab&)
+  {
+    window.set_mode(Mode::INSERT);
+  }
+
+  static void
+  bind_mode_hint(MainWindow& window, Tab&)
+  {
+    window.set_mode(Mode::HINT);
+  }
+
+  static void
+  bind_mode_hint_new_tab(MainWindow& window, Tab& tab)
+  {
+    window.set_mode(Mode::HINT);
+    if (const auto context = tab.get_hint_context())
     {
-      window->get_command_entry().set_text(":");
-      window->set_mode(Mode::COMMAND);
+      context->set_open_to_new_tab(tab);
     }
   }
 
   static void
-  bind_mode_insert(Tab& tab)
-  {
-    if (const auto window = tab.get_main_window())
-    {
-      window->set_mode(Mode::INSERT);
-    }
-  }
-
-  static void
-  bind_mode_hint(Tab& tab)
-  {
-    if (const auto window = tab.get_main_window())
-    {
-      window->set_mode(Mode::HINT);
-    }
-  }
-
-  static void
-  bind_mode_hint_new_tab(Tab& tab)
-  {
-    if (const auto window = tab.get_main_window())
-    {
-      window->set_mode(Mode::HINT);
-      if (const auto context = tab.get_hint_context())
-      {
-        context->set_open_to_new_tab(tab);
-      }
-    }
-  }
-
-  static void
-  bind_tab_reload(Tab& tab)
+  bind_tab_reload(MainWindow&, Tab& tab)
   {
     tab.reload();
   }
 
   static void
-  bind_tab_reload_bypass_cache(Tab& tab)
+  bind_tab_reload_bypass_cache(MainWindow&, Tab& tab)
   {
     tab.reload(true);
   }
 
   static void
-  bind_tab_open(Tab& tab)
+  bind_tab_open(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->open_tab();
-    }
+    window.open_tab();
   }
 
   static void
-  bind_tab_close(Tab& tab)
+  bind_tab_close(MainWindow& window, Tab& tab)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->close_tab(tab);
-    }
+    window.close_tab(tab);
   }
 
   static void
-  bind_tab_next(Tab& tab)
+  bind_tab_next(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->next_tab();
-    }
+    window.next_tab();
   }
 
   static void
-  bind_tab_prev(Tab& tab)
+  bind_tab_prev(MainWindow& window, Tab& tab)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->prev_tab();
-    }
+    window.prev_tab();
   }
 
   static void
-  bind_scroll_left(Tab& tab)
+  bind_scroll_left(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollBy({ left: -100 });");
   }
 
   static void
-  bind_scroll_right(Tab& tab)
+  bind_scroll_right(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollBy({ left: 100 });");
   }
 
   static void
-  bind_scroll_up(Tab& tab)
+  bind_scroll_up(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollBy({ top: -100 });");
   }
 
   static void
-  bind_scroll_down(Tab& tab)
+  bind_scroll_down(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollBy({ top: 100 });");
   }
 
   static void
-  bind_scroll_page_up(Tab& tab)
+  bind_scroll_page_up(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollBy({ top: -(window.innerHeight / 2) });");
   }
 
   static void
-  bind_scroll_page_down(Tab& tab)
+  bind_scroll_page_down(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollBy({ top: window.innerHeight / 2 });");
   }
 
   static void
-  bind_scroll_top(Tab& tab)
+  bind_scroll_top(MainWindow&, Tab& tab)
   {
     tab.execute_script("window.scrollTo({ top: 0 });");
   }
 
   static void
-  bind_scroll_bottom(Tab& tab)
+  bind_scroll_bottom(MainWindow&, Tab& tab)
   {
     tab.execute_script(
       "window.scrollTo({ top: document.body.scrollHeight });"
@@ -435,39 +415,33 @@ namespace selain
   }
 
   static void
-  bind_history_prev(Tab& tab)
+  bind_history_prev(MainWindow&, Tab& tab)
   {
     tab.go_back();
   }
 
   static void
-  bind_history_next(Tab& tab)
+  bind_history_next(MainWindow&, Tab& tab)
   {
     tab.go_forward();
   }
 
   static void
-  bind_complete_open(Tab& tab)
+  bind_complete_open(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->get_command_entry().set_text(":open ");
-      window->set_mode(Mode::COMMAND);
-    }
+    window.get_command_entry().set_text(":open ");
+    window.set_mode(Mode::COMMAND);
   }
 
   static void
-  bind_complete_open_tab(Tab& tab)
+  bind_complete_open_tab(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->get_command_entry().set_text(":open-tab ");
-      window->set_mode(Mode::COMMAND);
-    }
+    window.get_command_entry().set_text(":open-tab ");
+    window.set_mode(Mode::COMMAND);
   }
 
   static void
-  bind_paste(Tab& tab)
+  bind_paste(MainWindow&, Tab& tab)
   {
     const auto clipboard = Gtk::Clipboard::get();
     Glib::ustring uri;
@@ -484,24 +458,23 @@ namespace selain
   }
 
   static void
-  bind_paste_open_tab(Tab& tab)
+  bind_paste_open_tab(MainWindow& window, Tab& tab)
   {
     const auto clipboard = Gtk::Clipboard::get();
-    const auto window = tab.get_main_window();
 
-    if (window && clipboard && clipboard->wait_is_text_available())
+    if (clipboard && clipboard->wait_is_text_available())
     {
       const auto uri = clipboard->wait_for_text();
 
       if (!uri.empty())
       {
-        window->open_tab(uri);
+        window.open_tab(uri);
       }
     }
   }
 
   static void
-  bind_yank(Tab& tab)
+  bind_yank(MainWindow& window, Tab& tab)
   {
     const auto clipboard = Gtk::Clipboard::get();
     const auto uri = tab.get_uri();
@@ -511,40 +484,31 @@ namespace selain
       return;
     }
     clipboard->set_text(uri);
-    if (const auto window = tab.get_main_window())
-    {
-      window->add_notification("Yanked " + uri);
-    }
+    window.add_notification("Yanked " + uri);
   }
 
   static void
-  bind_search_forwards(Tab& tab)
+  bind_search_forwards(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->get_command_entry().set_text("/");
-      window->set_mode(Mode::COMMAND);
-    }
+    window.get_command_entry().set_text("/");
+    window.set_mode(Mode::COMMAND);
   }
 
   static void
-  bind_search_backwards(Tab& tab)
+  bind_search_backwards(MainWindow& window, Tab&)
   {
-    if (const auto window = tab.get_main_window())
-    {
-      window->get_command_entry().set_text("?");
-      window->set_mode(Mode::COMMAND);
-    }
+    window.get_command_entry().set_text("?");
+    window.set_mode(Mode::COMMAND);
   }
 
   static void
-  bind_search_next(Tab& tab)
+  bind_search_next(MainWindow&, Tab& tab)
   {
     tab.search_next();
   }
 
   static void
-  bind_search_prev(Tab& tab)
+  bind_search_prev(MainWindow&, Tab& tab)
   {
     tab.search_prev();
   }

@@ -14,7 +14,7 @@ You also need [CMake] to compile this application. On Ubuntu, all of these can
 be installed with following command:
 
 ```bash
-$ sudo apt install libgtkmm-3.0-dev libwebkit2gtk-4.0-dev cmake
+$ sudo apt install libgtkmm-3.0-dev libwebkit2gtk-4.0-dev cmake build-essential
 ```
 
 After dependencies have been installed, you can compile the application like

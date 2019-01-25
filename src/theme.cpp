@@ -33,6 +33,7 @@ namespace selain
     static const auto entry_style_provider = Gtk::CssProvider::create();
 
     const Gdk::RGBA window_background("#262626");
+    const Gdk::RGBA window_foreground("#eeeeee");
     const Gdk::RGBA status_bar_background("#444444");
     const Gdk::RGBA status_bar_foreground("#a7d6f8");
     const Gdk::RGBA status_bar_error_background("#f43753");

@@ -91,17 +91,11 @@ namespace selain
       }
       else if (!::g_strcmp0(str_value, "mode::normal"))
       {
-        if (const auto window = tab->get_main_window())
-        {
-          window->set_mode(Mode::NORMAL);
-        }
+        tab->set_mode(Mode::NORMAL);
       }
       else if (!::g_strcmp0(str_value, "mode::insert"))
       {
-        if (const auto window = tab->get_main_window())
-        {
-          window->set_mode(Mode::INSERT);
-        }
+        tab->set_mode(Mode::INSERT);
       }
       ::g_free(str_value);
     } else {

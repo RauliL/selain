@@ -33,6 +33,7 @@ namespace selain
   namespace theme
   {
     extern const Gdk::RGBA window_background;
+    extern const Gdk::RGBA window_foreground;
     extern const Gdk::RGBA status_bar_background;
     extern const Gdk::RGBA status_bar_foreground;
     extern const Gdk::RGBA status_bar_error_background;

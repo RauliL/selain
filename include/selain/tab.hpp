@@ -28,6 +28,7 @@
 
 #include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
+#include <selain/tab-status.hpp>
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
 
@@ -38,19 +39,28 @@ namespace selain
   /**
    * GTK widget for a browser tab.
    */
-  class Tab : public Gtk::Bin
+  class Tab : public Gtk::Box
   {
   public:
-    using status_changed_signal_type = sigc::signal<
-      void,
-      Tab*,
-      const Glib::ustring&
-    >;
+    using signal_mode_changed_type = sigc::signal<void, Tab&, Mode>;
 
     explicit Tab(
       const Glib::RefPtr<WebContext>& context,
       const Glib::RefPtr<WebSettings>& settings
     );
+
+    /**
+     * Returns current mode of the tab.
+     */
+    inline Mode get_mode() const
+    {
+      return m_mode;
+    }
+
+    /**
+     * Sets the current mode of the tab.
+     */
+    void set_mode(Mode mode);
 
     inline Glib::RefPtr<HintContext>& get_hint_context()
     {
@@ -92,6 +102,16 @@ namespace selain
       return m_tab_label;
     }
 
+    /**
+     * Sets the text on the tab status bar.
+     *
+     * \param text      Text to be displayed on the status bar.
+     * \param permanent Whether the text should be considered to be "permanent"
+     *                  e.g. it's a text that should be displayed if the normal
+     *                  status text is being cleared.
+     */
+    void set_status(const Glib::ustring& text, bool permanent = false);
+
     Glib::ustring get_uri() const;
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
@@ -114,30 +134,23 @@ namespace selain
 
     void grab_focus();
 
-    const Glib::ustring& get_status() const;
-    void set_status(const Glib::ustring& status, bool permanent = false);
-
-    inline status_changed_signal_type& signal_status_changed()
+    inline signal_mode_changed_type& signal_mode_changed()
     {
-      return m_signal_status_changed;
-    }
-
-    inline const status_changed_signal_type& signal_status_changed() const
-    {
-      return m_signal_status_changed;
+      return m_signal_mode_changed;
     }
 
   private:
     void on_close_button_clicked();
 
   private:
+    /** Current mode of the tab. */
+    Mode m_mode;
     Glib::RefPtr<HintContext> m_hint_context;
     TabLabel m_tab_label;
     ::WebKitWebView* m_web_view;
     Glib::RefPtr<Gtk::Widget> m_web_view_widget;
-    Glib::ustring m_status;
-    Glib::ustring m_permanent_status;
-    status_changed_signal_type m_signal_status_changed;
+    TabStatus m_status;
+    signal_mode_changed_type m_signal_mode_changed;
   };
 }
 

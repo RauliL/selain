@@ -26,16 +26,10 @@
 #ifndef SELAIN_MAIN_WINDOW_HPP_GUARD
 #define SELAIN_MAIN_WINDOW_HPP_GUARD
 
-#include <mutex>
-#include <queue>
 #include <unordered_map>
-
-#include <gtkmm.h>
 
 #include <selain/command.hpp>
 #include <selain/command-entry.hpp>
-#include <selain/notification.hpp>
-#include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
 
 namespace selain
@@ -64,35 +58,6 @@ namespace selain
     inline const command_mapping_type& get_command_mapping() const
     {
       return m_command_mapping;
-    }
-
-    /**
-     * Returns the current mode of the window.
-     */
-    inline Mode get_mode() const
-    {
-      return m_mode;
-    }
-
-    /**
-     * Sets the current mode of the window.
-     */
-    void set_mode(Mode mode);
-
-    /**
-     * Returns the status bar of the window.
-     */
-    inline StatusBar& get_status_bar()
-    {
-      return m_status_bar;
-    }
-
-    /**
-     * Returns the status bar of the window.
-     */
-    inline const StatusBar& get_status_bar() const
-    {
-      return m_status_bar;
     }
 
     /**
@@ -145,32 +110,20 @@ namespace selain
     void next_tab();
     void prev_tab();
 
-    void add_notification(
-      const Glib::ustring& text,
-      NotificationType type = NotificationType::INFO,
-      unsigned int timeout = 5
-    );
-
   private:
     void initialize_commands();
 
     bool on_command_entry_key_press(::GdkEventKey* event);
     void on_command_received(const Glib::ustring& command);
-    void on_tab_status_change(Tab* tab, const Glib::ustring& status);
-    void on_tab_switch(Gtk::Widget* widget, ::guint page_number);
-    void on_notification_timeout();
+    void on_tab_mode_change(Tab& tab, Mode mode);
 
   private:
     command_mapping_type m_command_mapping;
     Glib::RefPtr<WebContext> m_web_context;
     Glib::RefPtr<WebSettings> m_web_settings;
-    Mode m_mode;
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;
-    StatusBar m_status_bar;
     CommandEntry m_command_entry;
-    std::queue<Notification> m_notification_queue;
-    std::mutex m_notification_queue_mutex;
   };
 }
 

@@ -35,7 +35,6 @@ namespace selain
     : Gtk::ApplicationWindow(application)
     , m_web_context(WebContext::create())
     , m_web_settings(WebSettings::create())
-    , m_mode(Mode::NORMAL)
     , m_box(Gtk::ORIENTATION_VERTICAL)
   {
     initialize_commands();
@@ -46,14 +45,9 @@ namespace selain
     set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
     m_box.pack_start(m_notebook);
-    m_box.pack_start(m_status_bar, Gtk::PACK_SHRINK);
     m_box.pack_start(m_command_entry, Gtk::PACK_SHRINK);
     add(m_box);
 
-    m_notebook.signal_switch_page().connect(sigc::mem_fun(
-      this,
-      &MainWindow::on_tab_switch
-    ));
     m_command_entry.signal_key_press_event().connect(sigc::mem_fun(
       this,
       &MainWindow::on_command_entry_key_press
@@ -67,42 +61,6 @@ namespace selain
 
     show_all();
     maximize();
-  }
-
-  void
-  MainWindow::set_mode(Mode mode)
-  {
-    const auto tab = get_current_tab();
-
-    if (m_mode == Mode::HINT && tab)
-    {
-      if (auto& context = tab->get_hint_context())
-      {
-        context->uninstall(*tab);
-        context.reset();
-      }
-    }
-    m_status_bar.set_mode(mode);
-    switch (m_mode = mode)
-    {
-      case Mode::COMMAND:
-        m_command_entry.grab_focus();
-        break;
-
-      case Mode::HINT:
-        if (tab)
-        {
-          tab->set_hint_context(HintContext::create());
-        }
-
-      default:
-        m_command_entry.set_text(Glib::ustring());
-        if (tab)
-        {
-          tab->grab_focus();
-        }
-        break;
-    }
   }
 
   Tab*
@@ -143,11 +101,11 @@ namespace selain
     const auto tab = Glib::RefPtr<Tab>(new Tab(m_web_context, m_web_settings));
 
     m_notebook.append_page(*tab.get(), tab->get_tab_label());
-    tab->signal_status_changed().connect(sigc::mem_fun(
-      this,
-      &MainWindow::on_tab_status_change
-    ));
     show_all_children();
+    tab->signal_mode_changed().connect(sigc::mem_fun(
+      *this,
+      &MainWindow::on_tab_mode_change
+    ));
     if (!uri.empty())
     {
       tab->load_uri(uri);
@@ -209,32 +167,15 @@ namespace selain
     m_notebook.prev_page();
   }
 
-  void
-  MainWindow::add_notification(const Glib::ustring& text,
-                               NotificationType type,
-                               unsigned int timeout)
-  {
-    const Notification notification(text, type, timeout);
-    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
-
-    m_notification_queue.push(notification);
-    if (m_notification_queue.size() > 1)
-    {
-      return;
-    }
-    Glib::signal_timeout().connect_once(
-      sigc::mem_fun(*this, &MainWindow::on_notification_timeout),
-      timeout * 1000
-    );
-    m_status_bar.show_notification(notification);
-  }
-
   bool
   MainWindow::on_command_entry_key_press(::GdkEventKey* event)
   {
     if (event->keyval == GDK_KEY_Escape)
     {
-      set_mode(Mode::NORMAL);
+      if (const auto tab = get_current_tab())
+      {
+        tab->set_mode(Mode::NORMAL);
+      }
 
       return true;
     }
@@ -249,61 +190,26 @@ namespace selain
   void
   MainWindow::on_command_received(const Glib::ustring& command)
   {
-    set_mode(Mode::NORMAL);
     if (const auto tab = get_current_tab())
     {
+      tab->set_mode(Mode::NORMAL);
       tab->execute_command(command);
     }
   }
 
   void
-  MainWindow::on_tab_status_change(Tab* tab, const Glib::ustring& status)
+  MainWindow::on_tab_mode_change(Tab& tab, Mode mode)
   {
-    const auto current_index = m_notebook.get_current_page();
-    const auto tab_index = m_notebook.page_num(*tab);
-
-    if (current_index >= 0 && tab_index >= 0 && current_index == tab_index)
-    {
-      m_status_bar.set_status(status);
-    }
-  }
-
-  void
-  MainWindow::on_tab_switch(Gtk::Widget* widget, ::guint)
-  {
-    if (widget)
-    {
-      m_status_bar.set_status(static_cast<Tab*>(widget)->get_status());
-    } else {
-      m_status_bar.set_status(Glib::ustring());
-    }
-  }
-
-  void
-  MainWindow::on_notification_timeout()
-  {
-    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
-
-    if (m_notification_queue.empty())
+    if (&tab != get_current_tab())
     {
       return;
     }
-    m_notification_queue.pop();
-    if (m_notification_queue.empty())
+    if (mode == Mode::COMMAND)
     {
-      m_status_bar.reset_notification();
-      if (const auto tab = get_current_tab())
-      {
-        m_status_bar.set_status(tab->get_status());
-      }
+      m_command_entry.grab_focus();
     } else {
-      const auto& next_notification = m_notification_queue.front();
-
-      m_status_bar.show_notification(next_notification);
-      Glib::signal_timeout().connect_once(
-        sigc::mem_fun(*this, &MainWindow::on_notification_timeout),
-        std::get<2>(next_notification) * 1000
-      );
+      m_command_entry.set_text(Glib::ustring());
+      tab.grab_focus();
     }
   }
 }

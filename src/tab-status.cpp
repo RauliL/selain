@@ -23,24 +23,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/status-bar.hpp>
+#include <selain/tab-status.hpp>
 #include <selain/theme.hpp>
 #include <selain/utils.hpp>
 
 namespace selain
 {
-  StatusBar::StatusBar()
+  TabStatus::TabStatus()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
     , m_mode_label("NORMAL")
   {
     const auto& font = utils::get_monospace_font();
     const auto& style_provider = theme::get_status_bar_style_provider();
 
-    set_border_width(0);
-
     pack_start(m_mode_label, Gtk::PACK_SHRINK);
-    pack_start(m_status_label, true, true);
+    pack_start(m_text_label, true, true);
+    show_all();
 
+    set_border_width(0);
     override_background_color(theme::status_bar_background);
 
     m_mode_label.override_font(font);
@@ -50,18 +50,16 @@ namespace selain
     m_mode_label.set_justify(Gtk::JUSTIFY_CENTER);
     m_mode_label.get_style_context()->add_provider(style_provider, 1000);
 
-    m_status_label.override_font(font);
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
-    m_status_label.set_halign(Gtk::ALIGN_START);
-    m_status_label.set_justify(Gtk::JUSTIFY_LEFT);
-    m_status_label.get_style_context()->add_provider(style_provider, 1000);
-
-    show_all_children();
+    m_text_label.override_font(font);
+    m_text_label.override_background_color(theme::status_bar_background);
+    m_text_label.override_color(theme::status_bar_foreground);
+    m_text_label.set_halign(Gtk::ALIGN_START);
+    m_text_label.set_justify(Gtk::JUSTIFY_LEFT);
+    m_text_label.get_style_context()->add_provider(style_provider, 1000);
   }
 
   void
-  StatusBar::set_mode(Mode mode)
+  TabStatus::set_mode(Mode mode)
   {
     m_mode_label.set_text(get_mode_text(mode));
     if (mode == Mode::INSERT)
@@ -75,41 +73,15 @@ namespace selain
   }
 
   void
-  StatusBar::set_status(const Glib::ustring& status)
+  TabStatus::set_text(const Glib::ustring& text)
   {
-    m_status_label.set_text(status);
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
+    m_text_label.set_text(text.empty() ? m_permanent_text : text);
   }
 
   void
-  StatusBar::show_notification(const Notification& notification)
+  TabStatus::set_permanent_text(const Glib::ustring& text)
   {
-    Gdk::RGBA background;
-    Gdk::RGBA foreground;
-
-    switch (std::get<1>(notification))
-    {
-      case NotificationType::INFO:
-        background = theme::status_bar_background;
-        foreground = theme::status_bar_foreground;
-        break;
-
-      case NotificationType::ERROR:
-        background = theme::status_bar_error_background;
-        foreground = theme::status_bar_error_foreground;
-        break;
-    }
-
-    m_status_label.override_background_color(background);
-    m_status_label.override_color(foreground);
-    m_status_label.set_text(std::get<0>(notification));
-  }
-
-  void
-  StatusBar::reset_notification()
-  {
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
+    m_permanent_text = text;
+    m_text_label.set_text(text);
   }
 }

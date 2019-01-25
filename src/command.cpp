@@ -123,22 +123,22 @@ namespace selain
       }
     }
 
-    window->add_notification(
+    window->get_command_entry().show_notification(
       "Error: Unknown command: " + command,
       NotificationType::ERROR
     );
   }
 
   static void
-  cmd_hint_mode(MainWindow& window, Tab&, const Glib::ustring&)
+  cmd_hint_mode(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    window.set_mode(Mode::HINT);
+    tab.set_mode(Mode::HINT);
   }
 
   static void
-  cmd_insert_mode(MainWindow& window, Tab&, const Glib::ustring&)
+  cmd_insert_mode(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    window.set_mode(Mode::INSERT);
+    tab.set_mode(Mode::INSERT);
   }
 
   static void

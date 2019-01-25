@@ -15,9 +15,9 @@ ADD_EXECUTABLE(
   src/main.cpp
   src/main-window.cpp
   src/mode.cpp
-  src/status-bar.cpp
   src/tab.cpp
   src/tab-label.cpp
+  src/tab-status.cpp
   src/theme.cpp
   src/utils.cpp
   src/web-context.cpp

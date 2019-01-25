@@ -66,9 +66,14 @@ namespace selain
 
   Tab::Tab(const Glib::RefPtr<WebContext>& context,
            const Glib::RefPtr<WebSettings>& settings)
-    : m_web_view(context->create_web_view())
+    : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
+    , m_mode(Mode::NORMAL)
+    , m_web_view(context->create_web_view())
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
+    pack_start(*m_web_view_widget.get());
+    pack_start(m_status, Gtk::PACK_SHRINK);
+
     m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(
       this,
       &Tab::on_close_button_clicked
@@ -110,8 +115,6 @@ namespace selain
       static_cast<::gpointer>(this)
     );
 
-    add(*m_web_view_widget.get());
-
     override_background_color(theme::window_background);
     ::webkit_web_view_set_background_color(
       m_web_view,
@@ -119,6 +122,23 @@ namespace selain
     );
 
     settings->install(m_web_view);
+  }
+
+  void
+  Tab::set_mode(Mode mode)
+  {
+    if (m_mode == Mode::HINT && m_hint_context)
+    {
+      m_hint_context->uninstall(*this);
+      m_hint_context.reset();
+    }
+    m_status.set_mode(mode);
+    if ((m_mode = mode) == Mode::HINT)
+    {
+      set_hint_context(HintContext::create());
+    }
+
+    m_signal_mode_changed.emit(*this, mode);
   }
 
   void
@@ -265,40 +285,25 @@ namespace selain
   void
   Tab::grab_focus()
   {
-    const auto window = get_main_window();
-
-    if (window && window->get_mode() == Mode::COMMAND)
+    if (m_mode == Mode::COMMAND)
     {
-      window->get_command_entry().grab_focus();
+      if (const auto window = get_main_window())
+      {
+        window->get_command_entry().grab_focus();
+      }
     } else {
       m_web_view_widget->grab_focus();
     }
   }
 
-  const Glib::ustring&
-  Tab::get_status() const
-  {
-    return m_status.empty() ? m_permanent_status : m_status;
-  }
-
   void
-  Tab::set_status(const Glib::ustring& status, bool permanent)
+  Tab::set_status(const Glib::ustring& text, bool permanent)
   {
     if (permanent)
     {
-      m_permanent_status = status;
-      if (m_status.empty())
-      {
-        m_signal_status_changed.emit(this, status);
-      }
-    }
-    else if (status.empty())
-    {
-      m_status.clear();
-      m_signal_status_changed.emit(this, m_permanent_status);
+      m_status.set_permanent_text(text);
     } else {
-      m_status = status;
-      m_signal_status_changed.emit(this, status);
+      m_status.set_text(text);
     }
   }
 

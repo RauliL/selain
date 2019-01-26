@@ -12,6 +12,8 @@ Selain currently supports following commands:
 |`:qall`    |`:qa`   |Closes all tabs.                       |
 |`:reload`  |`:r`    |Reloads page.                          |
 |`:reload!` |`:r!`   |Reloads page bypassing the cache.      |
+|`:split`   |`:sp`   |Splits the view in half vertically.    |
 |`:stop`    |`:s`    |Stops page from loading content.       |
 |`:tabnext` |`:tn`   |Switches to next tab.                  |
 |`:tabprev` |`:tp`   |Switches to previous tab.              |
+|`:vsplit`  |`:vs`   |Splits the view in half horizontally.  |

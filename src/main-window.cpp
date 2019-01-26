@@ -106,6 +106,10 @@ namespace selain
       *this,
       &MainWindow::on_tab_mode_change
     ));
+    tab->signal_close().connect(sigc::mem_fun(
+      *this,
+      &MainWindow::on_tab_closed
+    ));
     if (!uri.empty())
     {
       tab->load_uri(uri);
@@ -117,31 +121,6 @@ namespace selain
     }
 
     return tab;
-  }
-
-  void
-  MainWindow::close_tab(const Tab& tab)
-  {
-    const auto index = m_notebook.page_num(tab);
-
-    if (index < 0)
-    {
-      return;
-    }
-    m_notebook.remove_page(index);
-    if (m_notebook.get_current_page() < 0)
-    {
-      std::exit(EXIT_SUCCESS);
-    }
-  }
-
-  void
-  MainWindow::close_tab(const Glib::RefPtr<Tab>& tab)
-  {
-    if (tab)
-    {
-      close_tab(*tab.get());
-    }
   }
 
   void
@@ -198,9 +177,9 @@ namespace selain
   }
 
   void
-  MainWindow::on_tab_mode_change(Tab& tab, Mode mode)
+  MainWindow::on_tab_mode_change(View& view, Mode mode)
   {
-    if (&tab != get_current_tab())
+    if (get_current_tab() != &view)
     {
       return;
     }
@@ -209,7 +188,23 @@ namespace selain
       m_command_entry.grab_focus();
     } else {
       m_command_entry.set_text(Glib::ustring());
-      tab.grab_focus();
+      view.grab_focus();
+    }
+  }
+
+  void
+  MainWindow::on_tab_closed(View& view)
+  {
+    const auto index = m_notebook.page_num(view);
+
+    if (index < 0)
+    {
+      return;
+    }
+    m_notebook.remove_page(index);
+    if (m_notebook.get_current_page() < 0)
+    {
+      std::exit(EXIT_SUCCESS);
     }
   }
 }

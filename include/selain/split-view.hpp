@@ -23,59 +23,46 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_TAB_HPP_GUARD
-#define SELAIN_TAB_HPP_GUARD
+#ifndef SELAIN_SPLIT_VIEW_HPP_GUARD
+#define SELAIN_SPLIT_VIEW_HPP_GUARD
 
-#include <selain/tab-label.hpp>
 #include <selain/view.hpp>
-#include <selain/web-context.hpp>
-#include <selain/web-settings.hpp>
 
 namespace selain
 {
   /**
-   * GTK widget which acts as container for contents of a single tab. For
-   * convenience reasons it also acts as a view itself.
+   * View which has been split into two child views.
    */
-  class Tab : public View
+  class SplitView : public View
   {
   public:
-    explicit Tab(
-      const Glib::RefPtr<WebContext>& context,
-      const Glib::RefPtr<WebSettings>& settings
+    explicit SplitView(
+      const Glib::RefPtr<View>& view1,
+      const Glib::RefPtr<View>& view2,
+      Gtk::Orientation orientation = Gtk::ORIENTATION_VERTICAL
     );
 
-    /**
-     * Returns the GTK widget used as label for the tab.
-     */
-    inline TabLabel& get_tab_label()
+    inline const Glib::RefPtr<View>& get_active_view()
     {
-      return m_tab_label;
+      return m_current_view_index == 1 ? m_view1 : m_view2;
     }
 
-    /**
-     * Returns the GTK widget used as label for the tab.
-     */
-    inline const TabLabel& get_tab_label() const
+    inline Glib::RefPtr<const View> get_active_view() const
     {
-      return m_tab_label;
+      return m_current_view_index == 1 ? m_view1 : m_view2;
     }
 
+    void close();
     void grab_focus();
 
     inline Mode get_mode() const
     {
-      return m_top_view->get_mode();
+      return get_active_view()->get_mode();
     }
 
     inline void set_mode(Mode mode)
     {
-      m_top_view->set_mode(mode);
-    }
-
-    inline void close()
-    {
-      signal_close().emit(*this);
+      get_active_view()->set_mode(mode);
     }
 
     inline void execute_script(const Glib::ustring& script,
@@ -83,67 +70,67 @@ namespace selain
                                ::GAsyncReadyCallback callback = nullptr,
                                void* data = nullptr)
     {
-      m_top_view->execute_script(script, cancellable, callback, data);
+      get_active_view()->execute_script(script, cancellable, callback, data);
     }
 
     inline Glib::ustring get_uri() const
     {
-      return m_top_view->get_uri();
+      return get_active_view()->get_uri();
     }
 
     inline void load_uri(const Glib::ustring& uri)
     {
-      m_top_view->load_uri(uri);
+      get_active_view()->load_uri(uri);
     }
 
     inline void reload(bool bypass_cache = true)
     {
-      m_top_view->reload(bypass_cache);
+      get_active_view()->reload(bypass_cache);
     }
 
     inline void stop_loading()
     {
-      m_top_view->stop_loading();
+      get_active_view()->stop_loading();
     }
 
     inline void go_back_in_history()
     {
-      m_top_view->go_back_in_history();
+      get_active_view()->go_back_in_history();
     }
 
     inline void go_forward_in_history()
     {
-      m_top_view->go_forward_in_history();
+      get_active_view()->go_forward_in_history();
     }
 
     inline void find(const Glib::ustring& text, bool forwards = true)
     {
-      m_top_view->find(text, forwards);
+      get_active_view()->find(text, forwards);
     }
 
     inline void find_next()
     {
-      m_top_view->find_next();
+      get_active_view()->find_next();
     }
 
     inline void find_previous()
     {
-      m_top_view->find_previous();
+      get_active_view()->find_previous();
     }
 
     inline void add_hint_char(Glib::ustring::value_type c)
     {
-      m_top_view->add_hint_char(c);
+      get_active_view()->add_hint_char(c);
     }
 
     inline void remove_hint_char()
     {
-      m_top_view->remove_hint_char();
+      get_active_view()->remove_hint_char();
     }
 
     inline void activate_current_hint()
     {
-      m_top_view->activate_current_hint();
+      get_active_view()->activate_current_hint();
     }
 
     Glib::RefPtr<View> split(
@@ -153,15 +140,16 @@ namespace selain
     );
 
   private:
-    void on_top_view_closed(View& view);
     void on_mode_changed(View& view, Mode mode);
     void on_title_changed(View& view, const Glib::ustring& title);
     void on_favicon_changed(View& view, ::cairo_surface_t* icon);
 
   private:
-    TabLabel m_tab_label;
-    Glib::RefPtr<View> m_top_view;
+    int m_current_view_index;
+    Glib::RefPtr<View> m_view1;
+    Glib::RefPtr<View> m_view2;
+    Gtk::Paned m_paned;
   };
 }
 
-#endif /* !SELAIN_TAB_HPP_GUARD */
+#endif /* !SELAIN_SPLIT_VIEW_HPP_GUARD */

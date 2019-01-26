@@ -23,13 +23,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/tab-status.hpp>
+#include <selain/status-bar.hpp>
 #include <selain/theme.hpp>
 #include <selain/utils.hpp>
 
 namespace selain
 {
-  TabStatus::TabStatus()
+  StatusBar::StatusBar()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
     , m_mode_label("NORMAL")
   {
@@ -59,7 +59,7 @@ namespace selain
   }
 
   void
-  TabStatus::set_mode(Mode mode)
+  StatusBar::set_mode(Mode mode)
   {
     m_mode_label.set_text(get_mode_text(mode));
     if (mode == Mode::INSERT)
@@ -73,13 +73,13 @@ namespace selain
   }
 
   void
-  TabStatus::set_text(const Glib::ustring& text)
+  StatusBar::set_text(const Glib::ustring& text)
   {
     m_text_label.set_text(text.empty() ? m_permanent_text : text);
   }
 
   void
-  TabStatus::set_permanent_text(const Glib::ustring& text)
+  StatusBar::set_permanent_text(const Glib::ustring& text)
   {
     m_permanent_text = text;
     m_text_label.set_text(text);

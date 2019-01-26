@@ -15,13 +15,16 @@ ADD_EXECUTABLE(
   src/main.cpp
   src/main-window.cpp
   src/mode.cpp
+  src/split-view.cpp
+  src/status-bar.cpp
   src/tab.cpp
   src/tab-label.cpp
-  src/tab-status.cpp
   src/theme.cpp
   src/utils.cpp
+  src/view.cpp
   src/web-context.cpp
   src/web-settings.cpp
+  src/web-view.cpp
 )
 
 TARGET_COMPILE_FEATURES(

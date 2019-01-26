@@ -41,6 +41,8 @@ namespace selain
     COMMAND,
     /** Hint mode where user can click elements with keyboard shortcuts. */
     HINT,
+    /** Hint mode where links are opened into a new tab. */
+    HINT_NEW_TAB
   };
 
   /**

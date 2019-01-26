@@ -61,6 +61,38 @@ namespace selain
     }
 
     /**
+     * Returns the web context used by the window to create new web views.
+     */
+    inline const Glib::RefPtr<WebContext>& get_web_context()
+    {
+      return m_web_context;
+    }
+
+    /**
+     * Returns the web context used by the window to create new web views.
+     */
+    inline Glib::RefPtr<const WebContext> get_web_context() const
+    {
+      return m_web_context;
+    }
+
+    /**
+     * Returns the web settings used for web views created by the window.
+     */
+    inline const Glib::RefPtr<WebSettings>& get_web_settings()
+    {
+      return m_web_settings;
+    }
+
+    /**
+     * Returns the web settings used for web views created by the window.
+     */
+    inline Glib::RefPtr<const WebSettings> get_web_settings() const
+    {
+      return m_web_settings;
+    }
+
+    /**
      * Returns the text boxed where commands are being typed.
      */
     inline CommandEntry& get_command_entry()
@@ -103,9 +135,6 @@ namespace selain
       bool focus = true
     );
 
-    void close_tab(const Tab& tab);
-    void close_tab(const Glib::RefPtr<Tab>& tab);
-
     void set_current_tab(const Glib::RefPtr<Tab>& tab);
     void next_tab();
     void prev_tab();
@@ -115,7 +144,8 @@ namespace selain
 
     bool on_command_entry_key_press(::GdkEventKey* event);
     void on_command_received(const Glib::ustring& command);
-    void on_tab_mode_change(Tab& tab, Mode mode);
+    void on_tab_mode_change(View& view, Mode mode);
+    void on_tab_closed(View& view);
 
   private:
     command_mapping_type m_command_mapping;

@@ -23,7 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/main-window.hpp>
+#include <selain/web-view.hpp>
 
 #define SELAIN_JS_STRINGIFY(source) #source
 
@@ -34,32 +34,37 @@ namespace selain
   ;
 
   Glib::RefPtr<HintContext>
-  HintContext::create()
+  HintContext::create(bool open_new_tab)
   {
-    return Glib::RefPtr<HintContext>(new HintContext());
+    return Glib::RefPtr<HintContext>(new HintContext(open_new_tab));
   }
 
-  HintContext::HintContext() {}
+  HintContext::HintContext(bool open_new_tab)
+    : m_open_new_tab(open_new_tab) {}
 
   void
-  HintContext::install(Tab& tab)
+  HintContext::install(WebView& view)
   {
-    tab.execute_script(hint_mode_source_code);
+    view.execute_script(hint_mode_source_code);
+    if (m_open_new_tab)
+    {
+      view.execute_script("window.SelainHintMode.setOpenToNewTab();");
+    }
   }
 
   void
-  HintContext::uninstall(Tab& tab)
+  HintContext::uninstall(WebView& view)
   {
-    tab.execute_script("window.SelainHintMode.uninstall();");
+    view.execute_script("window.SelainHintMode.uninstall();");
   }
 
   static void
   hint_mode_callback(::GObject* web_view_object,
                      ::GAsyncResult* result,
-                     ::gpointer tab_data)
+                     ::gpointer view_data)
   {
     const auto web_view = WEBKIT_WEB_VIEW(web_view_object);
-    const auto tab = static_cast<Tab*>(tab_data);
+    const auto view = static_cast<View*>(view_data);
     ::GError* error = nullptr;
     const auto js_result = ::webkit_web_view_run_javascript_finish(
       web_view,
@@ -91,11 +96,11 @@ namespace selain
       }
       else if (!::g_strcmp0(str_value, "mode::normal"))
       {
-        tab->set_mode(Mode::NORMAL);
+        view->set_mode(Mode::NORMAL);
       }
       else if (!::g_strcmp0(str_value, "mode::insert"))
       {
-        tab->set_mode(Mode::INSERT);
+        view->set_mode(Mode::INSERT);
       }
       ::g_free(str_value);
     } else {
@@ -105,7 +110,7 @@ namespace selain
   }
 
   void
-  HintContext::add_char(Tab& tab, Glib::ustring::value_type ch)
+  HintContext::add_char(WebView& view, Glib::ustring::value_type ch)
   {
     char buffer[7];
 
@@ -114,34 +119,28 @@ namespace selain
       return;
     }
     std::snprintf(buffer, 7, "\\u%04x", static_cast<int>(ch));
-    tab.execute_script(
+    view.execute_script(
       Glib::ustring::compose("window.SelainHintMode.addChar('%1');", buffer),
       nullptr,
       hint_mode_callback,
-      static_cast<void*>(&tab)
+      static_cast<void*>(&view)
     );
   }
 
   void
-  HintContext::remove_char(Tab& tab)
+  HintContext::remove_char(WebView& view)
   {
-    tab.execute_script("window.SelainHintMode.removeChar();");
+    view.execute_script("window.SelainHintMode.removeChar();");
   }
 
   void
-  HintContext::activate_current_match(Tab& tab)
+  HintContext::activate_current_match(WebView& view)
   {
-    tab.execute_script(
+    view.execute_script(
       "window.SelainHintMode.activateCurrentMatch();",
       nullptr,
       hint_mode_callback,
-      static_cast<void*>(&tab)
+      static_cast<void*>(&view)
     );
-  }
-
-  void
-  HintContext::set_open_to_new_tab(Tab& tab)
-  {
-    tab.execute_script("window.SelainHintMode.setOpenToNewTab();");
   }
 }

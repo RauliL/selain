@@ -23,31 +23,32 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_COMMAND_HPP_GUARD
-#define SELAIN_COMMAND_HPP_GUARD
+#ifndef SELAIN_STATUS_BAR_HPP_GUARD
+#define SELAIN_STATUS_BAR_HPP_GUARD
 
-#include <functional>
-#include <string>
+#include <gtkmm.h>
 
-#include <glibmm.h>
+#include <selain/mode.hpp>
 
 namespace selain
 {
-  class MainWindow;
-  class View;
-
-  using CommandCallback = std::function<void(
-    MainWindow&,
-    View&,
-    const Glib::ustring&
-  )>;
-
-  struct Command
+  /**
+   * GTK widget for status bar in a browser tab.
+   */
+  class StatusBar : public Gtk::Box
   {
-    const char* name;
-    const char* name_shortcut;
-    CommandCallback callback;
+  public:
+    explicit StatusBar();
+
+    void set_mode(Mode mode);
+    void set_text(const Glib::ustring& text);
+    void set_permanent_text(const Glib::ustring& text);
+
+  private:
+    Gtk::Label m_mode_label;
+    Gtk::Label m_text_label;
+    Glib::ustring m_permanent_text;
   };
 }
 
-#endif /* !SELAIN_COMMAND_HPP_GUARD */
+#endif /* !SELAIN_STATUS_BAR_HPP_GUARD */

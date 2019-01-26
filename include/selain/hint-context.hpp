@@ -31,25 +31,25 @@
 
 namespace selain
 {
-  class Tab;
+  class WebView;
 
   class HintContext : public Glib::Object
   {
   public:
-    static Glib::RefPtr<HintContext> create();
+    static Glib::RefPtr<HintContext> create(bool open_new_tab = false);
 
-    void install(Tab& tab);
-    void uninstall(Tab& tab);
+    void install(WebView& view);
+    void uninstall(WebView& view);
 
-    void add_char(Tab& tab, Glib::ustring::value_type ch);
-    void remove_char(Tab& tab);
-    void activate_current_match(Tab& tab);
-    void set_open_to_new_tab(Tab& tab);
-
-  private:
-    explicit HintContext();
+    void add_char(WebView& view, Glib::ustring::value_type ch);
+    void remove_char(WebView& view);
+    void activate_current_match(WebView& view);
 
   private:
+    explicit HintContext(bool open_new_tab);
+
+  private:
+    const bool m_open_new_tab;
     Glib::ustring m_sequence;
   };
 }

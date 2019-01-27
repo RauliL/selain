@@ -36,7 +36,7 @@ namespace selain
   class HintContext : public Glib::Object
   {
   public:
-    static Glib::RefPtr<HintContext> create();
+    static Glib::RefPtr<HintContext> create(bool open_in_new_tab = false);
 
     void install(Tab& tab);
     void uninstall(Tab& tab);
@@ -44,13 +44,12 @@ namespace selain
     void add_char(Tab& tab, Glib::ustring::value_type ch);
     void remove_char(Tab& tab);
     void activate_current_match(Tab& tab);
-    void set_open_to_new_tab(Tab& tab);
 
   private:
-    explicit HintContext();
+    explicit HintContext(bool open_in_new_tab);
 
   private:
-    Glib::ustring m_sequence;
+    const bool m_open_in_new_tab;
   };
 }
 

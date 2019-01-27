@@ -26,11 +26,20 @@
 #ifndef SELAIN_COMMAND_ENTRY_HPP_GUARD
 #define SELAIN_COMMAND_ENTRY_HPP_GUARD
 
+#include <mutex>
+#include <queue>
+
 #include <gtkmm.h>
+
+#include <selain/notification.hpp>
 
 namespace selain
 {
-  class CommandEntry : public Gtk::Bin
+  /**
+   * GTK widget for the command line. It's also used for displaying various
+   * messages to the user.
+   */
+  class CommandEntry : public Gtk::Stack
   {
   public:
     using signal_command_received_type = sigc::signal<
@@ -50,6 +59,22 @@ namespace selain
       m_entry.set_text(text);
     }
 
+    /**
+     * Displays an notification to the user. If there already is an
+     * notification being displayed, the new one will be added to the
+     * notification queue.
+     *
+     * \param text    Text being displayed.
+     * \param type    Type of the notification.
+     * \param timeout How many seconds the notification will be visible to the
+     *                user.
+     */
+    void show_notification(
+      const Glib::ustring& text,
+      NotificationType type = NotificationType::INFO,
+      unsigned int timeout = 5
+    );
+
     void grab_focus();
 
     inline signal_command_received_type& signal_command_received()
@@ -58,10 +83,16 @@ namespace selain
     }
 
   private:
+    void show_notification(const Notification& notification);
     void on_activate();
+    void on_notification_timeout();
 
   private:
     Gtk::Entry m_entry;
+    Gtk::Label m_info_label;
+    Gtk::Label m_error_label;
+    std::queue<Notification> m_notification_queue;
+    std::mutex m_notification_queue_mutex;
     signal_command_received_type m_signal_command_received;
   };
 }

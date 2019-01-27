@@ -27,7 +27,6 @@
 #define SELAIN_STATUS_BAR_HPP_GUARD
 
 #include <selain/mode.hpp>
-#include <selain/notification.hpp>
 
 #include <gtkmm.h>
 
@@ -43,9 +42,6 @@ namespace selain
 
     void set_mode(Mode mode);
     void set_status(const Glib::ustring& status);
-
-    void show_notification(const Notification& notification);
-    void reset_notification();
 
   private:
     Gtk::Label m_mode_label;

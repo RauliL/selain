@@ -74,7 +74,7 @@ namespace selain
   {
     const auto tab = get_current_tab();
 
-    if (m_mode == Mode::HINT && tab)
+    if ((m_mode == Mode::HINT || m_mode == Mode::HINT_NEW_TAB) && tab)
     {
       if (auto& context = tab->get_hint_context())
       {
@@ -90,9 +90,12 @@ namespace selain
         break;
 
       case Mode::HINT:
+      case Mode::HINT_NEW_TAB:
         if (tab)
         {
-          tab->set_hint_context(HintContext::create());
+          tab->set_hint_context(HintContext::create(
+            m_mode == Mode::HINT_NEW_TAB
+          ));
         }
 
       default:

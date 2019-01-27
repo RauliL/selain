@@ -43,6 +43,9 @@ namespace selain
 
       case Mode::HINT:
         return "HINT";
+
+      case Mode::HINT_NEW_TAB:
+        return "HINT (NEW TAB)";
     }
 
     return "UNKNOWN";

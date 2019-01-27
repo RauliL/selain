@@ -132,6 +132,7 @@ namespace selain
           return key_event_insert_mode(*window, event);
 
         case Mode::HINT:
+        case Mode::HINT_NEW_TAB:
           return key_event_hint_mode(*window, *tab, event);
 
         default:
@@ -321,11 +322,7 @@ namespace selain
   static void
   bind_mode_hint_new_tab(MainWindow& window, Tab& tab)
   {
-    window.set_mode(Mode::HINT);
-    if (const auto context = tab.get_hint_context())
-    {
-      context->set_open_to_new_tab(tab);
-    }
+    window.set_mode(Mode::HINT_NEW_TAB);
   }
 
   static void

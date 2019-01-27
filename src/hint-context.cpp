@@ -34,17 +34,22 @@ namespace selain
   ;
 
   Glib::RefPtr<HintContext>
-  HintContext::create()
+  HintContext::create(bool open_in_new_tab)
   {
-    return Glib::RefPtr<HintContext>(new HintContext());
+    return Glib::RefPtr<HintContext>(new HintContext(open_in_new_tab));
   }
 
-  HintContext::HintContext() {}
+  HintContext::HintContext(bool open_in_new_tab)
+    : m_open_in_new_tab(open_in_new_tab) {}
 
   void
   HintContext::install(Tab& tab)
   {
     tab.execute_script(hint_mode_source_code);
+    if (m_open_in_new_tab)
+    {
+      tab.execute_script("window.SelainHintMode.setOpenToNewTab();");
+    }
   }
 
   void
@@ -143,11 +148,5 @@ namespace selain
       hint_mode_callback,
       static_cast<void*>(&tab)
     );
-  }
-
-  void
-  HintContext::set_open_to_new_tab(Tab& tab)
-  {
-    tab.execute_script("window.SelainHintMode.setOpenToNewTab();");
   }
 }

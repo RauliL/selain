@@ -123,7 +123,7 @@ namespace selain
       }
     }
 
-    window->add_notification(
+    window->get_command_entry().show_notification(
       "Error: Unknown command: " + command,
       NotificationType::ERROR
     );

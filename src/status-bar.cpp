@@ -78,38 +78,5 @@ namespace selain
   StatusBar::set_status(const Glib::ustring& status)
   {
     m_status_label.set_text(status);
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
-  }
-
-  void
-  StatusBar::show_notification(const Notification& notification)
-  {
-    Gdk::RGBA background;
-    Gdk::RGBA foreground;
-
-    switch (std::get<1>(notification))
-    {
-      case NotificationType::INFO:
-        background = theme::status_bar_background;
-        foreground = theme::status_bar_foreground;
-        break;
-
-      case NotificationType::ERROR:
-        background = theme::status_bar_error_background;
-        foreground = theme::status_bar_error_foreground;
-        break;
-    }
-
-    m_status_label.override_background_color(background);
-    m_status_label.override_color(foreground);
-    m_status_label.set_text(std::get<0>(notification));
-  }
-
-  void
-  StatusBar::reset_notification()
-  {
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
   }
 }

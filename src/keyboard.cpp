@@ -484,7 +484,7 @@ namespace selain
       return;
     }
     clipboard->set_text(uri);
-    window.add_notification("Yanked " + uri);
+    window.get_command_entry().show_notification("Yanked " + uri);
   }
 
   static void

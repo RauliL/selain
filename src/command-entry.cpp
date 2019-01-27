@@ -31,11 +31,31 @@ namespace selain
 {
   CommandEntry::CommandEntry()
   {
-    m_entry.override_font(utils::get_monospace_font());
+    const auto& font = utils::get_monospace_font();
+
+    override_background_color(theme::window_background);
+
+    m_entry.override_font(font);
     m_entry.get_style_context()->add_provider(
       theme::get_command_entry_style_provider(),
       1000
     );
+
+    m_info_label.set_halign(Gtk::ALIGN_START);
+    m_info_label.override_background_color(theme::window_background);
+    m_info_label.override_color(theme::window_foreground);
+    m_info_label.override_font(font);
+
+    m_error_label.set_halign(Gtk::ALIGN_START);
+    m_error_label.override_background_color(theme::status_bar_error_background);
+    m_error_label.override_color(theme::status_bar_error_foreground);
+    m_error_label.override_font(font);
+
+    add(m_entry, "entry");
+    add(m_info_label, "notification:info");
+    add(m_error_label, "notification:error");
+
+    set_visible_child(m_entry);
 
     m_entry.signal_activate().connect(sigc::mem_fun(
       this,
@@ -44,6 +64,45 @@ namespace selain
 
     add(m_entry);
     show_all();
+  }
+
+  void
+  CommandEntry::show_notification(const Glib::ustring& text,
+                                  NotificationType type,
+                                  unsigned int timeout)
+  {
+    const Notification notification(text, type, timeout);
+    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
+
+    m_notification_queue.push(notification);
+    if (m_notification_queue.size() > 1)
+    {
+      return;
+    }
+    Glib::signal_timeout().connect_once(
+      sigc::mem_fun(*this, &CommandEntry::on_notification_timeout),
+      timeout * 1000
+    );
+    show_notification(notification);
+  }
+
+  void
+  CommandEntry::show_notification(const Notification& notification)
+  {
+    const auto& text = std::get<0>(notification);
+
+    switch (std::get<1>(notification))
+    {
+      case NotificationType::INFO:
+        set_visible_child(m_info_label);
+        m_info_label.set_text(text);
+        break;
+
+      case NotificationType::ERROR:
+        set_visible_child(m_error_label);
+        m_error_label.set_text(text);
+        break;
+    }
   }
 
   void
@@ -60,5 +119,29 @@ namespace selain
 
     m_entry.set_text(Glib::ustring());
     m_signal_command_received.emit(text);
+  }
+
+  void
+  CommandEntry::on_notification_timeout()
+  {
+    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
+
+    if (m_notification_queue.empty())
+    {
+      return;
+    }
+    m_notification_queue.pop();
+    if (m_notification_queue.empty())
+    {
+      set_visible_child(m_entry);
+    } else {
+      const auto& next_notification = m_notification_queue.front();
+
+      show_notification(next_notification);
+      Glib::signal_timeout().connect_once(
+        sigc::mem_fun(*this, &CommandEntry::on_notification_timeout),
+        std::get<2>(next_notification) * 1000
+      );
+    }
   }
 }

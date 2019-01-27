@@ -209,26 +209,6 @@ namespace selain
     m_notebook.prev_page();
   }
 
-  void
-  MainWindow::add_notification(const Glib::ustring& text,
-                               NotificationType type,
-                               unsigned int timeout)
-  {
-    const Notification notification(text, type, timeout);
-    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
-
-    m_notification_queue.push(notification);
-    if (m_notification_queue.size() > 1)
-    {
-      return;
-    }
-    Glib::signal_timeout().connect_once(
-      sigc::mem_fun(*this, &MainWindow::on_notification_timeout),
-      timeout * 1000
-    );
-    m_status_bar.show_notification(notification);
-  }
-
   bool
   MainWindow::on_command_entry_key_press(::GdkEventKey* event)
   {
@@ -276,34 +256,6 @@ namespace selain
       m_status_bar.set_status(static_cast<Tab*>(widget)->get_status());
     } else {
       m_status_bar.set_status(Glib::ustring());
-    }
-  }
-
-  void
-  MainWindow::on_notification_timeout()
-  {
-    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
-
-    if (m_notification_queue.empty())
-    {
-      return;
-    }
-    m_notification_queue.pop();
-    if (m_notification_queue.empty())
-    {
-      m_status_bar.reset_notification();
-      if (const auto tab = get_current_tab())
-      {
-        m_status_bar.set_status(tab->get_status());
-      }
-    } else {
-      const auto& next_notification = m_notification_queue.front();
-
-      m_status_bar.show_notification(next_notification);
-      Glib::signal_timeout().connect_once(
-        sigc::mem_fun(*this, &MainWindow::on_notification_timeout),
-        std::get<2>(next_notification) * 1000
-      );
     }
   }
 }

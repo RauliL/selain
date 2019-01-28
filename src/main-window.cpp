@@ -46,14 +46,9 @@ namespace selain
     set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
     m_box.pack_start(m_notebook);
-    m_box.pack_start(m_status_bar, Gtk::PACK_SHRINK);
     m_box.pack_start(m_command_entry, Gtk::PACK_SHRINK);
     add(m_box);
 
-    m_notebook.signal_switch_page().connect(sigc::mem_fun(
-      this,
-      &MainWindow::on_tab_switch
-    ));
     m_command_entry.signal_key_press_event().connect(sigc::mem_fun(
       this,
       &MainWindow::on_command_entry_key_press
@@ -62,6 +57,12 @@ namespace selain
       this,
       &MainWindow::on_command_received
     ));
+    m_notebook.signal_switch_page().connect(sigc::hide(sigc::hide(
+      sigc::mem_fun(
+        this,
+        &MainWindow::on_tab_switch
+      )
+    )));
 
     m_box.override_background_color(theme::window_background);
 
@@ -74,29 +75,12 @@ namespace selain
   {
     const auto tab = get_current_tab();
 
-    if ((m_mode == Mode::HINT || m_mode == Mode::HINT_NEW_TAB) && tab)
-    {
-      if (auto& context = tab->get_hint_context())
-      {
-        context->uninstall(*tab);
-        context.reset();
-      }
-    }
-    m_status_bar.set_mode(mode);
+    tab->get_view()->set_current_mode(mode);
     switch (m_mode = mode)
     {
       case Mode::COMMAND:
         m_command_entry.grab_focus();
         break;
-
-      case Mode::HINT:
-      case Mode::HINT_NEW_TAB:
-        if (tab)
-        {
-          tab->set_hint_context(HintContext::create(
-            m_mode == Mode::HINT_NEW_TAB
-          ));
-        }
 
       default:
         m_command_entry.set_text(Glib::ustring());
@@ -146,14 +130,10 @@ namespace selain
     const auto tab = Glib::RefPtr<Tab>(new Tab(m_web_context, m_web_settings));
 
     m_notebook.append_page(*tab.get(), tab->get_tab_label());
-    tab->signal_status_changed().connect(sigc::mem_fun(
-      this,
-      &MainWindow::on_tab_status_change
-    ));
     show_all_children();
     if (!uri.empty())
     {
-      tab->load_uri(uri);
+      tab->get_view()->load_uri(uri);
     }
     if (focus)
     {
@@ -235,30 +215,16 @@ namespace selain
     set_mode(Mode::NORMAL);
     if (const auto tab = get_current_tab())
     {
-      tab->execute_command(command);
+      tab->get_view()->execute_command(command);
     }
   }
 
   void
-  MainWindow::on_tab_status_change(Tab* tab, const Glib::ustring& status)
+  MainWindow::on_tab_switch()
   {
-    const auto current_index = m_notebook.get_current_page();
-    const auto tab_index = m_notebook.page_num(*tab);
-
-    if (current_index >= 0 && tab_index >= 0 && current_index == tab_index)
+    if (const auto tab = get_current_tab())
     {
-      m_status_bar.set_status(status);
-    }
-  }
-
-  void
-  MainWindow::on_tab_switch(Gtk::Widget* widget, ::guint)
-  {
-    if (widget)
-    {
-      m_status_bar.set_status(static_cast<Tab*>(widget)->get_status());
-    } else {
-      m_status_bar.set_status(Glib::ustring());
+      tab->get_view()->set_current_mode(m_mode);
     }
   }
 }

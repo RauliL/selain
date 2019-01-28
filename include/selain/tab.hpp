@@ -26,8 +26,8 @@
 #ifndef SELAIN_TAB_HPP_GUARD
 #define SELAIN_TAB_HPP_GUARD
 
-#include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
+#include <selain/view.hpp>
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
 
@@ -41,40 +41,10 @@ namespace selain
   class Tab : public Gtk::Bin
   {
   public:
-    using status_changed_signal_type = sigc::signal<
-      void,
-      Tab*,
-      const Glib::ustring&
-    >;
-
     explicit Tab(
       const Glib::RefPtr<WebContext>& context,
       const Glib::RefPtr<WebSettings>& settings
     );
-
-    inline Glib::RefPtr<HintContext>& get_hint_context()
-    {
-      return m_hint_context;
-    }
-
-    inline Glib::RefPtr<const HintContext> get_hint_context() const
-    {
-      return m_hint_context;
-    }
-
-    void set_hint_context(const Glib::RefPtr<HintContext>& hint_context);
-
-    /**
-     * Returns pointer to the main window where this tab is being displayed, or
-     * null pointer if this tab isn't being displayed on a window.
-     */
-    MainWindow* get_main_window();
-
-    /**
-     * Returns pointer to the main window where this tab is being displayed, or
-     * null pointer if this tab isn't being displayed on a window.
-     */
-    const MainWindow* get_main_window() const;
 
     /**
      * Returns the GTK widget used as label for the tab.
@@ -92,52 +62,32 @@ namespace selain
       return m_tab_label;
     }
 
-    Glib::ustring get_uri() const;
-    void load_uri(const Glib::ustring& uri);
-    void reload(bool bypass_cache = false);
-    void stop_loading();
-
-    void execute_command(const Glib::ustring& command);
-    void execute_script(
-      const Glib::ustring& script,
-      ::GCancellable* cancellable = nullptr,
-      ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr
-    );
-
-    void go_back();
-    void go_forward();
-
-    void search(const Glib::ustring& text, bool forwards = true);
-    void search_next();
-    void search_prev();
-
-    void grab_focus();
-
-    const Glib::ustring& get_status() const;
-    void set_status(const Glib::ustring& status, bool permanent = false);
-
-    inline status_changed_signal_type& signal_status_changed()
+    /**
+     * Returns the top level view being displayed by the tab.
+     */
+    inline const Glib::RefPtr<View>& get_view()
     {
-      return m_signal_status_changed;
+      return m_view;
     }
 
-    inline const status_changed_signal_type& signal_status_changed() const
+    /**
+     * Returns the top level view being displayed by the tab.
+     */
+    inline Glib::RefPtr<const View> get_view() const
     {
-      return m_signal_status_changed;
+      return m_view;
     }
 
   private:
     void on_close_button_clicked();
+    bool on_focus_in();
+    void on_close();
+    void on_title_changed(const Glib::ustring& title);
+    void on_favicon_changed(::cairo_surface_t* icon);
 
   private:
-    Glib::RefPtr<HintContext> m_hint_context;
     TabLabel m_tab_label;
-    ::WebKitWebView* m_web_view;
-    Glib::RefPtr<Gtk::Widget> m_web_view_widget;
-    Glib::ustring m_status;
-    Glib::ustring m_permanent_status;
-    status_changed_signal_type m_signal_status_changed;
+    Glib::RefPtr<View> m_view;
   };
 }
 

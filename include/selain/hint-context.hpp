@@ -31,19 +31,19 @@
 
 namespace selain
 {
-  class Tab;
+  class View;
 
   class HintContext : public Glib::Object
   {
   public:
     static Glib::RefPtr<HintContext> create(bool open_in_new_tab = false);
 
-    void install(Tab& tab);
-    void uninstall(Tab& tab);
+    void install(View& tab);
+    void uninstall(View& tab);
 
-    void add_char(Tab& tab, Glib::ustring::value_type ch);
-    void remove_char(Tab& tab);
-    void activate_current_match(Tab& tab);
+    void add_hint_character(View& tab, Glib::ustring::value_type c);
+    void remove_hint_character(View& tab);
+    void activate_current_hint(View& tab);
 
   private:
     explicit HintContext(bool open_in_new_tab);

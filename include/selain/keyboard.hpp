@@ -34,11 +34,11 @@
 namespace selain
 {
   class MainWindow;
-  class Tab;
+  class View;
 
   namespace keyboard
   {
-    using BindingCallback = std::function<void(MainWindow&, Tab&)>;
+    using BindingCallback = std::function<void(MainWindow&, View&)>;
 
     struct Mapping
     {

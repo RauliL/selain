@@ -32,7 +32,7 @@
 
 #include <selain/command.hpp>
 #include <selain/command-entry.hpp>
-#include <selain/status-bar.hpp>
+#include <selain/mode.hpp>
 #include <selain/tab.hpp>
 
 namespace selain
@@ -75,22 +75,6 @@ namespace selain
      * Sets the current mode of the window.
      */
     void set_mode(Mode mode);
-
-    /**
-     * Returns the status bar of the window.
-     */
-    inline StatusBar& get_status_bar()
-    {
-      return m_status_bar;
-    }
-
-    /**
-     * Returns the status bar of the window.
-     */
-    inline const StatusBar& get_status_bar() const
-    {
-      return m_status_bar;
-    }
 
     /**
      * Returns the text boxed where commands are being typed.
@@ -147,8 +131,7 @@ namespace selain
 
     bool on_command_entry_key_press(::GdkEventKey* event);
     void on_command_received(const Glib::ustring& command);
-    void on_tab_status_change(Tab* tab, const Glib::ustring& status);
-    void on_tab_switch(Gtk::Widget* widget, ::guint page_number);
+    void on_tab_switch();
 
   private:
     command_mapping_type m_command_mapping;
@@ -157,7 +140,6 @@ namespace selain
     Mode m_mode;
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;
-    StatusBar m_status_bar;
     CommandEntry m_command_entry;
   };
 }

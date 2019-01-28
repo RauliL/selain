@@ -34,11 +34,11 @@
 namespace selain
 {
   class MainWindow;
-  class Tab;
+  class View;
 
   using CommandCallback = std::function<void(
     MainWindow&,
-    Tab&,
+    View&,
     const Glib::ustring&
   )>;
 

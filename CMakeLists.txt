@@ -15,6 +15,7 @@ ADD_EXECUTABLE(
   src/main.cpp
   src/main-window.cpp
   src/mode.cpp
+  src/split-view.cpp
   src/status-bar.cpp
   src/tab.cpp
   src/tab-label.cpp

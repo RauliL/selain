@@ -29,6 +29,8 @@
 #include <gtkmm.h>
 
 #include <selain/mode.hpp>
+#include <selain/web-context.hpp>
+#include <selain/web-settings.hpp>
 
 namespace selain
 {
@@ -42,7 +44,16 @@ namespace selain
   public:
     using signal_close_type = sigc::signal<
       void,
-      View&
+      View&,
+      const Glib::RefPtr<View>&
+    >;
+    using signal_split_type = sigc::signal<
+      void,
+      View&,
+      const Glib::RefPtr<WebContext>&,
+      const Glib::RefPtr<WebSettings>&,
+      const Glib::ustring&,
+      Gtk::Orientation
     >;
     using signal_title_changed_type = sigc::signal<
       void,
@@ -76,6 +87,13 @@ namespace selain
     const MainWindow* get_main_window() const;
 
     virtual void close();
+
+    void split(
+      const Glib::RefPtr<WebContext>& context,
+      const Glib::RefPtr<WebSettings>& settings,
+      const Glib::ustring& uri = Glib::ustring(),
+      Gtk::Orientation orientation = Gtk::ORIENTATION_VERTICAL
+    );
 
     void execute_command(const Glib::ustring& command);
 
@@ -112,6 +130,16 @@ namespace selain
       return m_signal_close;
     }
 
+    inline signal_split_type& signal_split()
+    {
+      return m_signal_split;
+    }
+
+    inline const signal_split_type& signal_split() const
+    {
+      return m_signal_split;
+    }
+
     inline signal_title_changed_type& signal_title_changed()
     {
       return m_signal_title_changed;
@@ -134,6 +162,7 @@ namespace selain
 
   private:
     signal_close_type m_signal_close;
+    signal_split_type m_signal_split;
     signal_title_changed_type m_signal_title_changed;
     signal_favicon_changed_type m_signal_favicon_changed;
   };

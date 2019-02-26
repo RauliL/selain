@@ -64,6 +64,38 @@ namespace selain
     }
 
     /**
+     * Returns the Web context used by the window to create new Web views.
+     */
+    inline const Glib::RefPtr<WebContext>& get_web_context()
+    {
+      return m_web_context;
+    }
+
+    /**
+     * Returns the Web context used by the window to create new Web views.
+     */
+    inline Glib::RefPtr<const WebContext> get_web_context() const
+    {
+      return m_web_context;
+    }
+
+    /**
+     * Returns the Web settings used by the window to create new Web views.
+     */
+    inline const Glib::RefPtr<WebSettings>& get_web_settings()
+    {
+      return m_web_settings;
+    }
+
+    /**
+     * Returns the Web settings used by the window to create new Web views.
+     */
+    inline Glib::RefPtr<const WebSettings> get_web_settings() const
+    {
+      return m_web_settings;
+    }
+
+    /**
      * Returns the current mode of the window.
      */
     inline Mode get_mode() const

@@ -55,7 +55,22 @@ namespace selain
   void
   View::close()
   {
-    signal_close().emit(*this);
+    signal_close().emit(*this, Glib::RefPtr<View>());
+  }
+
+  void
+  View::split(const Glib::RefPtr<WebContext>& context,
+              const Glib::RefPtr<WebSettings>& settings,
+              const Glib::ustring& uri,
+              Gtk::Orientation orientation)
+  {
+    signal_split().emit(
+      *this,
+      context,
+      settings,
+      uri,
+      orientation
+    );
   }
 
   void

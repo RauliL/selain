@@ -29,8 +29,6 @@
 #include <selain/hint-context.hpp>
 #include <selain/status-bar.hpp>
 #include <selain/view.hpp>
-#include <selain/web-context.hpp>
-#include <selain/web-settings.hpp>
 
 namespace selain
 {

@@ -24,6 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <selain/main-window.hpp>
+#include <selain/split-view.hpp>
 #include <selain/theme.hpp>
 #include <selain/web-view.hpp>
 
@@ -49,7 +50,11 @@ namespace selain
     )));
     m_view->signal_close().connect(sigc::hide<0>(sigc::mem_fun(
       this,
-      &Tab::on_close
+      &Tab::on_view_close
+    )));
+    m_view->signal_split().connect(sigc::hide<0>(sigc::mem_fun(
+      this,
+      &Tab::on_view_split
     )));
     m_view->signal_title_changed().connect(sigc::hide<0>(sigc::mem_fun(
       this,
@@ -88,11 +93,47 @@ namespace selain
   }
 
   void
-  Tab::on_close()
+  Tab::on_view_close(const Glib::RefPtr<View>& new_view)
   {
-    if (const auto window = m_view->get_main_window())
+    if (new_view)
+    {
+      remove();
+      add(*(m_view = new_view).get());
+      show_all();
+    }
+    else if (const auto window = m_view->get_main_window())
     {
       window->close_tab(*this);
+    }
+  }
+
+  void
+  Tab::on_view_split(const Glib::RefPtr<WebContext>& context,
+                     const Glib::RefPtr<WebSettings>& settings,
+                     const Glib::ustring& uri,
+                     Gtk::Orientation orientation)
+  {
+    const auto new_web_view = Glib::RefPtr<View>(new WebView(
+      context,
+      settings
+    ));
+
+    // TODO: Disconnect all signals!
+
+    remove();
+    m_view = Glib::RefPtr<View>(new SplitView(
+      new_web_view,
+      m_view,
+      orientation
+    ));
+    add(*m_view.get());
+    show_all();
+
+    // TODO: Reconnect all signals!
+
+    if (!uri.empty())
+    {
+      new_web_view->load_uri(uri);
     }
   }
 

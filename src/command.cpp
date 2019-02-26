@@ -39,6 +39,8 @@ namespace selain
   static void cmd_stop(MainWindow&, View&, const Glib::ustring&);
   static void cmd_tab_next(MainWindow&, View&, const Glib::ustring&);
   static void cmd_tab_prev(MainWindow&, View&, const Glib::ustring&);
+  static void cmd_split(MainWindow&, View&, const Glib::ustring&);
+  static void cmd_vsplit(MainWindow&, View&, const Glib::ustring&);
 
   static const std::vector<Command> command_list =
   {
@@ -50,9 +52,11 @@ namespace selain
     { "quit-all", "qa", cmd_quit_all },
     { "reload", "r", cmd_reload },
     { "reload!", "r!", cmd_force_reload },
+    { "split", "sp", cmd_split },
     { "stop", "s", cmd_stop },
     { "tab-next", "tn", cmd_tab_next },
     { "tab-prev", "tp", cmd_tab_prev },
+    { "vsplit", "vs", cmd_vsplit }
   };
 
   void
@@ -136,5 +140,27 @@ namespace selain
   cmd_tab_next(MainWindow& window, View&, const Glib::ustring&)
   {
     window.next_tab();
+  }
+
+  static void
+  cmd_split(MainWindow& window, View& view, const Glib::ustring& args)
+  {
+    view.split(
+      window.get_web_context(),
+      window.get_web_settings(),
+      args.empty() ? view.get_uri() : args,
+      Gtk::ORIENTATION_VERTICAL
+    );
+  }
+
+  static void
+  cmd_vsplit(MainWindow& window, View& view, const Glib::ustring& args)
+  {
+    view.split(
+      window.get_web_context(),
+      window.get_web_settings(),
+      args.empty() ? view.get_uri() : args,
+      Gtk::ORIENTATION_HORIZONTAL
+    );
   }
 }

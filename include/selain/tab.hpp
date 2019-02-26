@@ -28,8 +28,6 @@
 
 #include <selain/tab-label.hpp>
 #include <selain/view.hpp>
-#include <selain/web-context.hpp>
-#include <selain/web-settings.hpp>
 
 namespace selain
 {
@@ -81,7 +79,13 @@ namespace selain
   private:
     void on_close_button_clicked();
     bool on_focus_in();
-    void on_close();
+    void on_view_close(const Glib::RefPtr<View>& new_view);
+    void on_view_split(
+      const Glib::RefPtr<WebContext>& context,
+      const Glib::RefPtr<WebSettings>& settings,
+      const Glib::ustring& uri,
+      Gtk::Orientation orientation
+    );
     void on_title_changed(const Glib::ustring& title);
     void on_favicon_changed(::cairo_surface_t* icon);
 

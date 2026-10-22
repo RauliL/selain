@@ -27,6 +27,7 @@
 #include <selain/main-window.hpp>
 
 #include <chrono>
+#include <format>
 
 namespace selain
 {
@@ -515,7 +516,9 @@ namespace selain
       return;
     }
     clipboard->set_text(uri);
-    window.get_command_entry().show_notification("Yanked " + uri);
+    window.get_command_entry().show_notification(
+      std::format("Yanked {}", uri.raw())
+    );
   }
 
   static void

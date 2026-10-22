@@ -26,6 +26,8 @@
 #include <selain/main-window.hpp>
 #include <selain/utils.hpp>
 
+#include <format>
+
 namespace selain
 {
   static void cmd_hint_mode(MainWindow&, Tab&, const Glib::ustring&);
@@ -78,7 +80,7 @@ namespace selain
     const auto window = get_main_window();
 
     // Skip empty commands.
-    if (!length || std::all_of(command.begin(), command.end(), ::isspace))
+    if (utils::is_blank(command))
     {
       return;
     }
@@ -124,8 +126,8 @@ namespace selain
     }
 
     window->get_command_entry().show_notification(
-      "Error: Unknown command: " + command,
-      NotificationType::ERROR
+      std::format("Error: Unknown command: {}", command.raw()),
+      Notification::Type::ERROR
     );
   }
 

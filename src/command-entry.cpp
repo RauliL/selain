@@ -71,10 +71,14 @@ namespace selain
 
   void
   CommandEntry::show_notification(const Glib::ustring& text,
-                                  NotificationType type,
+                                  Notification::Type type,
                                   unsigned int timeout)
   {
-    const Notification notification(text, type, timeout);
+    const Notification notification{
+      .text = text,
+      .type = type,
+      .timeout = timeout
+    };
     std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
 
     m_notification_queue.push(notification);
@@ -92,18 +96,16 @@ namespace selain
   void
   CommandEntry::show_notification(const Notification& notification)
   {
-    const auto& text = std::get<0>(notification);
-
-    switch (std::get<1>(notification))
+    switch (notification.type)
     {
-      case NotificationType::INFO:
+      case Notification::Type::INFO:
         set_visible_child(m_info_label);
-        m_info_label.set_text(text);
+        m_info_label.set_text(notification.text);
         break;
 
-      case NotificationType::ERROR:
+      case Notification::Type::ERROR:
         set_visible_child(m_error_label);
-        m_error_label.set_text(text);
+        m_error_label.set_text(notification.text);
         break;
     }
   }
@@ -143,7 +145,7 @@ namespace selain
       show_notification(next_notification);
       Glib::signal_timeout().connect_once(
         sigc::mem_fun(*this, &CommandEntry::on_notification_timeout),
-        std::get<2>(next_notification) * 1000
+        next_notification.timeout * 1000
       );
     }
   }

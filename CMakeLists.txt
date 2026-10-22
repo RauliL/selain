@@ -19,7 +19,6 @@ ADD_EXECUTABLE(
   src/tab.cpp
   src/tab-label.cpp
   src/theme.cpp
-  src/utils.cpp
   src/web-context.cpp
   src/web-settings.cpp
 )
@@ -27,7 +26,7 @@ ADD_EXECUTABLE(
 TARGET_COMPILE_FEATURES(
   selain
   PRIVATE
-    cxx_std_17
+    cxx_std_20
 )
 
 TARGET_INCLUDE_DIRECTORIES(

@@ -23,8 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_MODE_HPP_GUARD
-#define SELAIN_MODE_HPP_GUARD
+#pragma once
 
 namespace selain
 {
@@ -42,7 +41,7 @@ namespace selain
     /** Hint mode where user can click elements with keyboard shortcuts. */
     HINT,
     /** Hint mode where links are opened into new tab. */
-    HINT_NEW_TAB
+    HINT_NEW_TAB,
   };
 
   /**
@@ -51,4 +50,3 @@ namespace selain
   const char* get_mode_text(Mode mode);
 }
 
-#endif /* !SELAIN_MODE_HPP_GUARD */

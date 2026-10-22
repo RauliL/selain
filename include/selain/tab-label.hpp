@@ -23,8 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_TAB_LABEL_HPP_GUARD
-#define SELAIN_TAB_LABEL_HPP_GUARD
+#pragma once
 
 #include <gtkmm.h>
 
@@ -53,4 +52,3 @@ namespace selain
   };
 }
 
-#endif /* !SELAIN_TAB_LABEL_HPP_GUARD */

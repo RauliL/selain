@@ -23,8 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_WEB_CONTEXT_HPP_GUARD
-#define SELAIN_WEB_CONTEXT_HPP_GUARD
+#pragma once
 
 #include <glibmm.h>
 #include <webkit/webkit.h>
@@ -56,4 +55,3 @@ namespace selain
   };
 }
 
-#endif /* !SELAIN_WEB_CONTEXT_HPP_GUARD */

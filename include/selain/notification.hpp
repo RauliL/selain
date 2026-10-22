@@ -23,26 +23,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_NOTIFICATION_HPP_GUARD
-#define SELAIN_NOTIFICATION_HPP_GUARD
-
-#include <tuple>
+#pragma once
 
 #include <glibmm.h>
 
 namespace selain
 {
-  enum class NotificationType
+  struct Notification
   {
-    INFO,
-    ERROR
-  };
+    enum class Type
+    {
+      INFO,
+      ERROR,
+    };
 
-  using Notification = std::tuple<
-    Glib::ustring,
-    NotificationType,
-    unsigned int
-  >;
+    Glib::ustring text;
+    Type type;
+    unsigned int timeout;
+  };
 }
 
-#endif /* !SELAIN_NOTIFICATION_HPP_GUARD */

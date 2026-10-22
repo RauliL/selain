@@ -25,6 +25,9 @@
  */
 #include <selain/main-window.hpp>
 
+#include <cctype>
+#include <format>
+
 #define SELAIN_JS_STRINGIFY(source) #source
 
 namespace selain
@@ -121,15 +124,15 @@ namespace selain
   void
   HintContext::add_char(Tab& tab, Glib::ustring::value_type ch)
   {
-    char buffer[7];
-
     if (!std::isalnum(ch))
     {
       return;
     }
-    std::snprintf(buffer, 7, "\\u%04x", static_cast<int>(ch));
     tab.execute_script(
-      Glib::ustring::compose("window.SelainHintMode.addChar('%1');", buffer),
+      std::format(
+        "window.SelainHintMode.addChar('\\u{:04x}');",
+        static_cast<int>(ch)
+      ),
       nullptr,
       hint_mode_callback,
       static_cast<void*>(&tab)

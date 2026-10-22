@@ -23,8 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_TAB_HPP_GUARD
-#define SELAIN_TAB_HPP_GUARD
+#pragma once
 
 #include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
@@ -140,4 +139,3 @@ namespace selain
   };
 }
 
-#endif /* !SELAIN_TAB_HPP_GUARD */

@@ -26,6 +26,8 @@
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
 
+#include <format>
+
 namespace selain
 {
   static void on_load_changed(
@@ -197,7 +199,10 @@ namespace selain
       ::webkit_web_view_load_uri(m_web_view, uri.c_str());
       g_free(scheme);
     } else {
-      ::webkit_web_view_load_uri(m_web_view, ("http://" + uri).c_str());
+      ::webkit_web_view_load_uri(
+        m_web_view,
+        std::format("http://{}", uri.raw()).c_str()
+      );
     }
   }
 
@@ -347,7 +352,7 @@ namespace selain
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
           tab->set_status(uri, true);
-          tab->set_status(Glib::ustring("Loading ") + uri + U'\u2026');
+          tab->set_status(std::format("Loading {}…", uri));
         }
         break;
 
@@ -355,7 +360,7 @@ namespace selain
         tab->get_tab_label().set_text("Redirecting\xe2\x80\xa6");
         if (auto uri = ::webkit_web_view_get_uri(web_view))
         {
-          tab->set_status(Glib::ustring("Redirecting to ") + uri + U'\u2026');
+          tab->set_status(std::format("Redirecting to {}…", uri));
         }
         break;
 

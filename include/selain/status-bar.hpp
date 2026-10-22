@@ -23,8 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_STATUS_BAR_HPP_GUARD
-#define SELAIN_STATUS_BAR_HPP_GUARD
+#pragma once
 
 #include <selain/mode.hpp>
 
@@ -49,4 +48,3 @@ namespace selain
   };
 }
 
-#endif /* !SELAIN_STATUS_BAR_HPP_GUARD */

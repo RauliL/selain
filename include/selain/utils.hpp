@@ -23,55 +23,70 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_UTILS_HPP_GUARD
-#define SELAIN_UTILS_HPP_GUARD
+#pragma once
 
-#include <pangomm.h>
-
+#include <algorithm>
 #include <cctype>
+#include <concepts>
+#include <cstddef>
 
-namespace selain
+namespace selain::utils
 {
-  namespace utils
+  template<typename T>
+  concept TrimableString = requires(const T& s, std::size_t i, std::size_t n)
   {
-    /**
-     * Constructs and returns monospaced font description.
-     */
-    const Pango::FontDescription& get_monospace_font();
+    { s.length() } -> std::convertible_to<std::size_t>;
+    { s[i] };
+    { s.substr(i, n) } -> std::convertible_to<T>;
+  };
 
-    /**
-     * Strips whitespace from beginning and of end of given string and returns
-     * result.
-     */
-    template<class T>
-    T string_trim(const T& input)
+  /**
+   * Tests whether given string is empty or contains only whitespace
+   * characters.
+   */
+  template<class T>
+  bool is_blank(const T& input)
+  {
+    return input.empty() || std::all_of(
+      std::begin(input),
+      std::end(input),
+      [](T::const_reference c) -> bool
+      {
+        return std::isspace(static_cast<int>(c));
+      }
+    );
+  }
+
+  /**
+   * Strips whitespace from beginning and of end of given string and returns
+   * result.
+   */
+  template<TrimableString T>
+  T string_trim(const T& input)
+  {
+    const auto length = input.length();
+    std::size_t i;
+    std::size_t j;
+
+    for (i = 0; i < length; ++i)
     {
-      const auto length = input.length();
-      std::size_t i;
-      std::size_t j;
-
-      for (i = 0; i < length; ++i)
+      if (!std::isspace(input[i]))
       {
-        if (!std::isspace(input[i]))
-        {
-          break;
-        }
+        break;
       }
-      for (j = length; j != 0; --j)
-      {
-        if (!std::isspace(input[j - 1]))
-        {
-          break;
-        }
-      }
-      if (i != 0 && j != length)
-      {
-        return input.substr(i, j - i);
-      }
-
-      return input;
     }
+    for (j = length; j != 0; --j)
+    {
+      if (!std::isspace(input[j - 1]))
+      {
+        break;
+      }
+    }
+    if (i != 0 && j != length)
+    {
+      return input.substr(i, j - i);
+    }
+
+    return input;
   }
 }
-
-#endif /* !SELAIN_UTILS_HPP_GUARD */

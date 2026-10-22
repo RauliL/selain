@@ -23,8 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SELAIN_COMMAND_ENTRY_HPP_GUARD
-#define SELAIN_COMMAND_ENTRY_HPP_GUARD
+#pragma once
 
 #include <mutex>
 #include <queue>
@@ -70,7 +69,7 @@ namespace selain
      */
     void show_notification(
       const Glib::ustring& text,
-      NotificationType type = NotificationType::INFO,
+      Notification::Type type = Notification::Type::INFO,
       unsigned int timeout = 5
     );
 
@@ -96,4 +95,3 @@ namespace selain
   };
 }
 
-#endif /* !SELAIN_COMMAND_ENTRY_HPP_GUARD */

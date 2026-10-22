@@ -24,7 +24,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <selain/status-bar.hpp>
-#include <selain/theme.hpp>
 
 namespace selain
 {
@@ -32,30 +31,16 @@ namespace selain
     : Gtk::Box(Gtk::Orientation::HORIZONTAL)
     , m_mode_label("NORMAL")
   {
-    const auto& style_provider = theme::get_status_bar_style_provider();
-
     add_css_class("selain-status-bar");
-    get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     m_mode_label.add_css_class("mode-label");
     m_mode_label.set_halign(Gtk::Align::CENTER);
     m_mode_label.set_justify(Gtk::Justification::CENTER);
-    m_mode_label.get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     m_status_label.add_css_class("status-label");
     m_status_label.set_halign(Gtk::Align::START);
     m_status_label.set_justify(Gtk::Justification::LEFT);
     m_status_label.set_hexpand(true);
-    m_status_label.get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     append(m_mode_label);
     append(m_status_label);

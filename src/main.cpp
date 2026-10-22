@@ -25,6 +25,7 @@
  */
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
+#include <selain/theme.hpp>
 
 static selain::MainWindow*
 get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
@@ -50,6 +51,7 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
   int argc = 0;
   auto argv = command_line->get_arguments(argc);
   static bool keyboard_initialized = false;
+  static bool theme_initialized = false;
 
   app->activate();
 
@@ -61,6 +63,12 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
   {
     selain::keyboard::initialize();
     keyboard_initialized = true;
+  }
+
+  if (!theme_initialized)
+  {
+    selain::theme::initialize();
+    theme_initialized = true;
   }
 
   for (int i = 1; i < argc; ++i)

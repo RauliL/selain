@@ -25,114 +25,130 @@
  */
 #include <selain/theme.hpp>
 
-namespace selain
+#include <filesystem>
+#include <format>
+
+namespace selain::theme
 {
-  namespace theme
+  const Gdk::RGBA window_background("#262626");
+  const Gdk::RGBA window_foreground("#b3deef");
+  const Gdk::RGBA status_bar_background("#444444");
+  const Gdk::RGBA status_bar_foreground("#a7d6f8");
+  const Gdk::RGBA status_bar_error_background("#f43753");
+  const Gdk::RGBA status_bar_error_foreground("#eeeeee");
+  const Gdk::RGBA mode_bar_normal_background("#b3deef");
+  const Gdk::RGBA mode_bar_normal_foreground("#282828");
+  const Gdk::RGBA mode_bar_insert_background("#d7d75f");
+  const Gdk::RGBA mode_bar_insert_foreground("#262626");
+
+  static void
+  load_default_css()
   {
-    const Gdk::RGBA window_background("#262626");
-    const Gdk::RGBA window_foreground("#b3deef");
-    const Gdk::RGBA status_bar_background("#444444");
-    const Gdk::RGBA status_bar_foreground("#a7d6f8");
-    const Gdk::RGBA status_bar_error_background("#f43753");
-    const Gdk::RGBA status_bar_error_foreground("#eeeeee");
-    const Gdk::RGBA mode_bar_normal_background("#b3deef");
-    const Gdk::RGBA mode_bar_normal_foreground("#282828");
-    const Gdk::RGBA mode_bar_insert_background("#d7d75f");
-    const Gdk::RGBA mode_bar_insert_foreground("#262626");
+    auto provider = Gtk::CssProvider::create();
 
-    const Glib::RefPtr<Gtk::CssProvider>&
-    get_window_style_provider()
+    provider->load_from_string(
+      std::format(
+        "* {{\n"
+        "  --selain-window-background: {};\n"
+        "  --selain-window-foreground: {};\n"
+        "  --selain-status-bar-background: {};\n"
+        "  --selain-status-bar-foreground: {};\n"
+        "  --selain-status-bar-error-background: {};\n"
+        "  --selain-status-bar-error-foreground: {};\n"
+        "  --selain-mode-bar-normal-background: {};\n"
+        "  --selain-mode-bar-normal-foreground: {};\n"
+        "  --selain-mode-bar-insert-background: {};\n"
+        "  --selain-mode-bar-insert-foreground: {};\n"
+        "}}\n"
+        ".selain-window {{\n"
+        "  background-color: var(--selain-window-background);\n"
+        "}}\n"
+        ".selain-status-bar {{\n"
+        "  background-color: var(--selain-status-bar-background);\n"
+        "}}\n"
+        ".selain-status-bar label {{\n"
+        "  font-family: monospace;\n"
+        "  padding: 0.1em 0.4em;\n"
+        "}}\n"
+        ".selain-status-bar .mode-label {{\n"
+        "  background-color: var(--selain-mode-bar-normal-background);\n"
+        "  color: var(--selain-mode-bar-normal-foreground);\n"
+        "}}\n"
+        ".selain-status-bar .mode-label.mode-insert {{\n"
+        "  background-color: var(--selain-mode-bar-insert-background);\n"
+        "  color: var(--selain-mode-bar-insert-foreground);\n"
+        "}}\n"
+        ".selain-status-bar .status-label {{\n"
+        "  background-color: var(--selain-status-bar-background);\n"
+        "  color: var(--selain-status-bar-foreground);\n"
+        "}}\n"
+        ".selain-command-entry {{\n"
+        "  background-color: var(--selain-window-background);\n"
+        "}}\n"
+        ".selain-command-entry entry {{\n"
+        "  background: var(--selain-window-background);\n"
+        "  border: none;\n"
+        "  color: var(--selain-status-bar-error-foreground);\n"
+        "  font-family: monospace;\n"
+        "  margin: 0;\n"
+        "  outline: none;\n"
+        "  padding: 0.2em;\n"
+        "}}\n"
+        ".selain-command-entry .notification-info {{\n"
+        "  background-color: var(--selain-window-background);\n"
+        "  color: var(--selain-window-foreground);\n"
+        "  font-family: monospace;\n"
+        "}}\n"
+        ".selain-command-entry .notification-error {{\n"
+        "  background-color: var(--selain-status-bar-error-background);\n"
+        "  color: var(--selain-status-bar-error-foreground);\n"
+        "  font-family: monospace;\n"
+        "}}\n",
+        window_background.to_string().raw(),
+        window_foreground.to_string().raw(),
+        status_bar_background.to_string().raw(),
+        status_bar_foreground.to_string().raw(),
+        status_bar_error_background.to_string().raw(),
+        status_bar_error_foreground.to_string().raw(),
+        mode_bar_normal_background.to_string().raw(),
+        mode_bar_normal_foreground.to_string().raw(),
+        mode_bar_insert_background.to_string().raw(),
+        mode_bar_insert_foreground.to_string().raw()
+      )
+    );
+    Gtk::StyleProvider::add_provider_for_display(
+      Gdk::Display::get_default(),
+      provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
+  }
+
+  static void
+  load_custom_css()
+  {
+    const auto path = Glib::build_filename(
+      Glib::get_user_config_dir(),
+      "selain",
+      "style.css"
+    );
+
+    if (std::filesystem::exists(path))
     {
-      static Glib::RefPtr<Gtk::CssProvider> provider;
-      static bool initialized = false;
+      auto provider = Gtk::CssProvider::create();
 
-      if (!initialized)
-      {
-        initialized = true;
-        provider = Gtk::CssProvider::create();
-        provider->load_from_string(
-          ".selain-window {\n"
-          "  background-color: #262626;\n"
-          "}\n"
-        );
-      }
-
-      return provider;
+      provider->load_from_path(path);
+      Gtk::StyleProvider::add_provider_for_display(
+        Gdk::Display::get_default(),
+        provider,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+      );
     }
+  }
 
-    const Glib::RefPtr<Gtk::CssProvider>&
-    get_status_bar_style_provider()
-    {
-      static Glib::RefPtr<Gtk::CssProvider> provider;
-      static bool initialized = false;
-
-      if (!initialized)
-      {
-        initialized = true;
-        provider = Gtk::CssProvider::create();
-        provider->load_from_string(
-          ".selain-status-bar {\n"
-          "  background-color: #444444;\n"
-          "}\n"
-          ".selain-status-bar label {\n"
-          "  font-family: monospace;\n"
-          "  padding: 0.1em 0.4em;\n"
-          "}\n"
-          ".selain-status-bar .mode-label {\n"
-          "  background-color: #b3deef;\n"
-          "  color: #282828;\n"
-          "}\n"
-          ".selain-status-bar .mode-label.mode-insert {\n"
-          "  background-color: #d7d75f;\n"
-          "  color: #262626;\n"
-          "}\n"
-          ".selain-status-bar .status-label {\n"
-          "  background-color: #444444;\n"
-          "  color: #a7d6f8;\n"
-          "}\n"
-        );
-      }
-
-      return provider;
-    }
-
-    const Glib::RefPtr<Gtk::CssProvider>&
-    get_command_entry_style_provider()
-    {
-      static Glib::RefPtr<Gtk::CssProvider> provider;
-      static bool initialized = false;
-
-      if (!initialized)
-      {
-        initialized = true;
-        provider = Gtk::CssProvider::create();
-        provider->load_from_string(
-          ".selain-command-entry {\n"
-          "  background-color: #262626;\n"
-          "}\n"
-          ".selain-command-entry entry {\n"
-          "  background: #262626;\n"
-          "  border: none;\n"
-          "  color: #eeeeee;\n"
-          "  font-family: monospace;\n"
-          "  margin: 0;\n"
-          "  outline: none;\n"
-          "  padding: 0.2em;\n"
-          "}\n"
-          ".selain-command-entry .notification-info {\n"
-          "  background-color: #262626;\n"
-          "  color: #b3deef;\n"
-          "  font-family: monospace;\n"
-          "}\n"
-          ".selain-command-entry .notification-error {\n"
-          "  background-color: #f43753;\n"
-          "  color: #eeeeee;\n"
-          "  font-family: monospace;\n"
-          "}\n"
-        );
-      }
-
-      return provider;
-    }
+  void
+  initialize()
+  {
+    load_default_css();
+    load_custom_css();
   }
 }

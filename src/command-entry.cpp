@@ -24,38 +24,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <selain/command-entry.hpp>
-#include <selain/theme.hpp>
 
 namespace selain
 {
   CommandEntry::CommandEntry()
   {
-    const auto& style_provider = theme::get_command_entry_style_provider();
-
     add_css_class("selain-command-entry");
-    get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
-
-    m_entry.get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     m_info_label.add_css_class("notification-info");
     m_info_label.set_halign(Gtk::Align::START);
-    m_info_label.get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     m_error_label.add_css_class("notification-error");
     m_error_label.set_halign(Gtk::Align::START);
-    m_error_label.get_style_context()->add_provider(
-      style_provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     add(m_entry, "entry");
     add(m_info_label, "notification:info");

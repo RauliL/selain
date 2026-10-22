@@ -24,7 +24,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <selain/main-window.hpp>
-#include <selain/theme.hpp>
 
 namespace selain
 {
@@ -67,10 +66,6 @@ namespace selain
     ));
 
     add_css_class("selain-window");
-    m_box.get_style_context()->add_provider(
-      theme::get_window_style_provider(),
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
 
     maximize();
   }

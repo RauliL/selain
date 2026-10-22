@@ -25,31 +25,37 @@
  */
 #include <selain/command-entry.hpp>
 #include <selain/theme.hpp>
-#include <selain/utils.hpp>
 
 namespace selain
 {
   CommandEntry::CommandEntry()
   {
-    const auto& font = utils::get_monospace_font();
+    const auto& style_provider = theme::get_command_entry_style_provider();
 
-    override_background_color(theme::window_background);
-
-    m_entry.override_font(font);
-    m_entry.get_style_context()->add_provider(
-      theme::get_command_entry_style_provider(),
-      1000
+    add_css_class("selain-command-entry");
+    get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
     );
 
-    m_info_label.set_halign(Gtk::ALIGN_START);
-    m_info_label.override_background_color(theme::window_background);
-    m_info_label.override_color(theme::window_foreground);
-    m_info_label.override_font(font);
+    m_entry.get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
 
-    m_error_label.set_halign(Gtk::ALIGN_START);
-    m_error_label.override_background_color(theme::status_bar_error_background);
-    m_error_label.override_color(theme::status_bar_error_foreground);
-    m_error_label.override_font(font);
+    m_info_label.add_css_class("notification-info");
+    m_info_label.set_halign(Gtk::Align::START);
+    m_info_label.get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
+
+    m_error_label.add_css_class("notification-error");
+    m_error_label.set_halign(Gtk::Align::START);
+    m_error_label.get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
 
     add(m_entry, "entry");
     add(m_info_label, "notification:info");
@@ -58,12 +64,9 @@ namespace selain
     set_visible_child(m_entry);
 
     m_entry.signal_activate().connect(sigc::mem_fun(
-      this,
+      *this,
       &CommandEntry::on_activate
     ));
-
-    add(m_entry);
-    show_all();
   }
 
   void

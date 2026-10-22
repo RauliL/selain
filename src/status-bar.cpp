@@ -25,39 +25,40 @@
  */
 #include <selain/status-bar.hpp>
 #include <selain/theme.hpp>
-#include <selain/utils.hpp>
 
 namespace selain
 {
   StatusBar::StatusBar()
-    : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
+    : Gtk::Box(Gtk::Orientation::HORIZONTAL)
     , m_mode_label("NORMAL")
   {
-    const auto& font = utils::get_monospace_font();
     const auto& style_provider = theme::get_status_bar_style_provider();
 
-    set_border_width(0);
+    add_css_class("selain-status-bar");
+    get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
 
-    pack_start(m_mode_label, Gtk::PACK_SHRINK);
-    pack_start(m_status_label, true, true);
+    m_mode_label.add_css_class("mode-label");
+    m_mode_label.set_halign(Gtk::Align::CENTER);
+    m_mode_label.set_justify(Gtk::Justification::CENTER);
+    m_mode_label.get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
 
-    override_background_color(theme::status_bar_background);
+    m_status_label.add_css_class("status-label");
+    m_status_label.set_halign(Gtk::Align::START);
+    m_status_label.set_justify(Gtk::Justification::LEFT);
+    m_status_label.set_hexpand(true);
+    m_status_label.get_style_context()->add_provider(
+      style_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
 
-    m_mode_label.override_font(font);
-    m_mode_label.override_background_color(theme::mode_bar_normal_background);
-    m_mode_label.override_color(theme::mode_bar_normal_foreground);
-    m_mode_label.set_halign(Gtk::ALIGN_CENTER);
-    m_mode_label.set_justify(Gtk::JUSTIFY_CENTER);
-    m_mode_label.get_style_context()->add_provider(style_provider, 1000);
-
-    m_status_label.override_font(font);
-    m_status_label.override_background_color(theme::status_bar_background);
-    m_status_label.override_color(theme::status_bar_foreground);
-    m_status_label.set_halign(Gtk::ALIGN_START);
-    m_status_label.set_justify(Gtk::JUSTIFY_LEFT);
-    m_status_label.get_style_context()->add_provider(style_provider, 1000);
-
-    show_all_children();
+    append(m_mode_label);
+    append(m_status_label);
   }
 
   void
@@ -66,11 +67,9 @@ namespace selain
     m_mode_label.set_text(get_mode_text(mode));
     if (mode == Mode::INSERT)
     {
-      m_mode_label.override_background_color(theme::mode_bar_insert_background);
-      m_mode_label.override_color(theme::mode_bar_insert_foreground);
+      m_mode_label.add_css_class("mode-insert");
     } else {
-      m_mode_label.override_background_color(theme::mode_bar_normal_background);
-      m_mode_label.override_color(theme::mode_bar_normal_foreground);
+      m_mode_label.remove_css_class("mode-insert");
     }
   }
 

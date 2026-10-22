@@ -33,9 +33,19 @@ namespace selain
   static const int keypress_timeout = 2;
   static std::shared_ptr<keyboard::Mapping> top_mapping;
 
-  static ::gboolean key_event_normal_mode(MainWindow&, Tab&, ::GdkEventKey*);
-  static ::gboolean key_event_insert_mode(MainWindow&, ::GdkEventKey*);
-  static ::gboolean key_event_hint_mode(MainWindow&, Tab&, ::GdkEventKey*);
+  static ::gboolean key_event_normal_mode(
+    MainWindow&,
+    Tab&,
+    ::guint keyval,
+    ::GdkModifierType state
+  );
+  static ::gboolean key_event_insert_mode(MainWindow&, ::guint keyval);
+  static ::gboolean key_event_hint_mode(
+    MainWindow&,
+    Tab&,
+    ::guint keyval,
+    ::GdkModifierType state
+  );
   static void add_mapping(
     const std::u32string&,
     const keyboard::BindingCallback&
@@ -115,7 +125,11 @@ namespace selain
     }
 
     ::gboolean
-    on_tab_key_press(::WebKitWebView*, ::GdkEventKey* event, Tab* tab)
+    on_tab_key_pressed(::GtkEventControllerKey*,
+                       ::guint keyval,
+                       ::guint,
+                       ::GdkModifierType state,
+                       Tab* tab)
     {
       const auto window = tab->get_main_window();
 
@@ -126,14 +140,14 @@ namespace selain
       switch (window->get_mode())
       {
         case Mode::NORMAL:
-          return key_event_normal_mode(*window, *tab, event);
+          return key_event_normal_mode(*window, *tab, keyval, state);
 
         case Mode::INSERT:
-          return key_event_insert_mode(*window, event);
+          return key_event_insert_mode(*window, keyval);
 
         case Mode::HINT:
         case Mode::HINT_NEW_TAB:
-          return key_event_hint_mode(*window, *tab, event);
+          return key_event_hint_mode(*window, *tab, keyval, state);
 
         default:
           return FALSE;
@@ -142,11 +156,14 @@ namespace selain
   }
 
   static ::gboolean
-  key_event_normal_mode(MainWindow& window, Tab& tab, ::GdkEventKey* event)
+  key_event_normal_mode(MainWindow& window,
+                        Tab& tab,
+                        ::guint keyval,
+                        ::GdkModifierType state)
   {
     static std::shared_ptr<keyboard::Mapping> last_mapping;
     static std::chrono::time_point<std::chrono::system_clock> last_keypress;
-    const bool is_control = event->state & GDK_CONTROL_MASK;
+    const bool is_control = state & GDK_CONTROL_MASK;
     const auto now = std::chrono::system_clock::now();
     keyboard::Mapping::mapping_type::const_iterator entry;
 
@@ -170,13 +187,13 @@ namespace selain
 
     if (is_control)
     {
-      entry = last_mapping->control_mapping.find(event->keyval);
+      entry = last_mapping->control_mapping.find(keyval);
       if (entry == std::end(last_mapping->control_mapping))
       {
         return TRUE;
       }
     } else {
-      entry = last_mapping->mapping.find(event->keyval);
+      entry = last_mapping->mapping.find(keyval);
       if (entry == std::end(last_mapping->mapping))
       {
         return TRUE;
@@ -197,9 +214,9 @@ namespace selain
   }
 
   static ::gboolean
-  key_event_insert_mode(MainWindow& window, ::GdkEventKey* event)
+  key_event_insert_mode(MainWindow& window, ::guint keyval)
   {
-    if (event->keyval == GDK_KEY_Escape)
+    if (keyval == GDK_KEY_Escape)
     {
       window.set_mode(Mode::NORMAL);
 
@@ -210,11 +227,14 @@ namespace selain
   }
 
   static ::gboolean
-  key_event_hint_mode(MainWindow& window, Tab& tab, ::GdkEventKey* event)
+  key_event_hint_mode(MainWindow& window,
+                      Tab& tab,
+                      ::guint keyval,
+                      ::GdkModifierType state)
   {
     const auto& context = tab.get_hint_context();
 
-    if (event->keyval == GDK_KEY_Escape)
+    if (keyval == GDK_KEY_Escape)
     {
       if (context)
       {
@@ -222,24 +242,23 @@ namespace selain
       }
       window.set_mode(Mode::NORMAL);
     }
-    else if (event->keyval == GDK_KEY_BackSpace)
+    else if (keyval == GDK_KEY_BackSpace)
     {
       if (context)
       {
         context->remove_char(tab);
       }
     }
-    else if (event->keyval == GDK_KEY_Return ||
-             event->keyval == GDK_KEY_KP_Enter)
+    else if (keyval == GDK_KEY_Return || keyval == GDK_KEY_KP_Enter)
     {
       if (context)
       {
         context->activate_current_match(tab);
       }
     }
-    else if (!(event->state & GDK_CONTROL_MASK))
+    else if (!(state & GDK_CONTROL_MASK))
     {
-      const auto c = ::gdk_keyval_to_unicode(event->keyval);
+      const auto c = ::gdk_keyval_to_unicode(keyval);
 
       if (context && std::isalnum(c))
       {
@@ -320,7 +339,7 @@ namespace selain
   }
 
   static void
-  bind_mode_hint_new_tab(MainWindow& window, Tab& tab)
+  bind_mode_hint_new_tab(MainWindow& window, Tab&)
   {
     window.set_mode(Mode::HINT_NEW_TAB);
   }
@@ -356,7 +375,7 @@ namespace selain
   }
 
   static void
-  bind_tab_prev(MainWindow& window, Tab& tab)
+  bind_tab_prev(MainWindow& window, Tab&)
   {
     window.prev_tab();
   }
@@ -438,45 +457,60 @@ namespace selain
   }
 
   static void
-  bind_paste(MainWindow&, Tab& tab)
+  bind_paste(MainWindow& window, Tab& tab)
   {
-    const auto clipboard = Gtk::Clipboard::get();
-    Glib::ustring uri;
+    const auto clipboard = window.get_clipboard();
 
-    if (!clipboard || !clipboard->wait_is_text_available())
-    {
-      return;
-    }
-    uri = clipboard->wait_for_text();
-    if (!uri.empty())
-    {
-      tab.load_uri(uri);
-    }
+    clipboard->read_text_async(
+      [&tab, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result)
+      {
+        try
+        {
+          const auto uri = clipboard->read_text_finish(result);
+
+          if (!uri.empty())
+          {
+            tab.load_uri(uri);
+          }
+        }
+        catch (const Glib::Error&)
+        {
+        }
+      }
+    );
   }
 
   static void
-  bind_paste_open_tab(MainWindow& window, Tab& tab)
+  bind_paste_open_tab(MainWindow& window, Tab&)
   {
-    const auto clipboard = Gtk::Clipboard::get();
+    const auto clipboard = window.get_clipboard();
 
-    if (clipboard && clipboard->wait_is_text_available())
-    {
-      const auto uri = clipboard->wait_for_text();
-
-      if (!uri.empty())
+    clipboard->read_text_async(
+      [&window, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result)
       {
-        window.open_tab(uri);
+        try
+        {
+          const auto uri = clipboard->read_text_finish(result);
+
+          if (!uri.empty())
+          {
+            window.open_tab(uri);
+          }
+        }
+        catch (const Glib::Error&)
+        {
+        }
       }
-    }
+    );
   }
 
   static void
   bind_yank(MainWindow& window, Tab& tab)
   {
-    const auto clipboard = Gtk::Clipboard::get();
+    const auto clipboard = window.get_clipboard();
     const auto uri = tab.get_uri();
 
-    if (!clipboard || uri.empty())
+    if (uri.empty())
     {
       return;
     }

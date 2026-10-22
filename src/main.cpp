@@ -26,62 +26,72 @@
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
 
-#include <iostream>
-
-static int on_command_line(
-  const Glib::RefPtr<Gio::ApplicationCommandLine>&,
-  const Glib::RefPtr<Gtk::Application>&,
-  selain::MainWindow*
-);
-
-int
-main(int argc, char** argv)
+static selain::MainWindow*
+get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
 {
-  const auto app = Gtk::Application::create(
-    "pw.rauli.selain",
-    Gio::APPLICATION_HANDLES_COMMAND_LINE
-  );
-  selain::MainWindow window(app);
+  const auto& windows = app->get_windows();
 
-  app->signal_command_line().connect(
-    sigc::bind(sigc::ptr_fun(&on_command_line), app, &window),
-    false
-  );
+  if (!windows.empty())
+  {
+    return static_cast<selain::MainWindow*>(windows.front());
+  }
 
-  return app->run(window, argc, argv);
+  const auto window = Gtk::make_managed<selain::MainWindow>(app);
+
+  app->add_window(*window);
+
+  return window;
 }
 
 static int
 on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
-                const Glib::RefPtr<Gtk::Application>& app,
-                selain::MainWindow* window)
+                const Glib::RefPtr<Gtk::Application>& app)
 {
-  int argc;
+  int argc = 0;
   auto argv = command_line->get_arguments(argc);
-  Glib::OptionContext context;
-  Glib::OptionGroup gtk_group(::gtk_get_option_group(true));
-
-  context.add_group(gtk_group);
-
-  if (!context.parse(argc, argv))
-  {
-    std::exit(EXIT_FAILURE);
-  }
+  static bool keyboard_initialized = false;
 
   app->activate();
 
-  selain::keyboard::initialize();
+  const auto window = get_or_create_window(app);
+
+  window->present();
+
+  if (!keyboard_initialized)
+  {
+    selain::keyboard::initialize();
+    keyboard_initialized = true;
+  }
 
   for (int i = 1; i < argc; ++i)
   {
     window->open_tab(argv[i]);
   }
 
-  if (argc == 1)
+  if (argc == 1 && !window->get_current_tab())
   {
     // TODO: Make the initial home page URL customizable through settings.
     window->open_tab("https://duckduckgo.com");
   }
 
   return EXIT_SUCCESS;
+}
+
+int
+main(int argc, char** argv)
+{
+  const auto app = Gtk::Application::create(
+    "pw.rauli.selain",
+    Gio::Application::Flags::HANDLES_COMMAND_LINE
+  );
+
+  app->signal_activate().connect([app]() {
+    get_or_create_window(app)->present();
+  });
+  app->signal_command_line().connect(
+    sigc::bind(sigc::ptr_fun(&on_command_line), app),
+    false
+  );
+
+  return app->run(argc, argv);
 }

@@ -28,24 +28,21 @@
 namespace selain
 {
   TabLabel::TabLabel()
-    : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
+    : Gtk::Box(Gtk::Orientation::HORIZONTAL)
     , m_text("Untitled")
   {
-    m_icon.set_from_icon_name("text-x-generic", Gtk::ICON_SIZE_BUTTON);
+    m_icon.set_from_icon_name("text-x-generic");
     m_icon.set_margin_end(5);
 
-    m_close_button.set_relief(Gtk::RELIEF_NONE);
+    m_close_button.set_has_frame(false);
     m_close_button.set_focus_on_click(false);
-    m_close_button.set_image_from_icon_name(
-      "window-close",
-      Gtk::ICON_SIZE_BUTTON
-    );
+    m_close_button.set_icon_name("window-close-symbolic");
     m_close_button.set_margin_start(5);
 
-    pack_start(m_icon, Gtk::PACK_SHRINK);
-    pack_start(m_text);
-    pack_start(m_close_button, Gtk::PACK_SHRINK);
-    show_all();
+    append(m_icon);
+    append(m_text);
+    m_text.set_hexpand(true);
+    append(m_close_button);
   }
 
   void
@@ -57,13 +54,13 @@ namespace selain
   }
 
   void
-  TabLabel::set_icon(const Glib::RefPtr<Gdk::Pixbuf>& icon)
+  TabLabel::set_icon(const Glib::RefPtr<Gdk::Paintable>& icon)
   {
     if (icon)
     {
       m_icon.set(icon);
     } else {
-      m_icon.set_from_icon_name("text-x-generic", Gtk::ICON_SIZE_BUTTON);
+      m_icon.set_from_icon_name("text-x-generic");
     }
   }
 }

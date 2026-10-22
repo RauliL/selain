@@ -31,22 +31,24 @@ namespace selain
   Glib::RefPtr<WebSettings>
   WebSettings::create()
   {
-    return Glib::RefPtr<WebSettings>(new WebSettings());
+    return Glib::make_refptr_for_instance<WebSettings>(new WebSettings());
   }
 
   WebSettings::WebSettings()
-    : m_settings(::webkit_settings_new())
+    : Glib::ObjectBase(typeid(WebSettings))
+    , m_settings(::webkit_settings_new())
   {
-    initialize(G_OBJECT(m_settings));
-
-    ::webkit_settings_set_enable_java(m_settings, false);
-    ::webkit_settings_set_enable_plugins(m_settings, false);
     ::webkit_settings_set_enable_developer_extras(m_settings, true);
     ::webkit_settings_set_user_agent_with_application_details(
       m_settings,
       "Selain",
       SELAIN_VERSION
     );
+  }
+
+  WebSettings::~WebSettings()
+  {
+    g_clear_object(&m_settings);
   }
 
   void

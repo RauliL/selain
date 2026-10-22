@@ -27,7 +27,7 @@
 #define SELAIN_HINT_CONTEXT_HPP_GUARD
 
 #include <glibmm.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 namespace selain
 {

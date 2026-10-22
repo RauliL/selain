@@ -38,19 +38,18 @@ namespace selain
   /**
    * GTK widget for a browser tab.
    */
-  class Tab : public Gtk::Bin
+  class Tab : public Gtk::Box
   {
   public:
     using status_changed_signal_type = sigc::signal<
-      void,
-      Tab*,
-      const Glib::ustring&
+      void(Tab*, const Glib::ustring&)
     >;
 
     explicit Tab(
       const Glib::RefPtr<WebContext>& context,
       const Glib::RefPtr<WebSettings>& settings
     );
+    ~Tab() override;
 
     inline Glib::RefPtr<HintContext>& get_hint_context()
     {

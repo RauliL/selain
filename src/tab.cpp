@@ -61,16 +61,25 @@ namespace selain
     /**
      * GTK signal callback used for key press events inside web view of a tab.
      */
-    ::gboolean on_tab_key_press(::WebKitWebView*, ::GdkEventKey*, Tab*);
+    ::gboolean on_tab_key_pressed(
+      ::GtkEventControllerKey*,
+      ::guint keyval,
+      ::guint keycode,
+      ::GdkModifierType state,
+      Tab*
+    );
   }
 
   Tab::Tab(const Glib::RefPtr<WebContext>& context,
            const Glib::RefPtr<WebSettings>& settings)
-    : m_web_view(context->create_web_view())
+    : Gtk::Box(Gtk::Orientation::VERTICAL)
+    , m_web_view(context->create_web_view())
     , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
+    const auto key_controller = ::gtk_event_controller_key_new();
+
     m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(
-      this,
+      *this,
       &Tab::on_close_button_clicked
     ));
     ::g_signal_connect(
@@ -92,10 +101,14 @@ namespace selain
       static_cast<::gpointer>(this)
     );
     ::g_signal_connect(
-      G_OBJECT(m_web_view),
-      "key-press-event",
-      G_CALLBACK(keyboard::on_tab_key_press),
+      G_OBJECT(key_controller),
+      "key-pressed",
+      G_CALLBACK(keyboard::on_tab_key_pressed),
       static_cast<::gpointer>(this)
+    );
+    ::gtk_widget_add_controller(
+      GTK_WIDGET(m_web_view),
+      key_controller
     );
     ::g_signal_connect(
       G_OBJECT(m_web_view),
@@ -110,15 +123,27 @@ namespace selain
       static_cast<::gpointer>(this)
     );
 
-    add(*m_web_view_widget.get());
+    m_web_view_widget->set_hexpand(true);
+    m_web_view_widget->set_vexpand(true);
+    append(*m_web_view_widget.get());
 
-    override_background_color(theme::window_background);
+    add_css_class("selain-tab");
     ::webkit_web_view_set_background_color(
       m_web_view,
       theme::window_background.gobj()
     );
 
     settings->install(m_web_view);
+  }
+
+  Tab::~Tab()
+  {
+    if (m_web_view_widget)
+    {
+      remove(*m_web_view_widget);
+      m_web_view_widget.reset();
+    }
+    m_web_view = nullptr;
   }
 
   void
@@ -138,17 +163,13 @@ namespace selain
   MainWindow*
   Tab::get_main_window()
   {
-    const auto container = get_toplevel();
-
-    return container ? static_cast<MainWindow*>(container) : nullptr;
+    return dynamic_cast<MainWindow*>(get_root());
   }
 
   const MainWindow*
   Tab::get_main_window() const
   {
-    const auto container = get_toplevel();
-
-    return container ? static_cast<const MainWindow*>(container) : nullptr;
+    return dynamic_cast<const MainWindow*>(get_root());
   }
 
   Glib::ustring
@@ -174,7 +195,7 @@ namespace selain
     if (auto scheme = ::g_uri_parse_scheme(uri.c_str()))
     {
       ::webkit_web_view_load_uri(m_web_view, uri.c_str());
-      ::g_free(scheme);
+      g_free(scheme);
     } else {
       ::webkit_web_view_load_uri(m_web_view, ("http://" + uri).c_str());
     }
@@ -203,9 +224,12 @@ namespace selain
                       ::GAsyncReadyCallback callback,
                       void* user_data)
   {
-    ::webkit_web_view_run_javascript(
+    ::webkit_web_view_evaluate_javascript(
       m_web_view,
       script.c_str(),
+      static_cast<::gssize>(script.bytes()),
+      nullptr,
+      nullptr,
       cancellable,
       callback,
       static_cast<::gpointer>(user_data)
@@ -430,27 +454,13 @@ namespace selain
   on_notify_favicon(::WebKitWebView* web_view, ::GParamSpec*, Tab* tab)
   {
     auto& tab_label = tab->get_tab_label();
-    const auto surface = ::webkit_web_view_get_favicon(web_view);
-    int width;
-    int height;
+    const auto texture = ::webkit_web_view_get_favicon(web_view);
 
-    if (surface && Gtk::IconSize::lookup(Gtk::ICON_SIZE_BUTTON, width, height))
+    if (texture)
     {
-      const auto pixbuf = Gdk::Pixbuf::create(
-        Cairo::RefPtr<Cairo::Surface>(new Cairo::Surface(surface)),
-        0,
-        0,
-        ::cairo_image_surface_get_width(surface),
-        ::cairo_image_surface_get_height(surface)
-      );
-
-      tab_label.set_icon(pixbuf->scale_simple(
-        width,
-        height,
-        Gdk::INTERP_BILINEAR
-      ));
+      tab_label.set_icon(Glib::wrap(texture, true));
     } else {
-      tab_label.set_icon(Glib::RefPtr<Gdk::Pixbuf>());
+      tab_label.set_icon(Glib::RefPtr<Gdk::Paintable>());
     }
   }
 }

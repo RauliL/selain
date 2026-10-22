@@ -27,24 +27,34 @@
 
 namespace selain
 {
-  static ::WebKitWebContext* create_web_context();
+  static ::WebKitNetworkSession* create_network_session();
 
   Glib::RefPtr<WebContext>
   WebContext::create()
   {
-    return Glib::RefPtr<WebContext>(new WebContext());
+    return Glib::make_refptr_for_instance<WebContext>(new WebContext());
   }
 
   WebContext::WebContext()
-    : m_context(create_web_context())
+    : Glib::ObjectBase(typeid(WebContext))
+    , m_session(create_network_session())
   {
-    initialize(G_OBJECT(m_context));
+  }
+
+  WebContext::~WebContext()
+  {
+    g_clear_object(&m_session);
   }
 
   ::WebKitWebView*
   WebContext::create_web_view()
   {
-    return WEBKIT_WEB_VIEW(::webkit_web_view_new_with_context(m_context));
+    return WEBKIT_WEB_VIEW(::g_object_new(
+      WEBKIT_TYPE_WEB_VIEW,
+      "network-session",
+      m_session,
+      nullptr
+    ));
   }
 
   static inline void
@@ -52,29 +62,24 @@ namespace selain
   {
     if (str)
     {
-      ::g_free(str);
+      g_free(str);
     }
   }
 
-  static ::WebKitWebContext*
-  create_web_context()
+  static ::WebKitNetworkSession*
+  create_network_session()
   {
     ::gchar* base_cache_dir = nullptr;
     ::gchar* base_data_dir = nullptr;
-    ::gchar* disk_cache_dir = nullptr;
-    ::gchar* indexeddb_dir = nullptr;
-    ::gchar* local_storage_dir = nullptr;
-    ::gchar* offline_app_dir = nullptr;
-    ::gchar* websql_dir = nullptr;
     ::gchar* cookie_file = nullptr;
-    ::gchar* favicon_cache_dir = nullptr;
-    ::WebKitWebContext* context;
+    ::WebKitNetworkSession* session;
 
     if (const auto user_cache_dir = ::g_get_user_cache_dir())
     {
       base_cache_dir = ::g_build_filename(
         user_cache_dir,
         "selain",
+        "cache",
         nullptr
       );
       base_data_dir = ::g_build_filename(
@@ -83,79 +88,25 @@ namespace selain
         "data",
         nullptr
       );
-      disk_cache_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "disk",
-        nullptr
-      );
-      indexeddb_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "indexeddb",
-        nullptr
-      );
-      local_storage_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "local-storage",
-        nullptr
-      );
-      offline_app_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "offline-app",
-        nullptr
-      );
-      websql_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "websql",
-        nullptr
-      );
       cookie_file = ::g_build_filename(
         user_cache_dir,
         "selain",
         "cookies.sqlite",
         nullptr
       );
-      favicon_cache_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "favicons",
-        nullptr
-      );
     }
 
-    context = ::webkit_web_context_new_with_website_data_manager(
-      ::webkit_website_data_manager_new(
-        "base-cache-directory",
-        base_cache_dir,
-        "base-data-directory",
-        base_data_dir,
-        "disk-cache-directory",
-        disk_cache_dir,
-        "indexeddb-directory",
-        indexeddb_dir,
-        "local-storage-directory",
-        local_storage_dir,
-        "offline-application-cache-directory",
-        offline_app_dir,
-        "websql-directory",
-        websql_dir,
-        nullptr
-      )
-    );
+    session = ::webkit_network_session_new(base_data_dir, base_cache_dir);
 
-    ::webkit_web_context_set_favicon_database_directory(
-      context,
-      favicon_cache_dir
+    ::webkit_website_data_manager_set_favicons_enabled(
+      ::webkit_network_session_get_website_data_manager(session),
+      true
     );
 
     if (cookie_file)
     {
       ::webkit_cookie_manager_set_persistent_storage(
-        ::webkit_web_context_get_cookie_manager(context),
+        ::webkit_network_session_get_cookie_manager(session),
         cookie_file,
         WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
       );
@@ -163,13 +114,8 @@ namespace selain
 
     free_string(base_cache_dir);
     free_string(base_data_dir);
-    free_string(disk_cache_dir);
-    free_string(indexeddb_dir);
-    free_string(offline_app_dir);
-    free_string(websql_dir);
     free_string(cookie_file);
-    free_string(favicon_cache_dir);
 
-    return context;
+    return session;
   }
 }

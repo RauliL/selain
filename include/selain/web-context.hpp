@@ -27,14 +27,14 @@
 #define SELAIN_WEB_CONTEXT_HPP_GUARD
 
 #include <glibmm.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 namespace selain
 {
   /**
-   * Wrapper for the WebKitWebContext type.
+   * Wrapper for the WebKitNetworkSession type.
    */
-  class WebContext : public Glib::ObjectBase
+  class WebContext : public Glib::Object
   {
   public:
     /**
@@ -43,15 +43,16 @@ namespace selain
     static Glib::RefPtr<WebContext> create();
 
     /**
-     * Creates new web view using the wrapped web context.
+     * Creates new web view using the wrapped network session.
      */
     ::WebKitWebView* create_web_view();
 
   private:
     explicit WebContext();
+    ~WebContext() override;
 
   private:
-    ::WebKitWebContext* m_context;
+    ::WebKitNetworkSession* m_session;
   };
 }
 

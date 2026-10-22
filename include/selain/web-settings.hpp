@@ -27,14 +27,14 @@
 #define SELAIN_WEB_SETTINGS_HPP_GUARD
 
 #include <glibmm.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 namespace selain
 {
   /**
    * Wrapper for the WebKitSettings type.
    */
-  class WebSettings : public Glib::ObjectBase
+  class WebSettings : public Glib::Object
   {
   public:
     /**
@@ -46,6 +46,7 @@ namespace selain
 
   private:
     explicit WebSettings();
+    ~WebSettings() override;
 
   private:
     ::WebKitSettings* m_settings;

@@ -36,11 +36,16 @@ namespace selain
   Glib::RefPtr<HintContext>
   HintContext::create(bool open_in_new_tab)
   {
-    return Glib::RefPtr<HintContext>(new HintContext(open_in_new_tab));
+    return Glib::make_refptr_for_instance<HintContext>(
+      new HintContext(open_in_new_tab)
+    );
   }
 
   HintContext::HintContext(bool open_in_new_tab)
-    : m_open_in_new_tab(open_in_new_tab) {}
+    : Glib::ObjectBase(typeid(HintContext))
+    , m_open_in_new_tab(open_in_new_tab)
+  {
+  }
 
   void
   HintContext::install(Tab& tab)
@@ -66,20 +71,18 @@ namespace selain
     const auto web_view = WEBKIT_WEB_VIEW(web_view_object);
     const auto tab = static_cast<Tab*>(tab_data);
     ::GError* error = nullptr;
-    const auto js_result = ::webkit_web_view_run_javascript_finish(
+    const auto value = ::webkit_web_view_evaluate_javascript_finish(
       web_view,
       result,
       &error
     );
-    ::JSCValue* value;
 
-    if (!js_result)
+    if (!value)
     {
       ::g_warning("Error running JavaScript: %s", error->message);
       ::g_error_free(error);
       return;
     }
-    value = ::webkit_javascript_result_get_js_value(js_result);
     if (::jsc_value_is_string(value))
     {
       auto str_value = ::jsc_value_to_string(value);
@@ -108,11 +111,11 @@ namespace selain
           window->set_mode(Mode::INSERT);
         }
       }
-      ::g_free(str_value);
+      g_free(str_value);
     } else {
       ::g_warning("Unexpected return value from hint mode.");
     }
-    ::webkit_javascript_result_unref(js_result);
+    ::g_object_unref(value);
   }
 
   void

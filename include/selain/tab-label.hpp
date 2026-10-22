@@ -33,13 +33,13 @@ namespace selain
   class TabLabel : public Gtk::Box
   {
   public:
-    using signal_clicked_type = Glib::SignalProxy<void>;
+    using signal_clicked_type = Glib::SignalProxy<void()>;
 
     explicit TabLabel();
 
     void set_text(const Glib::ustring& text);
 
-    void set_icon(const Glib::RefPtr<Gdk::Pixbuf>& icon);
+    void set_icon(const Glib::RefPtr<Gdk::Paintable>& icon);
 
     inline signal_clicked_type signal_close_button_clicked()
     {

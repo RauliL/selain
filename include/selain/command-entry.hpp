@@ -43,8 +43,7 @@ namespace selain
   {
   public:
     using signal_command_received_type = sigc::signal<
-      void,
-      const Glib::ustring&
+      void(const Glib::ustring&)
     >;
 
     explicit CommandEntry();

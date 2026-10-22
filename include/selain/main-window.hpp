@@ -145,10 +145,14 @@ namespace selain
   private:
     void initialize_commands();
 
-    bool on_command_entry_key_press(::GdkEventKey* event);
+    bool on_command_entry_key_pressed(
+      guint keyval,
+      guint,
+      Gdk::ModifierType
+    );
     void on_command_received(const Glib::ustring& command);
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
-    void on_tab_switch(Gtk::Widget* widget, ::guint page_number);
+    void on_tab_switch(Gtk::Widget* widget, guint page_number);
 
   private:
     command_mapping_type m_command_mapping;
@@ -159,6 +163,7 @@ namespace selain
     Gtk::Notebook m_notebook;
     StatusBar m_status_bar;
     CommandEntry m_command_entry;
+    Glib::RefPtr<Gtk::EventControllerKey> m_command_entry_key_controller;
   };
 }
 

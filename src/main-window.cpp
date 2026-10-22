@@ -36,36 +36,42 @@ namespace selain
     , m_web_context(WebContext::create())
     , m_web_settings(WebSettings::create())
     , m_mode(Mode::NORMAL)
-    , m_box(Gtk::ORIENTATION_VERTICAL)
+    , m_box(Gtk::Orientation::VERTICAL)
+    , m_command_entry_key_controller(Gtk::EventControllerKey::create())
   {
     initialize_commands();
 
     set_title("Selain");
     set_icon_name("selain");
-    set_border_width(0);
     set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-    m_box.pack_start(m_notebook);
-    m_box.pack_start(m_status_bar, Gtk::PACK_SHRINK);
-    m_box.pack_start(m_command_entry, Gtk::PACK_SHRINK);
-    add(m_box);
+    m_notebook.set_hexpand(true);
+    m_notebook.set_vexpand(true);
+    m_box.append(m_notebook);
+    m_box.append(m_status_bar);
+    m_box.append(m_command_entry);
+    set_child(m_box);
 
     m_notebook.signal_switch_page().connect(sigc::mem_fun(
-      this,
+      *this,
       &MainWindow::on_tab_switch
     ));
-    m_command_entry.signal_key_press_event().connect(sigc::mem_fun(
-      this,
-      &MainWindow::on_command_entry_key_press
-    ));
+    m_command_entry_key_controller->signal_key_pressed().connect(
+      sigc::mem_fun(*this, &MainWindow::on_command_entry_key_pressed),
+      false
+    );
+    m_command_entry.add_controller(m_command_entry_key_controller);
     m_command_entry.signal_command_received().connect(sigc::mem_fun(
-      this,
+      *this,
       &MainWindow::on_command_received
     ));
 
-    m_box.override_background_color(theme::window_background);
+    add_css_class("selain-window");
+    m_box.get_style_context()->add_provider(
+      theme::get_window_style_provider(),
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
 
-    show_all();
     maximize();
   }
 
@@ -143,14 +149,15 @@ namespace selain
   Glib::RefPtr<Tab>
   MainWindow::open_tab(const Glib::ustring& uri, bool focus)
   {
-    const auto tab = Glib::RefPtr<Tab>(new Tab(m_web_context, m_web_settings));
+    const auto tab = Glib::make_refptr_for_instance<Tab>(
+      new Tab(m_web_context, m_web_settings)
+    );
 
     m_notebook.append_page(*tab.get(), tab->get_tab_label());
     tab->signal_status_changed().connect(sigc::mem_fun(
-      this,
+      *this,
       &MainWindow::on_tab_status_change
     ));
-    show_all_children();
     if (!uri.empty())
     {
       tab->load_uri(uri);
@@ -213,15 +220,15 @@ namespace selain
   }
 
   bool
-  MainWindow::on_command_entry_key_press(::GdkEventKey* event)
+  MainWindow::on_command_entry_key_pressed(guint keyval, guint, Gdk::ModifierType)
   {
-    if (event->keyval == GDK_KEY_Escape)
+    if (keyval == GDK_KEY_Escape)
     {
       set_mode(Mode::NORMAL);
 
       return true;
     }
-    else if (event->keyval == GDK_KEY_Tab)
+    else if (keyval == GDK_KEY_Tab)
     {
       return true;
     }
@@ -252,7 +259,7 @@ namespace selain
   }
 
   void
-  MainWindow::on_tab_switch(Gtk::Widget* widget, ::guint)
+  MainWindow::on_tab_switch(Gtk::Widget* widget, guint)
   {
     if (widget)
     {

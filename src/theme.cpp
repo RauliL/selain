@@ -29,9 +29,6 @@ namespace selain
 {
   namespace theme
   {
-    static const auto status_bar_style_provider = Gtk::CssProvider::create();
-    static const auto entry_style_provider = Gtk::CssProvider::create();
-
     const Gdk::RGBA window_background("#262626");
     const Gdk::RGBA window_foreground("#b3deef");
     const Gdk::RGBA status_bar_background("#444444");
@@ -44,44 +41,98 @@ namespace selain
     const Gdk::RGBA mode_bar_insert_foreground("#262626");
 
     const Glib::RefPtr<Gtk::CssProvider>&
-    get_status_bar_style_provider()
+    get_window_style_provider()
     {
+      static Glib::RefPtr<Gtk::CssProvider> provider;
       static bool initialized = false;
 
       if (!initialized)
       {
         initialized = true;
-        status_bar_style_provider->load_from_data(
-          "label {\n"
-          "  padding: 0.1em 0.4em;\n"
+        provider = Gtk::CssProvider::create();
+        provider->load_from_string(
+          ".selain-window {\n"
+          "  background-color: #262626;\n"
           "}\n"
         );
       }
 
-      return status_bar_style_provider;
+      return provider;
+    }
+
+    const Glib::RefPtr<Gtk::CssProvider>&
+    get_status_bar_style_provider()
+    {
+      static Glib::RefPtr<Gtk::CssProvider> provider;
+      static bool initialized = false;
+
+      if (!initialized)
+      {
+        initialized = true;
+        provider = Gtk::CssProvider::create();
+        provider->load_from_string(
+          ".selain-status-bar {\n"
+          "  background-color: #444444;\n"
+          "}\n"
+          ".selain-status-bar label {\n"
+          "  font-family: monospace;\n"
+          "  padding: 0.1em 0.4em;\n"
+          "}\n"
+          ".selain-status-bar .mode-label {\n"
+          "  background-color: #b3deef;\n"
+          "  color: #282828;\n"
+          "}\n"
+          ".selain-status-bar .mode-label.mode-insert {\n"
+          "  background-color: #d7d75f;\n"
+          "  color: #262626;\n"
+          "}\n"
+          ".selain-status-bar .status-label {\n"
+          "  background-color: #444444;\n"
+          "  color: #a7d6f8;\n"
+          "}\n"
+        );
+      }
+
+      return provider;
     }
 
     const Glib::RefPtr<Gtk::CssProvider>&
     get_command_entry_style_provider()
     {
+      static Glib::RefPtr<Gtk::CssProvider> provider;
       static bool initialized = false;
 
       if (!initialized)
       {
         initialized = true;
-        entry_style_provider->load_from_data(
-          "entry, .entry {\n"
+        provider = Gtk::CssProvider::create();
+        provider->load_from_string(
+          ".selain-command-entry {\n"
+          "  background-color: #262626;\n"
+          "}\n"
+          ".selain-command-entry entry {\n"
           "  background: #262626;\n"
           "  border: none;\n"
           "  color: #eeeeee;\n"
+          "  font-family: monospace;\n"
           "  margin: 0;\n"
           "  outline: none;\n"
           "  padding: 0.2em;\n"
-          "}"
+          "}\n"
+          ".selain-command-entry .notification-info {\n"
+          "  background-color: #262626;\n"
+          "  color: #b3deef;\n"
+          "  font-family: monospace;\n"
+          "}\n"
+          ".selain-command-entry .notification-error {\n"
+          "  background-color: #f43753;\n"
+          "  color: #eeeeee;\n"
+          "  font-family: monospace;\n"
+          "}\n"
         );
       }
 
-      return entry_style_provider;
+      return provider;
     }
   }
 }

@@ -147,8 +147,18 @@ namespace selain
     const auto tab = Glib::make_refptr_for_instance<Tab>(
       new Tab(m_web_context, m_web_settings)
     );
+    const auto scroll_controller = Gtk::EventControllerScroll::create();
 
     m_notebook.append_page(*tab.get(), tab->get_tab_label());
+    scroll_controller->set_flags(
+      Gtk::EventControllerScroll::Flags::VERTICAL |
+      Gtk::EventControllerScroll::Flags::DISCRETE
+    );
+    scroll_controller->signal_scroll().connect(
+      sigc::mem_fun(*this, &MainWindow::on_tab_list_scroll),
+      false
+    );
+    tab->get_tab_label().add_controller(scroll_controller);
     tab->signal_status_changed().connect(sigc::mem_fun(
       *this,
       &MainWindow::on_tab_status_change
@@ -179,6 +189,11 @@ namespace selain
     if (m_notebook.get_current_page() < 0)
     {
       close();
+      return;
+    }
+    if (const auto current = get_current_tab())
+    {
+      current->grab_focus();
     }
   }
 
@@ -259,5 +274,20 @@ namespace selain
     } else {
       m_status_bar.set_status(Glib::ustring());
     }
+  }
+
+  bool
+  MainWindow::on_tab_list_scroll(double, double dy)
+  {
+    if (dy > 0.0)
+    {
+      next_tab();
+    }
+    else if (dy < 0.0)
+    {
+      prev_tab();
+    }
+
+    return true;
   }
 }

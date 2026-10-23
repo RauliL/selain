@@ -154,6 +154,7 @@ namespace selain
     void on_command_received(const Glib::ustring& command);
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
     void on_tab_switch(Gtk::Widget* widget, guint page_number);
+    bool on_tab_list_scroll(double dx, double dy);
 
   private:
     command_mapping_type m_command_mapping;

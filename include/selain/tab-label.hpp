@@ -32,7 +32,7 @@ namespace selain
   class TabLabel : public Gtk::Box
   {
   public:
-    using signal_clicked_type = Glib::SignalProxy<void()>;
+    using close_signal_type = sigc::signal<void()>;
 
     explicit TabLabel();
 
@@ -40,15 +40,20 @@ namespace selain
 
     void set_icon(const Glib::RefPtr<Gdk::Paintable>& icon);
 
-    inline signal_clicked_type signal_close_button_clicked()
+    inline close_signal_type& signal_close_requested()
     {
-      return m_close_button.signal_clicked();
+      return m_signal_close_requested;
     }
+
+  private:
+    void on_close_button_clicked();
+    void on_middle_button_pressed(int n_press, double x, double y);
 
   private:
     Gtk::Image m_icon;
     Gtk::Label m_text;
     Gtk::Button m_close_button;
+    Glib::RefPtr<Gtk::GestureClick> m_middle_click_gesture;
+    close_signal_type m_signal_close_requested;
   };
 }
-

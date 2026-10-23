@@ -121,7 +121,7 @@ namespace selain
     , m_web_settings(settings)
     , m_active_view(nullptr)
   {
-    m_tab_label.signal_close_button_clicked().connect(sigc::mem_fun(
+    m_tab_label.signal_close_requested().connect(sigc::mem_fun(
       *this,
       &Tab::on_close_button_clicked
     ));

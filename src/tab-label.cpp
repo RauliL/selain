@@ -30,6 +30,7 @@ namespace selain
   TabLabel::TabLabel()
     : Gtk::Box(Gtk::Orientation::HORIZONTAL)
     , m_text("Untitled")
+    , m_middle_click_gesture(Gtk::GestureClick::create())
   {
     m_icon.set_from_icon_name("text-x-generic");
     m_icon.set_margin_end(5);
@@ -38,6 +39,17 @@ namespace selain
     m_close_button.set_focus_on_click(false);
     m_close_button.set_icon_name("window-close-symbolic");
     m_close_button.set_margin_start(5);
+    m_close_button.signal_clicked().connect(sigc::mem_fun(
+      *this,
+      &TabLabel::on_close_button_clicked
+    ));
+
+    m_middle_click_gesture->set_button(GDK_BUTTON_MIDDLE);
+    m_middle_click_gesture->signal_pressed().connect(sigc::mem_fun(
+      *this,
+      &TabLabel::on_middle_button_pressed
+    ));
+    add_controller(m_middle_click_gesture);
 
     append(m_icon);
     append(m_text);
@@ -62,5 +74,17 @@ namespace selain
     } else {
       m_icon.set_from_icon_name("text-x-generic");
     }
+  }
+
+  void
+  TabLabel::on_close_button_clicked()
+  {
+    m_signal_close_requested.emit();
+  }
+
+  void
+  TabLabel::on_middle_button_pressed(int, double, double)
+  {
+    m_signal_close_requested.emit();
   }
 }

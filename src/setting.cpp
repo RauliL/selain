@@ -23,6 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <algorithm>
 #include <unordered_map>
 
 #include <glibmm/ustring_hash.h>
@@ -287,5 +288,20 @@ namespace selain::setting
     }
 
     return false;
+  }
+
+  std::vector<Glib::ustring>
+  names()
+  {
+    std::vector<Glib::ustring> result;
+
+    result.reserve(mapping.size());
+    for (const auto& [key, _] : mapping)
+    {
+      result.push_back(key);
+    }
+    std::sort(std::begin(result), std::end(result));
+
+    return result;
   }
 }

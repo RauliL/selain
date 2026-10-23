@@ -33,6 +33,7 @@
 #include <selain/command-entry.hpp>
 #include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
+#include <selain/tab-completion.hpp>
 
 namespace selain
 {
@@ -165,7 +166,7 @@ namespace selain
     bool on_command_entry_key_pressed(
       guint keyval,
       guint,
-      Gdk::ModifierType
+      Gdk::ModifierType state
     );
     void on_command_received(const Glib::ustring& command);
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
@@ -182,6 +183,7 @@ namespace selain
     StatusBar m_status_bar;
     CommandEntry m_command_entry;
     Glib::RefPtr<Gtk::EventControllerKey> m_command_entry_key_controller;
+    TabCompletion m_tab_completion;
   };
 }
 

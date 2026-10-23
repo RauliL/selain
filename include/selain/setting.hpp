@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#include <vector>
+
 #include "selain/main-window.hpp"
 
 namespace selain::setting
@@ -39,4 +41,9 @@ namespace selain::setting
     const Glib::ustring& key,
     const Glib::ustring& value
   );
+
+  /**
+   * Returns all known setting names in alphabetical order.
+   */
+  std::vector<Glib::ustring> names();
 }

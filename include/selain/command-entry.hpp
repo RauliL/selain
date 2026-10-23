@@ -52,10 +52,7 @@ namespace selain
       return m_entry.get_text();
     }
 
-    inline void set_text(const Glib::ustring& text)
-    {
-      m_entry.set_text(text);
-    }
+    void set_text(const Glib::ustring& text);
 
     /**
      * Displays an notification to the user. If there already is an

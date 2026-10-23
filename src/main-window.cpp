@@ -230,18 +230,34 @@ namespace selain
   }
 
   bool
-  MainWindow::on_command_entry_key_pressed(guint keyval, guint, Gdk::ModifierType)
+  MainWindow::on_command_entry_key_pressed(guint keyval,
+                                           guint,
+                                           Gdk::ModifierType state)
   {
     if (keyval == GDK_KEY_Escape)
     {
+      m_tab_completion.reset();
       set_mode(Mode::NORMAL);
 
       return true;
     }
-    else if (keyval == GDK_KEY_Tab)
+
+    const bool shift = static_cast<bool>(
+      state & static_cast<Gdk::ModifierType>(GDK_SHIFT_MASK)
+    );
+
+    if (keyval == GDK_KEY_Tab || keyval == GDK_KEY_ISO_Left_Tab)
     {
+      m_tab_completion.complete(
+        *this,
+        keyval == GDK_KEY_ISO_Left_Tab || (keyval == GDK_KEY_Tab && shift)
+      );
+
       return true;
     }
+
+    // Typing anything else starts a fresh completion next time Tab is pressed.
+    m_tab_completion.reset();
 
     return false;
   }

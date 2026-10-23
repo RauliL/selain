@@ -91,10 +91,19 @@ namespace selain
   }
 
   void
+  CommandEntry::set_text(const Glib::ustring& text)
+  {
+    m_entry.set_text(text);
+    // Gtk::Entry::set_text() leaves the caret at offset 0; keep it at the end
+    // so tab completion and prefilled commands (e.g. ":open ") stay usable.
+    m_entry.set_position(static_cast<int>(m_entry.get_text().length()));
+  }
+
+  void
   CommandEntry::grab_focus()
   {
     m_entry.grab_focus_without_selecting();
-    m_entry.set_position(m_entry.get_text().length());
+    m_entry.set_position(static_cast<int>(m_entry.get_text().length()));
   }
 
   void

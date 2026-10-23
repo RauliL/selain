@@ -18,6 +18,7 @@ ADD_EXECUTABLE(
   src/setting.cpp
   src/status-bar.cpp
   src/tab.cpp
+  src/tab-completion.cpp
   src/tab-label.cpp
   src/theme.cpp
   src/view.cpp

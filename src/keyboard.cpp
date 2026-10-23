@@ -133,6 +133,7 @@ namespace selain
 
       // Navigation.
       add_mapping(U"d", bind_scroll_page_down);
+      add_mapping(U"<Page_Down>", bind_scroll_page_down);
       add_mapping(U"h", bind_scroll_left);
       add_mapping(U"j", bind_scroll_down);
       add_mapping(U"k", bind_scroll_up);
@@ -146,6 +147,7 @@ namespace selain
       add_mapping(U"p", bind_paste);
       add_mapping(U"P", bind_paste_open_tab);
       add_mapping(U"u", bind_scroll_page_up);
+      add_mapping(U"<Page_Up>", bind_scroll_page_up);
       add_mapping(U"yy", bind_yank);
 
       // Searching.

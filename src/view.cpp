@@ -26,6 +26,7 @@
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
 
+#include <cstring>
 #include <format>
 
 namespace selain
@@ -55,6 +56,11 @@ namespace selain
   static void on_notify_favicon(
     ::WebKitWebView*,
     ::GParamSpec*,
+    View*
+  );
+  static ::gboolean on_web_process_terminated(
+    ::WebKitWebView*,
+    ::WebKitWebProcessTerminationReason,
     View*
   );
 
@@ -133,6 +139,12 @@ namespace selain
       G_OBJECT(m_web_view),
       "notify::favicon",
       G_CALLBACK(on_notify_favicon),
+      static_cast<::gpointer>(this)
+    );
+    ::g_signal_connect(
+      G_OBJECT(m_web_view),
+      "web-process-terminated",
+      G_CALLBACK(on_web_process_terminated),
       static_cast<::gpointer>(this)
     );
 
@@ -439,24 +451,21 @@ namespace selain
   )
   {
     const auto uri = ::webkit_uri_request_get_uri(
-      ::webkit_navigation_action_get_request(
-        action
-      )
+      ::webkit_navigation_action_get_request(action)
     );
+    // Copy before ignore(): the request (and this pointer) may be released
+    // once the policy decision is completed.
+    const Glib::ustring open_uri = (uri && *uri) ? uri : Glib::ustring();
 
     // Resolve the policy before creating another view; loading from inside
     // this callback can deadlock the web process.
     ::webkit_policy_decision_ignore(decision);
-    if (window && uri && *uri)
-    {
-      const Glib::ustring open_uri = uri;
 
-      Glib::signal_idle().connect_once(
-        [window, open_uri]()
-        {
-          window->open_tab(open_uri, false);
-        }
-      );
+    if (window && !open_uri.empty())
+    {
+      Glib::signal_idle().connect_once([window, open_uri]() {
+        window->open_tab(open_uri, false);
+      });
     }
 
     return TRUE;
@@ -471,40 +480,49 @@ namespace selain
     const auto tab = view->get_tab();
     const auto window = tab ? tab->get_main_window() : nullptr;
 
-    // Open links clicked with middle mouse button in a new tab in the
-    // background.
-    if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
+    if (!window)
     {
-      auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
-      auto action = ::webkit_navigation_policy_decision_get_navigation_action(
-        navigation_decision
-      );
-      auto action_type = ::webkit_navigation_action_get_navigation_type(
-        action
+      return FALSE;
+    }
+
+    if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
+        decision_type != WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
+    {
+      // RESPONSE etc.: let WebKit's default MIME / download handling run.
+      return FALSE;
+    }
+
+    auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
+    auto action = ::webkit_navigation_policy_decision_get_navigation_action(
+      navigation_decision
+    );
+    const auto action_type = ::webkit_navigation_action_get_navigation_type(
+      action
+    );
+
+    // Middle-click: open in a background tab.
+    if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
+        ::webkit_navigation_action_get_mouse_button(action) == 2 &&
+        action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED)
+    {
+      return open_uri_from_action(window, decision, action);
+    }
+
+    // target=_blank / window.open() with a concrete URL: open as a tab.
+    // Do not intercept empty/about:blank popups — those need a related-view
+    // via the "create" signal, and ignoring them can break sites like Google.
+    if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
+    {
+      const auto uri = ::webkit_uri_request_get_uri(
+        ::webkit_navigation_action_get_request(action)
       );
 
-      if (::webkit_navigation_action_get_mouse_button(action) == 2 &&
-          action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED &&
-          window)
+      if (uri && *uri && std::strncmp(uri, "about:", 6) != 0)
       {
         return open_uri_from_action(window, decision, action);
       }
     }
-    // Open new windows into tabs. Handle every navigation type (link click,
-    // window.open(), form target=_blank, …). Returning TRUE without making a
-    // decision previously skipped WebKit's default MIME handling.
-    else if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION &&
-             window)
-    {
-      auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
-      auto action = ::webkit_navigation_policy_decision_get_navigation_action(
-        navigation_decision
-      );
 
-      return open_uri_from_action(window, decision, action);
-    }
-
-    // Let WebKit's default handler run (including response MIME checks).
     return FALSE;
   }
 
@@ -535,5 +553,25 @@ namespace selain
     {
       tab->on_view_favicon_changed(*view);
     }
+  }
+
+  static ::gboolean
+  on_web_process_terminated(::WebKitWebView*,
+                            ::WebKitWebProcessTerminationReason,
+                            View* view)
+  {
+    view->set_status("Web process crashed", true);
+    if (const auto tab = view->get_tab())
+    {
+      if (const auto window = tab->get_main_window())
+      {
+        window->get_command_entry().show_notification(
+          "Error: Web process crashed",
+          Notification::Type::ERROR
+        );
+      }
+    }
+
+    return FALSE;
   }
 }

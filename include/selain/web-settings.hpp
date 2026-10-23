@@ -43,6 +43,24 @@ namespace selain
 
     void install(::WebKitWebView* view);
 
+    bool get_bool(const Glib::ustring& setting) const;
+
+    ::guint get_int(const Glib::ustring& setting) const;
+
+    Glib::ustring get_string(const Glib::ustring& setting) const;
+
+    ::WebKitHardwareAccelerationPolicy get_hardware_acceleration_policy() const;
+
+    void set(const Glib::ustring& setting, bool value);
+
+    void set(const Glib::ustring& setting, ::guint value);
+
+    void set(const Glib::ustring& setting, const Glib::ustring& value);
+
+    void set_hardware_acceleration_policy(
+      ::WebKitHardwareAccelerationPolicy policy
+    );
+
   private:
     explicit WebSettings();
     ~WebSettings() override;

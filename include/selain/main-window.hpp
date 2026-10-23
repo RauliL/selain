@@ -65,6 +65,22 @@ namespace selain
     void execute_command(const Glib::ustring& command);
 
     /**
+     * Returns WebKit settings used for all browser tabs.
+     */
+    inline const Glib::RefPtr<WebSettings>& web_settings()
+    {
+      return m_web_settings;
+    }
+
+    /**
+     * Returns WebKit settings used for all browser tabs.
+     */
+    inline Glib::RefPtr<const WebSettings> web_settings() const
+    {
+      return m_web_settings;
+    }
+
+    /**
      * Returns the current mode of the window.
      */
     inline Mode get_mode() const

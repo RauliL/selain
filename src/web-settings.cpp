@@ -56,4 +56,75 @@ namespace selain
   {
     ::webkit_web_view_set_settings(view, m_settings);
   }
+
+  bool
+  WebSettings::get_bool(const Glib::ustring& setting) const
+  {
+    ::gboolean value = FALSE;
+
+    ::g_object_get(m_settings, setting.c_str(), &value, nullptr);
+
+    return value;
+  }
+
+  ::guint
+  WebSettings::get_int(const Glib::ustring& setting) const
+  {
+    ::guint value = 0;
+
+    ::g_object_get(m_settings, setting.c_str(), &value, nullptr);
+
+    return value;
+  }
+
+  Glib::ustring
+  WebSettings::get_string(const Glib::ustring& setting) const
+  {
+    ::gchar* value = nullptr;
+
+    ::g_object_get(m_settings, setting.c_str(), &value, nullptr);
+
+    const Glib::ustring result = value ? value : "";
+
+    g_free(value);
+
+    return result;
+  }
+
+  ::WebKitHardwareAccelerationPolicy
+  WebSettings::get_hardware_acceleration_policy() const
+  {
+    return ::webkit_settings_get_hardware_acceleration_policy(m_settings);
+  }
+
+  void
+  WebSettings::set(const Glib::ustring& setting, bool value)
+  {
+    ::g_object_set(
+      m_settings,
+      setting.c_str(),
+      static_cast<::gboolean>(value),
+      nullptr
+    );
+  }
+
+  void
+  WebSettings::set(const Glib::ustring& setting, ::guint value)
+  {
+    ::g_object_set(m_settings, setting.c_str(), value, nullptr);
+  }
+
+  void
+  WebSettings::set(const Glib::ustring& setting, const Glib::ustring& value)
+  {
+    ::g_object_set(m_settings, setting.c_str(), value.c_str(), nullptr);
+  }
+
+  void
+  WebSettings::set_hardware_acceleration_policy(
+    ::WebKitHardwareAccelerationPolicy policy
+  )
+  {
+    ::webkit_settings_set_hardware_acceleration_policy(m_settings, policy);
+  }
 }

@@ -35,6 +35,7 @@ namespace selain
     using close_signal_type = sigc::signal<void()>;
 
     explicit TabLabel();
+    ~TabLabel() override;
 
     void set_text(const Glib::ustring& text);
 

@@ -57,6 +57,14 @@ namespace selain
     append(m_close_button);
   }
 
+  TabLabel::~TabLabel()
+  {
+    while (auto* child = get_first_child())
+    {
+      remove(*child);
+    }
+  }
+
   void
   TabLabel::set_text(const Glib::ustring& text)
   {

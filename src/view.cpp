@@ -97,7 +97,6 @@ namespace selain
              const Glib::RefPtr<WebSettings>& settings)
     : Gtk::Box(Gtk::Orientation::VERTICAL)
     , m_web_view(context->create_web_view())
-    , m_web_view_widget(Glib::wrap(GTK_WIDGET(m_web_view)))
   {
     const auto key_controller = ::gtk_event_controller_key_new();
 
@@ -148,9 +147,10 @@ namespace selain
       static_cast<::gpointer>(this)
     );
 
-    m_web_view_widget->set_hexpand(true);
-    m_web_view_widget->set_vexpand(true);
-    append(*m_web_view_widget.get());
+    // append() sinks the floating ref from create_web_view(); the box owns it.
+    ::gtk_widget_set_hexpand(GTK_WIDGET(m_web_view), TRUE);
+    ::gtk_widget_set_vexpand(GTK_WIDGET(m_web_view), TRUE);
+    ::gtk_box_append(GTK_BOX(gobj()), GTK_WIDGET(m_web_view));
 
     set_hexpand(true);
     set_vexpand(true);
@@ -165,13 +165,26 @@ namespace selain
 
   View::~View()
   {
-    if (m_web_view_widget)
+    prepare_close();
+  }
+
+  void
+  View::prepare_close()
+  {
+    if (!m_web_view)
     {
-      remove(*m_web_view_widget);
-      m_web_view_widget.reset();
+      return;
+    }
+
+    ::g_signal_handlers_disconnect_by_data(m_web_view, this);
+    if (::gtk_widget_get_parent(GTK_WIDGET(m_web_view)) == GTK_WIDGET(gobj()))
+    {
+      // Drops the box's ref; web view is destroyed with that last ref.
+      ::gtk_box_remove(GTK_BOX(gobj()), GTK_WIDGET(m_web_view));
     }
     m_web_view = nullptr;
   }
+
 
   Tab*
   View::get_tab()
@@ -402,8 +415,10 @@ namespace selain
     if (window && window->get_mode() == Mode::COMMAND)
     {
       window->get_command_entry().grab_focus();
-    } else {
-      m_web_view_widget->grab_focus();
+    }
+    else if (m_web_view)
+    {
+      ::gtk_widget_grab_focus(GTK_WIDGET(m_web_view));
     }
   }
 

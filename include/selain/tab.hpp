@@ -132,6 +132,13 @@ namespace selain
     void close_other_views();
 
     /**
+     * Unparents and releases all split views. Call before removing the tab
+     * from the notebook so GTK does not finalize the tab with children still
+     * attached.
+     */
+    void prepare_close();
+
+    /**
      * Focuses the nearest split view in the given direction.
      */
     void focus_view(FocusDirection direction);

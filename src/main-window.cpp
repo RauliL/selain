@@ -72,6 +72,39 @@ namespace selain
     maximize();
   }
 
+  MainWindow::~MainWindow()
+  {
+    while (m_notebook.get_n_pages() > 0)
+    {
+      if (auto* tab = get_nth_tab(0))
+      {
+        tab->prepare_close();
+      }
+      m_notebook.remove_page(0);
+    }
+    while (auto* child = m_box.get_first_child())
+    {
+      m_box.remove(*child);
+    }
+  }
+
+  void
+  MainWindow::schedule_close()
+  {
+    Glib::signal_idle().connect_once([this]() {
+      // Destroy WebKit views while the window is still fully alive; tearing
+      // them down from ~MainWindow is too late and trips GObject criticals.
+      for (int i = 0; i < m_notebook.get_n_pages(); ++i)
+      {
+        if (auto* tab = get_nth_tab(i))
+        {
+          tab->prepare_close();
+        }
+      }
+      close();
+    });
+  }
+
   void
   MainWindow::set_mode(Mode mode)
   {
@@ -179,7 +212,7 @@ namespace selain
   }
 
   void
-  MainWindow::close_tab(const Tab& tab)
+  MainWindow::close_tab(Tab& tab)
   {
     const auto index = m_notebook.page_num(tab);
 
@@ -187,13 +220,14 @@ namespace selain
     {
       return;
     }
-    // remove_page() on the last tab followed by close() leaves GTK touching
-    // already-finalized widgets; close the window with the page still attached.
+    // Last tab: defer window close so we do not destroy MainWindow while still
+    // inside a command/signal handler (e.g. :q).
     if (m_notebook.get_n_pages() <= 1)
     {
-      close();
+      schedule_close();
       return;
     }
+    tab.prepare_close();
     m_notebook.remove_page(index);
     if (const auto current = get_current_tab())
     {

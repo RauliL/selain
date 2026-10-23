@@ -137,7 +137,33 @@ namespace selain
     add_css_class("selain-tab");
   }
 
-  Tab::~Tab() = default;
+  Tab::~Tab()
+  {
+    prepare_close();
+  }
+
+  void
+  Tab::prepare_close()
+  {
+    if (m_hint_context)
+    {
+      m_hint_context->uninstall(*this);
+      m_hint_context.reset();
+    }
+    m_active_view = nullptr;
+    for (auto& view : m_views)
+    {
+      if (view)
+      {
+        view->prepare_close();
+      }
+    }
+    while (auto* child = get_first_child())
+    {
+      remove(*child);
+    }
+    m_views.clear();
+  }
 
   void
   Tab::set_hint_context(const Glib::RefPtr<HintContext>& hint_context)

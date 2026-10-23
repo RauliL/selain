@@ -83,6 +83,9 @@ namespace selain
 
     void grab_focus();
 
+    /** Disconnect signals and unparent the web view. */
+    void prepare_close();
+
     const Glib::ustring& get_status() const;
     void set_status(const Glib::ustring& status, bool permanent = false);
 
@@ -90,7 +93,6 @@ namespace selain
 
   private:
     ::WebKitWebView* m_web_view;
-    Glib::RefPtr<Gtk::Widget> m_web_view_widget;
     Glib::ustring m_status;
     Glib::ustring m_permanent_status;
   };

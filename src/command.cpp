@@ -296,7 +296,7 @@ namespace selain
     {
       tab->close_active_view();
     } else {
-      window.close();
+      window.schedule_close();
     }
 
     return true;
@@ -305,7 +305,7 @@ namespace selain
   static bool
   cmd_quit_all(MainWindow& window, const Glib::ustring&)
   {
-    window.close();
+    window.schedule_close();
 
     return true;
   }

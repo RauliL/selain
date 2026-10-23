@@ -47,6 +47,7 @@ namespace selain
     using command_mapping_type = std::unordered_map<std::string, Command>;
 
     explicit MainWindow(const Glib::RefPtr<Gtk::Application>& application);
+    ~MainWindow() override;
 
     /**
      * Returns the mapping of all known browser commands.
@@ -165,8 +166,14 @@ namespace selain
       bool focus = true
     );
 
-    void close_tab(const Tab& tab);
+    void close_tab(Tab& tab);
     void close_tab(const Glib::RefPtr<Tab>& tab);
+
+    /**
+     * Closes the window on the next main-loop idle. Use this from command /
+     * signal handlers so MainWindow is not destroyed mid-callback.
+     */
+    void schedule_close();
 
     void set_current_tab(const Glib::RefPtr<Tab>& tab);
     void next_tab();

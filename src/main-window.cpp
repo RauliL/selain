@@ -287,7 +287,7 @@ namespace selain
   MainWindow::on_command_received(const Glib::ustring& command)
   {
     set_mode(Mode::NORMAL);
-    execute_command(command);
+    run_command(command, true);
   }
 
   void

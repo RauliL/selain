@@ -93,7 +93,7 @@ run_init(selain::MainWindow* window)
 
     while (std::getline(is, line))
     {
-      window->execute_command(Glib::ustring(line));
+      window->run_command(Glib::ustring(line), false);
     }
     is.close();
   }

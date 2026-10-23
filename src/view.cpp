@@ -623,10 +623,7 @@ namespace selain
     {
       if (const auto window = tab->get_main_window())
       {
-        window->get_command_entry().show_notification(
-          "Error: Web process crashed",
-          Notification::Type::ERROR
-        );
+        window->show_error("Web process crashed.");
       }
     }
 

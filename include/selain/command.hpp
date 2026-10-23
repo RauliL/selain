@@ -32,13 +32,11 @@
 namespace selain
 {
   class MainWindow;
-  class Tab;
 
   struct Command
   {
-    using callback_type = std::function<void(
+    using callback_type = std::function<bool(
       MainWindow&,
-      Tab*,
       const Glib::ustring&
     )>;
 

@@ -64,7 +64,18 @@ namespace selain
       return m_command_mapping;
     }
 
-    void execute_command(const Glib::ustring& command);
+    /**
+     * Executes an command.
+     *
+     * @param command The entire command line including name of the command and
+     *                it's arguments.
+     * @param interactive Set `true` if called from the user input, `false` if
+     *                    coming from some non-interactive context such as
+     *                    initialization script.
+     * @return Boolean flag telling you whether command execution finished
+     *         successfully or not.
+     */
+    bool run_command(const Glib::ustring& command, bool interactive);
 
     /**
      * Returns WebKit settings used for all browser tabs.
@@ -160,6 +171,26 @@ namespace selain
     void set_current_tab(const Glib::RefPtr<Tab>& tab);
     void next_tab();
     void prev_tab();
+
+    /**
+     * Displays an info message in command entry.
+     */
+    void show_info(const Glib::ustring& text)
+    {
+      m_command_entry.show_notification(text, Notification::Type::INFO);
+    }
+
+    /**
+     * Displays an error message in command entry. The given error message will
+     * be prefixed with "Error: ".
+     */
+    void show_error(const Glib::ustring& text)
+    {
+      m_command_entry.show_notification(
+        "Error: " + text,
+        Notification::Type::ERROR
+      );
+    }
 
     /**
      * Unique URIs from the back/forward history of every tab and split,

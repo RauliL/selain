@@ -21,6 +21,7 @@ ADD_EXECUTABLE(
   src/tab-completion.cpp
   src/tab-label.cpp
   src/theme.cpp
+  src/utils.cpp
   src/view.cpp
   src/web-context.cpp
   src/web-settings.cpp

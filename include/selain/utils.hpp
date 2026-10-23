@@ -28,7 +28,9 @@
 #include <algorithm>
 #include <cctype>
 #include <concepts>
-#include <cstddef>
+
+#include <glibmm.h>
+#include <webkit/webkit.h>
 
 namespace selain::utils
 {
@@ -44,7 +46,7 @@ namespace selain::utils
    * Tests whether given string is empty or contains only whitespace
    * characters.
    */
-  template<class T>
+  template<typename T>
   bool is_blank(const T& input)
   {
     return input.empty() || std::all_of(
@@ -57,16 +59,17 @@ namespace selain::utils
     );
   }
 
-  /**
-   * Strips whitespace from beginning and of end of given string and returns
-   * result.
-   */
+  template<typename T>
+  inline bool starts_with(const T& input, typename T::value_type c)
+  {
+    return !input.empty() && input[0] == c;
+  }
+
   template<TrimableString T>
-  T trim(const T& input)
+  std::size_t find_first_non_whitespace(const T& input)
   {
     const auto length = input.length();
     std::size_t i;
-    std::size_t j;
 
     for (i = 0; i < length; ++i)
     {
@@ -75,18 +78,63 @@ namespace selain::utils
         break;
       }
     }
-    for (j = length; j != 0; --j)
+
+    return i;
+  }
+
+  template<TrimableString T>
+  std::size_t find_last_non_whitespace(const T& input)
+  {
+    const auto length = input.length();
+    std::size_t i;
+
+    for (i = length; i != 0; --i)
     {
-      if (!std::isspace(input[j - 1]))
+      if (!std::isspace(input[i - 1]))
       {
         break;
       }
     }
-    if (i != 0 && j != length)
+
+    return i;
+  }
+
+  /**
+   * Strips whitespace from beginning and of end of given string and returns
+   * result.
+   */
+  template<TrimableString T>
+  T trim(const T& input)
+  {
+    const auto i = find_first_non_whitespace(input);
+    const auto j = find_last_non_whitespace(input);
+
+    if (i != 0 && j != input.length())
     {
       return input.substr(i, j - i);
     }
 
     return input;
   }
+
+  /**
+   * Strips whitespace from beginning of given string and returns result.
+   */
+  template<TrimableString T>
+  T trim_start(const T& input)
+  {
+    const auto i = find_first_non_whitespace(input);
+
+    if (i != 0)
+    {
+      return input.substr(i);
+    }
+
+    return input;
+  }
+
+  /**
+   * Returns textual representation of given JavaScript value.
+   */
+  Glib::ustring js_value_to_text(::JSCValue* value);
 }

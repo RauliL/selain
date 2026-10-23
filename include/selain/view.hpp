@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#include <vector>
+
 #include <selain/hint-context.hpp>
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
@@ -50,6 +52,12 @@ namespace selain
 
     Glib::ustring get_uri() const;
     Glib::ustring get_title() const;
+
+    /**
+     * Appends URIs from this view's back/forward list into \p uris.
+     */
+    void collect_history_uris(std::vector<Glib::ustring>& uris) const;
+
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
     void stop_loading();

@@ -142,6 +142,12 @@ namespace selain
     void cycle_view(bool backwards = false);
 
     Glib::ustring get_uri() const;
+
+    /**
+     * Appends URIs from every split view's browsing history into \p uris.
+     */
+    void collect_history_uris(std::vector<Glib::ustring>& uris) const;
+
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
     void stop_loading();

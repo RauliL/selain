@@ -232,6 +232,50 @@ namespace selain
   }
 
   void
+  View::collect_history_uris(std::vector<Glib::ustring>& uris) const
+  {
+    const auto append_item = [&uris](::WebKitBackForwardListItem* item) {
+      if (!item)
+      {
+        return;
+      }
+      if (const auto* uri = ::webkit_back_forward_list_item_get_uri(item))
+      {
+        if (*uri)
+        {
+          uris.emplace_back(uri);
+        }
+      }
+    };
+
+    auto* list = ::webkit_web_view_get_back_forward_list(m_web_view);
+
+    if (!list)
+    {
+      return;
+    }
+
+    append_item(::webkit_back_forward_list_get_current_item(list));
+
+    if (auto* back = ::webkit_back_forward_list_get_back_list(list))
+    {
+      for (auto* node = back; node; node = node->next)
+      {
+        append_item(WEBKIT_BACK_FORWARD_LIST_ITEM(node->data));
+      }
+      g_list_free(back);
+    }
+    if (auto* forward = ::webkit_back_forward_list_get_forward_list(list))
+    {
+      for (auto* node = forward; node; node = node->next)
+      {
+        append_item(WEBKIT_BACK_FORWARD_LIST_ITEM(node->data));
+      }
+      g_list_free(forward);
+    }
+  }
+
+  void
   View::load_uri(const Glib::ustring& uri)
   {
     if (uri.empty())

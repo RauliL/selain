@@ -410,6 +410,18 @@ namespace selain
   }
 
   void
+  Tab::collect_history_uris(std::vector<Glib::ustring>& uris) const
+  {
+    for (const auto& view : m_views)
+    {
+      if (view)
+      {
+        view->collect_history_uris(uris);
+      }
+    }
+  }
+
+  void
   Tab::load_uri(const Glib::ustring& uri)
   {
     if (m_active_view)

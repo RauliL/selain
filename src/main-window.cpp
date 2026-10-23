@@ -23,6 +23,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <algorithm>
+
 #include <selain/main-window.hpp>
 
 namespace selain
@@ -227,6 +229,25 @@ namespace selain
   MainWindow::prev_tab()
   {
     m_notebook.prev_page();
+  }
+
+  std::vector<Glib::ustring>
+  MainWindow::get_history_uris() const
+  {
+    std::vector<Glib::ustring> uris;
+
+    for (int i = 0; i < m_notebook.get_n_pages(); ++i)
+    {
+      if (const auto* tab = get_nth_tab(i))
+      {
+        tab->collect_history_uris(uris);
+      }
+    }
+
+    std::sort(std::begin(uris), std::end(uris));
+    uris.erase(std::unique(std::begin(uris), std::end(uris)), std::end(uris));
+
+    return uris;
   }
 
   bool

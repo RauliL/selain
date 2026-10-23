@@ -26,6 +26,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <vector>
 
 #include <gtkmm.h>
 
@@ -159,6 +160,12 @@ namespace selain
     void set_current_tab(const Glib::RefPtr<Tab>& tab);
     void next_tab();
     void prev_tab();
+
+    /**
+     * Unique URIs from the back/forward history of every tab and split,
+     * sorted alphabetically.
+     */
+    std::vector<Glib::ustring> get_history_uris() const;
 
   private:
     void initialize_commands();

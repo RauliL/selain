@@ -87,6 +87,15 @@ namespace selain
     {
       return name == "set" || name == "se";
     }
+
+    bool
+    is_uri_command(const Glib::ustring& name)
+    {
+      return name == "open" || name == "o" ||
+             name == "open-tab" || name == "ot" ||
+             name == "split" || name == "sp" ||
+             name == "vsplit" || name == "vs" || name == "vsp";
+    }
   }
 
   void
@@ -136,15 +145,25 @@ namespace selain
       const auto command_name = utils::trim(body.substr(0, space));
       const auto args = body.substr(space + 1);
 
-      if (!is_set_command(command_name) ||
-          args.find('=') != Glib::ustring::npos)
-      {
-        return;
-      }
-      // Complete setting name: ":set en" → ":set enable-javascript"
       line_prefix = ":" + command_name + " ";
       token = utils::trim(args);
-      candidates = setting::names();
+
+      if (is_set_command(command_name))
+      {
+        if (args.find('=') != Glib::ustring::npos)
+        {
+          return;
+        }
+        // Complete setting name: ":set en" → ":set enable-javascript"
+        candidates = setting::names();
+      }
+      else if (is_uri_command(command_name))
+      {
+        // Complete from browsing history of every tab/split.
+        candidates = window.get_history_uris();
+      } else {
+        return;
+      }
     }
 
     const auto token_is_current_match = std::find(

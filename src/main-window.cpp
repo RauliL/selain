@@ -187,12 +187,14 @@ namespace selain
     {
       return;
     }
-    m_notebook.remove_page(index);
-    if (m_notebook.get_current_page() < 0)
+    // remove_page() on the last tab followed by close() leaves GTK touching
+    // already-finalized widgets; close the window with the page still attached.
+    if (m_notebook.get_n_pages() <= 1)
     {
       close();
       return;
     }
+    m_notebook.remove_page(index);
     if (const auto current = get_current_tab())
     {
       current->grab_focus();

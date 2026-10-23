@@ -33,6 +33,7 @@ namespace selain
 {
   static void cmd_hint_mode(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_insert_mode(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_only(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_open(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_open_tab(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_quit(MainWindow&, Tab*, const Glib::ustring&);
@@ -40,14 +41,17 @@ namespace selain
   static void cmd_reload(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_force_reload(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_set(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_split(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_stop(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_tab_next(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_tab_prev(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_vsplit(MainWindow&, Tab*, const Glib::ustring&);
 
   static const std::vector<Command> command_list =
   {
     { "hint", "h", cmd_hint_mode },
     { "insert", "i", cmd_insert_mode },
+    { "only", "on", cmd_only },
     { "open", "o", cmd_open },
     { "open-tab", "ot", cmd_open_tab },
     { "quit", "q", cmd_quit },
@@ -55,9 +59,12 @@ namespace selain
     { "reload", "r", cmd_reload },
     { "reload!", "r!", cmd_force_reload },
     { "set", "se", cmd_set },
+    { "split", "sp", cmd_split },
     { "stop", "s", cmd_stop },
     { "tab-next", "tn", cmd_tab_next },
     { "tab-prev", "tp", cmd_tab_prev },
+    { "vsplit", "vs", cmd_vsplit },
+    { "vsp", nullptr, cmd_vsplit },
   };
 
   void
@@ -166,11 +173,20 @@ namespace selain
   }
 
   static void
+  cmd_only(MainWindow&, Tab* tab, const Glib::ustring&)
+  {
+    if (tab)
+    {
+      tab->close_other_views();
+    }
+  }
+
+  static void
   cmd_quit(MainWindow& window, Tab* tab, const Glib::ustring&)
   {
     if (tab)
     {
-      window.close_tab(*tab);
+      tab->close_active_view();
     } else {
       window.close();
     }
@@ -243,6 +259,15 @@ namespace selain
   }
 
   static void
+  cmd_split(MainWindow&, Tab* tab, const Glib::ustring& args)
+  {
+    if (tab)
+    {
+      tab->split(false, args);
+    }
+  }
+
+  static void
   cmd_stop(MainWindow&, Tab* tab, const Glib::ustring&)
   {
     if (tab)
@@ -261,5 +286,14 @@ namespace selain
   cmd_tab_next(MainWindow& window, Tab*, const Glib::ustring&)
   {
     window.next_tab();
+  }
+
+  static void
+  cmd_vsplit(MainWindow&, Tab* tab, const Glib::ustring& args)
+  {
+    if (tab)
+    {
+      tab->split(true, args);
+    }
   }
 }

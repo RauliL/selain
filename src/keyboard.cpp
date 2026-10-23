@@ -62,6 +62,16 @@ namespace selain
   static void bind_tab_close(MainWindow&, Tab&);
   static void bind_tab_prev(MainWindow&, Tab&);
   static void bind_tab_next(MainWindow&, Tab&);
+  static void bind_split(MainWindow&, Tab&);
+  static void bind_vsplit(MainWindow&, Tab&);
+  static void bind_split_close(MainWindow&, Tab&);
+  static void bind_split_only(MainWindow&, Tab&);
+  static void bind_split_focus_left(MainWindow&, Tab&);
+  static void bind_split_focus_down(MainWindow&, Tab&);
+  static void bind_split_focus_up(MainWindow&, Tab&);
+  static void bind_split_focus_right(MainWindow&, Tab&);
+  static void bind_split_cycle(MainWindow&, Tab&);
+  static void bind_split_cycle_prev(MainWindow&, Tab&);
   static void bind_scroll_left(MainWindow&, Tab&);
   static void bind_scroll_down(MainWindow&, Tab&);
   static void bind_scroll_up(MainWindow&, Tab&);
@@ -100,6 +110,21 @@ namespace selain
       add_mapping(U"x", bind_tab_close);
       add_mapping(U"J", bind_tab_prev);
       add_mapping(U"K", bind_tab_next);
+
+      // Split management (Vim Ctrl-W).
+      add_mapping(U"^ws", bind_split);
+      add_mapping(U"^wS", bind_split);
+      add_mapping(U"^wv", bind_vsplit);
+      add_mapping(U"^wq", bind_split_close);
+      add_mapping(U"^wc", bind_split_close);
+      add_mapping(U"^wo", bind_split_only);
+      add_mapping(U"^wh", bind_split_focus_left);
+      add_mapping(U"^wj", bind_split_focus_down);
+      add_mapping(U"^wk", bind_split_focus_up);
+      add_mapping(U"^wl", bind_split_focus_right);
+      add_mapping(U"^ww", bind_split_cycle);
+      add_mapping(U"^w^w", bind_split_cycle);
+      add_mapping(U"^wW", bind_split_cycle_prev);
 
       // Navigation.
       add_mapping(U"d", bind_scroll_page_down);
@@ -206,7 +231,8 @@ namespace selain
       entry->second->callback(window, tab);
       last_mapping.reset();
     }
-    else if (!entry->second->mapping.empty())
+    else if (!entry->second->mapping.empty() ||
+             !entry->second->control_mapping.empty())
     {
       last_mapping = entry->second;
     }
@@ -290,30 +316,29 @@ namespace selain
 
     for (std::u32string::size_type i = 0; i < length; ++i)
     {
-      const auto c = ::gdk_unicode_to_keyval(sequence[i]);
       bool is_control = false;
-      keyboard::Mapping::mapping_type::const_iterator entry;
 
-      if (c == '^' && i + 1 < length)
+      if (sequence[i] == U'^' && i + 1 < length)
       {
         ++i;
         is_control = true;
-        entry = current_mapping->control_mapping.find(c);
-      } else {
-        entry = current_mapping->mapping.find(c);
       }
-      if (entry == std::end(current_mapping->mapping))
-      {
-        const auto owner = current_mapping;
 
-        current_mapping = std::make_shared<keyboard::Mapping>();
-        current_mapping->value = c;
-        if (is_control)
-        {
-          owner->control_mapping[c] = current_mapping;
-        } else {
-          owner->mapping[c] = current_mapping;
-        }
+      const auto c = ::gdk_unicode_to_keyval(sequence[i]);
+      auto& map = is_control
+        ? current_mapping->control_mapping
+        : current_mapping->mapping;
+      auto entry = map.find(c);
+
+      if (entry == std::end(map))
+      {
+        auto next_mapping = std::make_shared<keyboard::Mapping>();
+
+        next_mapping->value = c;
+        map[c] = next_mapping;
+        current_mapping = next_mapping;
+      } else {
+        current_mapping = entry->second;
       }
     }
 
@@ -379,6 +404,66 @@ namespace selain
   bind_tab_prev(MainWindow& window, Tab&)
   {
     window.prev_tab();
+  }
+
+  static void
+  bind_split(MainWindow&, Tab& tab)
+  {
+    tab.split(false);
+  }
+
+  static void
+  bind_vsplit(MainWindow&, Tab& tab)
+  {
+    tab.split(true);
+  }
+
+  static void
+  bind_split_close(MainWindow&, Tab& tab)
+  {
+    tab.close_active_view();
+  }
+
+  static void
+  bind_split_only(MainWindow&, Tab& tab)
+  {
+    tab.close_other_views();
+  }
+
+  static void
+  bind_split_focus_left(MainWindow&, Tab& tab)
+  {
+    tab.focus_view(FocusDirection::LEFT);
+  }
+
+  static void
+  bind_split_focus_down(MainWindow&, Tab& tab)
+  {
+    tab.focus_view(FocusDirection::DOWN);
+  }
+
+  static void
+  bind_split_focus_up(MainWindow&, Tab& tab)
+  {
+    tab.focus_view(FocusDirection::UP);
+  }
+
+  static void
+  bind_split_focus_right(MainWindow&, Tab& tab)
+  {
+    tab.focus_view(FocusDirection::RIGHT);
+  }
+
+  static void
+  bind_split_cycle(MainWindow&, Tab& tab)
+  {
+    tab.cycle_view(false);
+  }
+
+  static void
+  bind_split_cycle_prev(MainWindow&, Tab& tab)
+  {
+    tab.cycle_view(true);
   }
 
   static void

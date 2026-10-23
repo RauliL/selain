@@ -103,6 +103,12 @@ namespace selain::theme
         "  background-color: var(--selain-status-bar-error-background);\n"
         "  color: var(--selain-status-bar-error-foreground);\n"
         "  font-family: monospace;\n"
+        "}}\n"
+        ".selain-view {{\n"
+        "  border: 1px solid transparent;\n"
+        "}}\n"
+        ".selain-view-active {{\n"
+        "  border-color: var(--selain-window-foreground);\n"
         "}}\n",
         window_background.to_string().raw(),
         window_foreground.to_string().raw(),

@@ -25,8 +25,11 @@
  */
 #pragma once
 
+#include <vector>
+
 #include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
+#include <selain/view.hpp>
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
 
@@ -35,7 +38,19 @@ namespace selain
   class MainWindow;
 
   /**
-   * GTK widget for a browser tab.
+   * Direction used when focusing a neighbouring split view.
+   */
+  enum class FocusDirection
+  {
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN
+  };
+
+  /**
+   * GTK widget for a browser tab page (Vim "tab"), which may contain one or
+   * more split views (Vim "windows").
    */
   class Tab : public Gtk::Box
   {
@@ -90,6 +105,42 @@ namespace selain
       return m_tab_label;
     }
 
+    /**
+     * Returns the currently focused split view inside this tab.
+     */
+    View* get_active_view();
+    const View* get_active_view() const;
+
+    void set_active_view(View& view);
+
+    /**
+     * Splits the active view. When vertical is false, creates a horizontal
+     * split (:split). When vertical is true, creates a vertical split
+     * (:vsplit). Optional URI is loaded in the new view; otherwise the
+     * current URI is reused.
+     */
+    void split(bool vertical, const Glib::ustring& uri = Glib::ustring());
+
+    /**
+     * Closes the active split view. If it is the only view, closes the tab.
+     */
+    void close_active_view();
+
+    /**
+     * Closes all split views except the active one.
+     */
+    void close_other_views();
+
+    /**
+     * Focuses the nearest split view in the given direction.
+     */
+    void focus_view(FocusDirection direction);
+
+    /**
+     * Cycles focus to the next or previous split view.
+     */
+    void cycle_view(bool backwards = false);
+
     Glib::ustring get_uri() const;
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
@@ -115,6 +166,10 @@ namespace selain
     const Glib::ustring& get_status() const;
     void set_status(const Glib::ustring& status, bool permanent = false);
 
+    void on_view_status_changed(View& view, const Glib::ustring& status);
+    void on_view_title_changed(View& view);
+    void on_view_favicon_changed(View& view);
+
     inline status_changed_signal_type& signal_status_changed()
     {
       return m_signal_status_changed;
@@ -126,16 +181,24 @@ namespace selain
     }
 
   private:
+    Glib::RefPtr<View> create_view();
+    void replace_view_with_paned(
+      View& current,
+      View& next,
+      Gtk::Orientation orientation
+    );
+    void promote_sibling(Gtk::Paned& paned, Gtk::Widget& sibling);
+    void collect_views(std::vector<View*>& output) const;
+    void sync_active_chrome();
     void on_close_button_clicked();
 
   private:
+    Glib::RefPtr<WebContext> m_web_context;
+    Glib::RefPtr<WebSettings> m_web_settings;
     Glib::RefPtr<HintContext> m_hint_context;
     TabLabel m_tab_label;
-    ::WebKitWebView* m_web_view;
-    Glib::RefPtr<Gtk::Widget> m_web_view_widget;
-    Glib::ustring m_status;
-    Glib::ustring m_permanent_status;
+    std::vector<Glib::RefPtr<View>> m_views;
+    View* m_active_view;
     status_changed_signal_type m_signal_status_changed;
   };
 }
-

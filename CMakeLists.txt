@@ -20,6 +20,7 @@ ADD_EXECUTABLE(
   src/tab.cpp
   src/tab-label.cpp
   src/theme.cpp
+  src/view.cpp
   src/web-context.cpp
   src/web-settings.cpp
 )

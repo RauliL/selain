@@ -23,6 +23,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 
@@ -30,6 +32,34 @@
 #include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/theme.hpp>
+
+/**
+ * WebKitGTK's DMA-BUF renderer is known to crash the web process on NVIDIA
+ * proprietary drivers (especially on Google properties). Disable it early,
+ * before any WebKitWebView is constructed, unless the user already set the
+ * variable themselves.
+ */
+static void
+maybe_workaround_nvidia_webkit()
+{
+  if (std::getenv("WEBKIT_DISABLE_DMABUF_RENDERER"))
+  {
+    return;
+  }
+
+  const auto* gl_vendor = std::getenv("GLX_VENDOR_LIBRARY_NAME");
+  const auto* nvidia = std::getenv("__GLX_VENDOR_LIBRARY_NAME");
+  const bool looks_nvidia =
+    (gl_vendor && std::strstr(gl_vendor, "nvidia")) ||
+    (nvidia && std::strstr(nvidia, "nvidia")) ||
+    std::filesystem::exists("/proc/driver/nvidia/version") ||
+    std::filesystem::exists("/dev/nvidia0");
+
+  if (looks_nvidia)
+  {
+    ::setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1", 0);
+  }
+}
 
 static selain::MainWindow*
 get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
@@ -123,6 +153,8 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
 int
 main(int argc, char** argv)
 {
+  maybe_workaround_nvidia_webkit();
+
   const auto app = Gtk::Application::create(
     "dev.rauli.selain",
     Gio::Application::Flags::HANDLES_COMMAND_LINE

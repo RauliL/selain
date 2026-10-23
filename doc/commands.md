@@ -6,6 +6,7 @@ Selain currently supports following commands:
 |-----------|--------|---------------------------------------|
 |`:hint`    |`:h`    |Switches to hint mode.                 |
 |`:insert`  |`:i`    |Switches to insert mode.               |
+|`:js`      |        |Runs JavaScript in the current tab.    |
 |`:only`    |`:on`   |Closes all splits except the current.  |
 |`:open`    |`:o`    |Opens URI given as argument.           |
 |`:open-tab`|`:ot`   |Opens URI given as argument in new tab.|
@@ -19,6 +20,9 @@ Selain currently supports following commands:
 |`:tabnext` |`:tn`   |Switches to next tab.                  |
 |`:tabprev` |`:tp`   |Switches to previous tab.              |
 |`:vsplit`  |`:vs`   |Splits the current view vertically.    |
+
+`:js` takes a JavaScript expression or statement as argument and shows the
+result (or an error) as a notification. Example: `:js document.title`.
 
 `:split` and `:vsplit` accept an optional URI argument. Without one, the new
 split loads the same URI as the current view.

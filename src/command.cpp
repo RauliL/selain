@@ -33,6 +33,7 @@ namespace selain
 {
   static void cmd_hint_mode(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_insert_mode(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_js(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_only(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_open(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_open_tab(MainWindow&, Tab*, const Glib::ustring&);
@@ -46,11 +47,14 @@ namespace selain
   static void cmd_tab_next(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_tab_prev(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_vsplit(MainWindow&, Tab*, const Glib::ustring&);
+  static void js_command_callback(::GObject*, ::GAsyncResult*, ::gpointer);
+  static Glib::ustring js_value_to_text(::JSCValue*);
 
   static const std::vector<Command> command_list =
   {
     { "hint", "h", cmd_hint_mode },
     { "insert", "i", cmd_insert_mode },
+    { "js", nullptr, cmd_js },
     { "only", "on", cmd_only },
     { "open", "o", cmd_open },
     { "open-tab", "ot", cmd_open_tab },
@@ -153,6 +157,107 @@ namespace selain
   cmd_insert_mode(MainWindow& window, Tab*, const Glib::ustring&)
   {
     window.set_mode(Mode::INSERT);
+  }
+
+  static void
+  cmd_js(MainWindow& window, Tab* tab, const Glib::ustring& args)
+  {
+    if (utils::is_blank(args))
+    {
+      window.get_command_entry().show_notification(
+        "Error: Usage: :js <script>",
+        Notification::Type::ERROR
+      );
+      return;
+    }
+    if (!tab)
+    {
+      window.get_command_entry().show_notification(
+        "Error: No tab to run JavaScript in",
+        Notification::Type::ERROR
+      );
+      return;
+    }
+    tab->execute_script(
+      args,
+      nullptr,
+      js_command_callback,
+      static_cast<void*>(tab)
+    );
+  }
+
+  static void
+  js_command_callback(::GObject* web_view_object,
+                      ::GAsyncResult* result,
+                      ::gpointer tab_data)
+  {
+    const auto tab = static_cast<Tab*>(tab_data);
+    const auto window = tab ? tab->get_main_window() : nullptr;
+    ::GError* error = nullptr;
+    const auto value = ::webkit_web_view_evaluate_javascript_finish(
+      WEBKIT_WEB_VIEW(web_view_object),
+      result,
+      &error
+    );
+
+    if (!value)
+    {
+      if (window && error)
+      {
+        window->get_command_entry().show_notification(
+          std::format("Error: {}", error->message),
+          Notification::Type::ERROR
+        );
+      }
+      if (error)
+      {
+        ::g_error_free(error);
+      }
+      return;
+    }
+
+    if (window)
+    {
+      if (const auto exception = ::jsc_context_get_exception(
+            ::jsc_value_get_context(value)
+          ))
+      {
+        window->get_command_entry().show_notification(
+          std::format("Error: {}", ::jsc_exception_get_message(exception)),
+          Notification::Type::ERROR
+        );
+      } else {
+        window->get_command_entry().show_notification(js_value_to_text(value));
+      }
+    }
+    ::g_object_unref(value);
+  }
+
+  static Glib::ustring
+  js_value_to_text(::JSCValue* value)
+  {
+    if (::jsc_value_is_undefined(value))
+    {
+      return "undefined";
+    }
+    if (auto* json = ::jsc_value_to_json(value, 0))
+    {
+      Glib::ustring text(json);
+
+      g_free(json);
+
+      return text;
+    }
+    if (auto* text = ::jsc_value_to_string(value))
+    {
+      Glib::ustring result(text);
+
+      g_free(text);
+
+      return result;
+    }
+
+    return Glib::ustring();
   }
 
   static void

@@ -432,6 +432,37 @@ namespace selain
   }
 
   static ::gboolean
+  open_uri_from_action(
+    MainWindow* window,
+    ::WebKitPolicyDecision* decision,
+    ::WebKitNavigationAction* action
+  )
+  {
+    const auto uri = ::webkit_uri_request_get_uri(
+      ::webkit_navigation_action_get_request(
+        action
+      )
+    );
+
+    // Resolve the policy before creating another view; loading from inside
+    // this callback can deadlock the web process.
+    ::webkit_policy_decision_ignore(decision);
+    if (window && uri && *uri)
+    {
+      const Glib::ustring open_uri = uri;
+
+      Glib::signal_idle().connect_once(
+        [window, open_uri]()
+        {
+          window->open_tab(open_uri, false);
+        }
+      );
+    }
+
+    return TRUE;
+  }
+
+  static ::gboolean
   on_decide_policy(::WebKitWebView*,
                    ::WebKitPolicyDecision* decision,
                    ::WebKitPolicyDecisionType decision_type,
@@ -456,39 +487,25 @@ namespace selain
           action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED &&
           window)
       {
-        window->open_tab(
-          ::webkit_uri_request_get_uri(
-            ::webkit_navigation_action_get_request(action)
-          ),
-          false
-        );
-        ::webkit_policy_decision_ignore(decision);
+        return open_uri_from_action(window, decision, action);
       }
     }
-    // Open new windows into tabs.
-    else if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
+    // Open new windows into tabs. Handle every navigation type (link click,
+    // window.open(), form target=_blank, …). Returning TRUE without making a
+    // decision previously skipped WebKit's default MIME handling.
+    else if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION &&
+             window)
     {
       auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
       auto action = ::webkit_navigation_policy_decision_get_navigation_action(
         navigation_decision
       );
-      auto action_type = ::webkit_navigation_action_get_navigation_type(
-        action
-      );
 
-      if (action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED && window)
-      {
-        window->open_tab(
-          ::webkit_uri_request_get_uri(
-            ::webkit_navigation_action_get_request(action)
-          ),
-          false
-        );
-        ::webkit_policy_decision_ignore(decision);
-      }
+      return open_uri_from_action(window, decision, action);
     }
 
-    return true;
+    // Let WebKit's default handler run (including response MIME checks).
+    return FALSE;
   }
 
   static void

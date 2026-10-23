@@ -34,19 +34,14 @@
 #include <selain/theme.hpp>
 
 /**
- * WebKitGTK's DMA-BUF renderer is known to crash the web process on NVIDIA
- * proprietary drivers (especially on Google properties). Disable it early,
- * before any WebKitWebView is constructed, unless the user already set the
- * variable themselves.
+ * WebKitGTK on NVIDIA proprietary drivers SIGSEGVs in
+ * AcceleratedBackingStore when entering accelerated compositing (reproduced
+ * reliably on google.fi). Disable DMA-BUF and compositing before any
+ * WebKitWebView is constructed, unless the user already overrode them.
  */
 static void
 maybe_workaround_nvidia_webkit()
 {
-  if (std::getenv("WEBKIT_DISABLE_DMABUF_RENDERER"))
-  {
-    return;
-  }
-
   const auto* gl_vendor = std::getenv("GLX_VENDOR_LIBRARY_NAME");
   const auto* nvidia = std::getenv("__GLX_VENDOR_LIBRARY_NAME");
   const bool looks_nvidia =
@@ -55,10 +50,14 @@ maybe_workaround_nvidia_webkit()
     std::filesystem::exists("/proc/driver/nvidia/version") ||
     std::filesystem::exists("/dev/nvidia0");
 
-  if (looks_nvidia)
+  if (!looks_nvidia)
   {
-    ::setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1", 0);
+    return;
   }
+
+  // overwrite=0: keep any value the user already exported.
+  ::setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1", 0);
+  ::setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", 0);
 }
 
 static selain::MainWindow*

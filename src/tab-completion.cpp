@@ -25,6 +25,8 @@
  */
 #include <algorithm>
 
+#include <glib.h>
+
 #include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/tab-completion.hpp>
@@ -64,6 +66,26 @@ namespace selain
       return prefix;
     }
 
+    bool
+    starts_with(const Glib::ustring& value, const Glib::ustring& prefix)
+    {
+      return value.size() >= prefix.size() &&
+             value.compare(0, prefix.size(), prefix) == 0;
+    }
+
+    bool
+    has_uri_scheme(const Glib::ustring& token)
+    {
+      if (auto* scheme = ::g_uri_parse_scheme(token.c_str()))
+      {
+        g_free(scheme);
+
+        return true;
+      }
+
+      return false;
+    }
+
     std::vector<Glib::ustring>
     filter_prefix(const std::vector<Glib::ustring>& candidates,
                   const Glib::ustring& prefix)
@@ -72,14 +94,65 @@ namespace selain
 
       for (const auto& candidate : candidates)
       {
-        if (candidate.size() >= prefix.size() &&
-            candidate.compare(0, prefix.size(), prefix) == 0)
+        if (starts_with(candidate, prefix))
         {
           matches.push_back(candidate);
         }
       }
 
       return matches;
+    }
+
+    /**
+     * Like filter_prefix, but if \p prefix has no URI scheme, also match
+     * candidates as if the user had typed "http://" or "https://" first.
+     */
+    std::vector<Glib::ustring>
+    filter_uri_prefix(const std::vector<Glib::ustring>& candidates,
+                      const Glib::ustring& prefix)
+    {
+      if (prefix.empty() || has_uri_scheme(prefix))
+      {
+        return filter_prefix(candidates, prefix);
+      }
+
+      const auto http_prefix = "http://" + prefix;
+      const auto https_prefix = "https://" + prefix;
+      std::vector<Glib::ustring> matches;
+
+      for (const auto& candidate : candidates)
+      {
+        if (starts_with(candidate, prefix) ||
+            starts_with(candidate, http_prefix) ||
+            starts_with(candidate, https_prefix))
+        {
+          matches.push_back(candidate);
+        }
+      }
+
+      return matches;
+    }
+
+    bool
+    completion_extends_token(const Glib::ustring& common,
+                             const Glib::ustring& token,
+                             bool uri_completion)
+    {
+      if (common.length() <= token.length())
+      {
+        return false;
+      }
+      if (starts_with(common, token))
+      {
+        return true;
+      }
+      if (!uri_completion || has_uri_scheme(token))
+      {
+        return false;
+      }
+
+      return starts_with(common, "http://" + token) ||
+             starts_with(common, "https://" + token);
     }
 
     bool
@@ -118,12 +191,13 @@ namespace selain
 
     const auto body = text.substr(1);
     const auto space = body.find(' ');
-    const bool completing_setting = space != Glib::ustring::npos;
+    const bool completing_argument = space != Glib::ustring::npos;
     Glib::ustring line_prefix;
     Glib::ustring token;
     std::vector<Glib::ustring> candidates;
+    bool uri_completion = false;
 
-    if (!completing_setting)
+    if (!completing_argument)
     {
       // Complete command name: ":op" → ":open"
       line_prefix = ":";
@@ -161,6 +235,7 @@ namespace selain
       {
         // Complete from browsing history of every tab/split.
         candidates = window.get_history_uris();
+        uri_completion = true;
       } else {
         return;
       }
@@ -174,7 +249,9 @@ namespace selain
 
     if (!token_is_current_match)
     {
-      m_matches = filter_prefix(candidates, token);
+      m_matches = uri_completion
+        ? filter_uri_prefix(candidates, token)
+        : filter_prefix(candidates, token);
       m_index = 0;
 
       if (m_matches.empty())
@@ -185,7 +262,9 @@ namespace selain
       const auto common = longest_common_prefix(m_matches);
 
       // Bash-style: first expand to the shared prefix when it grows the token.
-      if (common.length() > token.length() && common != m_matches.front())
+      // For schemeless URI tokens, http(s):// is treated as part of that growth.
+      if (completion_extends_token(common, token, uri_completion) &&
+          common != m_matches.front())
       {
         entry.set_text(line_prefix + common);
         return;

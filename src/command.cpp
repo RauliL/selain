@@ -226,7 +226,7 @@ namespace selain
       const auto name = utils::trim(args.substr(0, index));
       const auto value = utils::trim(args.substr(index + 1));
 
-      if (!setting::set(name, value))
+      if (!setting::set(window, name, value))
       {
         window.get_command_entry().show_notification(
           std::format("Error: Unknown setting: {}", name.raw()),
@@ -243,7 +243,7 @@ namespace selain
     } else {
       const auto name = utils::trim(args);
 
-      if (const auto value = setting::get(name))
+      if (const auto value = setting::get(window, name))
       {
         window.get_command_entry().show_notification(
           std::format("  {}={}", name.raw(), value->raw()),

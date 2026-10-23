@@ -111,7 +111,7 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
 
   if (argc == 1 && !window->get_current_tab())
   {
-    if (const auto homepage = selain::setting::get("homepage"))
+    if (const auto homepage = selain::setting::get(*window, "homepage"))
     {
       window->open_tab(*homepage);
     }

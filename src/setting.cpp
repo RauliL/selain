@@ -37,7 +37,7 @@ namespace selain::setting
   };
 
   std::optional<Glib::ustring>
-  get(const Glib::ustring& key)
+  get(MainWindow&, const Glib::ustring& key)
   {
     const auto entry = mapping.find(key);
 
@@ -50,7 +50,7 @@ namespace selain::setting
   }
 
   bool
-  set(const Glib::ustring& key, const Glib::ustring& value)
+  set(MainWindow&, const Glib::ustring& key, const Glib::ustring& value)
   {
     auto entry = mapping.find(key);
 

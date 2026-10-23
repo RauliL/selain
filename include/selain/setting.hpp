@@ -25,13 +25,18 @@
  */
 #pragma once
 
-#include <optional>
-
-#include <glibmm.h>
+#include "selain/main-window.hpp"
 
 namespace selain::setting
 {
-  std::optional<Glib::ustring> get(const Glib::ustring& key);
+  std::optional<Glib::ustring> get(
+    MainWindow& window,
+    const Glib::ustring& key
+  );
 
-  bool set(const Glib::ustring& key, const Glib::ustring& value);
+  bool set(
+    MainWindow& window,
+    const Glib::ustring& key,
+    const Glib::ustring& value
+  );
 }

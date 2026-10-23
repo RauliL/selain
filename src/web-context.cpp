@@ -69,52 +69,38 @@ namespace selain
   static ::WebKitNetworkSession*
   create_network_session()
   {
-    ::gchar* base_cache_dir = nullptr;
-    ::gchar* base_data_dir = nullptr;
-    ::gchar* cookie_file = nullptr;
+    const auto user_cache_dir = Glib::get_user_cache_dir();
+    const auto base_cache_dir = Glib::build_filename(
+      user_cache_dir,
+      "selain",
+      "cache"
+    );
+    const auto base_data_dir = Glib::build_filename(
+      user_cache_dir,
+      "selain",
+      "data"
+    );
+    const auto cookie_file = Glib::build_filename(
+      user_cache_dir,
+      "selain",
+      "cookies.sqlite"
+    );
     ::WebKitNetworkSession* session;
 
-    if (const auto user_cache_dir = ::g_get_user_cache_dir())
-    {
-      base_cache_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "cache",
-        nullptr
-      );
-      base_data_dir = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "data",
-        nullptr
-      );
-      cookie_file = ::g_build_filename(
-        user_cache_dir,
-        "selain",
-        "cookies.sqlite",
-        nullptr
-      );
-    }
-
-    session = ::webkit_network_session_new(base_data_dir, base_cache_dir);
+    session = ::webkit_network_session_new(
+      base_data_dir.c_str(),
+      base_cache_dir.c_str()
+    );
 
     ::webkit_website_data_manager_set_favicons_enabled(
       ::webkit_network_session_get_website_data_manager(session),
       true
     );
-
-    if (cookie_file)
-    {
-      ::webkit_cookie_manager_set_persistent_storage(
-        ::webkit_network_session_get_cookie_manager(session),
-        cookie_file,
-        WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
-      );
-    }
-
-    free_string(base_cache_dir);
-    free_string(base_data_dir);
-    free_string(cookie_file);
+    ::webkit_cookie_manager_set_persistent_storage(
+      ::webkit_network_session_get_cookie_manager(session),
+      cookie_file.c_str(),
+      WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
+    );
 
     return session;
   }

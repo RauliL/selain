@@ -72,6 +72,11 @@ namespace selain
     void go_back();
     void go_forward();
 
+    /**
+     * Toggles WebKit developer tools for this view.
+     */
+    void toggle_inspector();
+
     void search(const Glib::ustring& text, bool forwards = true);
     void search_next();
     void search_prev();

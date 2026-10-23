@@ -51,6 +51,10 @@ namespace selain
     const std::u32string&,
     const keyboard::BindingCallback&
   );
+  static ::guint parse_key_token(
+    const std::u32string&,
+    std::u32string::size_type&
+  );
 
   static void bind_mode_command(MainWindow&, Tab&);
   static void bind_mode_insert(MainWindow&, Tab&);
@@ -91,6 +95,7 @@ namespace selain
   static void bind_search_backwards(MainWindow&, Tab&);
   static void bind_search_next(MainWindow&, Tab&);
   static void bind_search_prev(MainWindow&, Tab&);
+  static void bind_toggle_inspector(MainWindow&, Tab&);
 
   namespace keyboard
   {
@@ -148,6 +153,9 @@ namespace selain
       add_mapping(U"?", bind_search_backwards);
       add_mapping(U"n", bind_search_next);
       add_mapping(U"N", bind_search_prev);
+
+      // Developer tools.
+      add_mapping(U"<F12>", bind_toggle_inspector);
     }
 
     ::gboolean
@@ -324,7 +332,7 @@ namespace selain
         is_control = true;
       }
 
-      const auto c = ::gdk_unicode_to_keyval(sequence[i]);
+      const auto c = parse_key_token(sequence, i);
       auto& map = is_control
         ? current_mapping->control_mapping
         : current_mapping->mapping;
@@ -343,6 +351,38 @@ namespace selain
     }
 
     current_mapping->callback = callback;
+  }
+
+  static ::guint
+  parse_key_token(const std::u32string& sequence,
+                  std::u32string::size_type& i)
+  {
+    if (sequence[i] == U'<')
+    {
+      const auto end = sequence.find(U'>', i + 1);
+
+      if (end != std::u32string::npos && end > i + 1)
+      {
+        std::string name;
+
+        name.reserve(end - i - 1);
+        for (auto j = i + 1; j < end; ++j)
+        {
+          name += static_cast<char>(sequence[j]);
+        }
+
+        const auto keyval = ::gdk_keyval_from_name(name.c_str());
+
+        if (keyval != GDK_KEY_VoidSymbol)
+        {
+          i = end;
+
+          return keyval;
+        }
+      }
+    }
+
+    return ::gdk_unicode_to_keyval(sequence[i]);
   }
 
   static void
@@ -630,5 +670,11 @@ namespace selain
   bind_search_prev(MainWindow&, Tab& tab)
   {
     tab.search_prev();
+  }
+
+  static void
+  bind_toggle_inspector(MainWindow&, Tab& tab)
+  {
+    tab.toggle_inspector();
   }
 }

@@ -342,6 +342,20 @@ namespace selain
   }
 
   void
+  View::toggle_inspector()
+  {
+    if (auto* inspector = ::webkit_web_view_get_inspector(m_web_view))
+    {
+      if (::webkit_web_inspector_is_attached(inspector))
+      {
+        ::webkit_web_inspector_close(inspector);
+      } else {
+        ::webkit_web_inspector_show(inspector);
+      }
+    }
+  }
+
+  void
   View::search(const Glib::ustring& text, bool forwards)
   {
     auto controller = ::webkit_web_view_get_find_controller(m_web_view);

@@ -479,6 +479,15 @@ namespace selain
   }
 
   void
+  Tab::toggle_inspector()
+  {
+    if (m_active_view)
+    {
+      m_active_view->toggle_inspector();
+    }
+  }
+
+  void
   Tab::search(const Glib::ustring& text, bool forwards)
   {
     if (m_active_view)

@@ -62,6 +62,8 @@ namespace selain
       return m_command_mapping;
     }
 
+    void execute_command(const Glib::ustring& command);
+
     /**
      * Returns the current mode of the window.
      */

@@ -30,17 +30,17 @@
 
 namespace selain
 {
-  static void cmd_hint_mode(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_insert_mode(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_open(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_open_tab(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_quit(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_quit_all(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_reload(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_force_reload(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_stop(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_tab_next(MainWindow&, Tab&, const Glib::ustring&);
-  static void cmd_tab_prev(MainWindow&, Tab&, const Glib::ustring&);
+  static void cmd_hint_mode(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_insert_mode(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_open(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_open_tab(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_quit(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_quit_all(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_reload(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_force_reload(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_stop(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_tab_next(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_tab_prev(MainWindow&, Tab*, const Glib::ustring&);
 
   static const std::vector<Command> command_list =
   {
@@ -74,10 +74,9 @@ namespace selain
   }
 
   void
-  Tab::execute_command(const Glib::ustring& command)
+  MainWindow::execute_command(const Glib::ustring& command)
   {
-    const auto length = command.length();
-    const auto window = get_main_window();
+    const auto tab = get_current_tab();
 
     // Skip empty commands.
     if (utils::is_blank(command))
@@ -85,115 +84,136 @@ namespace selain
       return;
     }
 
-    // Do not allow execution of commands on tabs that do not have a window.
-    if (!window)
+    // Activate search mode.
+    if (command[0] == '/')
     {
+      if (tab)
+      {
+        tab->search(command.substr(1));
+      }
       return;
     }
 
-    if (command[0] == '/')
+    // Activate backwards search mode.
+    if (command[0] == '?')
     {
-      search(command.substr(1));
+      if (tab)
+      {
+        tab->search(command.substr(1), false);
+      }
       return;
     }
-    else if (command[0] == '?')
+
+    if (command[0] == ':' && command.length() > 1)
     {
-      search(command.substr(1), false);
-      return;
-    }
-    else if (command[0] == ':' && length > 1)
-    {
-      const auto subcommand = command.substr(1);
-      const auto pos = subcommand.find(' ');
       Glib::ustring command_name;
       Glib::ustring command_args;
-      const auto& mapping = window->get_command_mapping();
-      MainWindow::command_mapping_type::const_iterator entry;
+      const auto sub = command.substr(1);
+      const auto pos = sub.find(' ');
+      command_mapping_type::const_iterator entry;
 
       if (pos == Glib::ustring::npos)
       {
-        command_name = utils::string_trim(subcommand);
+        command_name = utils::trim(sub);
       } else {
-        command_name = utils::string_trim(subcommand.substr(0, pos));
-        command_args = utils::string_trim(subcommand.substr(pos + 1));
+        command_name = utils::trim(sub.substr(0, pos));
+        command_args = utils::trim(sub.substr(pos + 1));
       }
-      entry = mapping.find(command_name.c_str());
-      if (entry != std::end(mapping))
+      entry = m_command_mapping.find(command_name.raw());
+      if (entry != std::end(m_command_mapping))
       {
-        entry->second.callback(*window, *this, command_args);
+        entry->second.callback(*this, tab, command_args);
         return;
       }
     }
 
-    window->get_command_entry().show_notification(
+    m_command_entry.show_notification(
       std::format("Error: Unknown command: {}", command.raw()),
       Notification::Type::ERROR
     );
   }
 
   static void
-  cmd_hint_mode(MainWindow& window, Tab&, const Glib::ustring&)
+  cmd_hint_mode(MainWindow& window, Tab*, const Glib::ustring&)
   {
     window.set_mode(Mode::HINT);
   }
 
   static void
-  cmd_insert_mode(MainWindow& window, Tab&, const Glib::ustring&)
+  cmd_insert_mode(MainWindow& window, Tab*, const Glib::ustring&)
   {
     window.set_mode(Mode::INSERT);
   }
 
   static void
-  cmd_open(MainWindow&, Tab& tab, const Glib::ustring& args)
+  cmd_open(MainWindow& window, Tab* tab, const Glib::ustring& args)
   {
-    tab.load_uri(args);
+    if (tab)
+    {
+      tab->load_uri(args);
+    } else {
+      window.open_tab(args);
+    }
   }
 
   static void
-  cmd_open_tab(MainWindow& window, Tab&, const Glib::ustring& args)
+  cmd_open_tab(MainWindow& window, Tab*, const Glib::ustring& args)
   {
     window.open_tab(args);
   }
 
   static void
-  cmd_quit(MainWindow& window, Tab& tab, const Glib::ustring&)
+  cmd_quit(MainWindow& window, Tab* tab, const Glib::ustring&)
   {
-    window.close_tab(tab);
+    if (tab)
+    {
+      window.close_tab(*tab);
+    } else {
+      window.close();
+    }
   }
 
   static void
-  cmd_quit_all(MainWindow&, Tab&, const Glib::ustring&)
+  cmd_quit_all(MainWindow& window, Tab*, const Glib::ustring&)
   {
-    // TODO: Close the main window instead.
-    std::exit(EXIT_SUCCESS);
+    window.close();
   }
 
   static void
-  cmd_reload(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_reload(MainWindow&, Tab* tab, const Glib::ustring&)
   {
-    tab.reload();
+    if (tab)
+    {
+      tab->reload();
+    }
   }
 
   static void
-  cmd_force_reload(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_force_reload(MainWindow&, Tab* tab, const Glib::ustring&)
   {
-    tab.reload(true);
+    if (tab)
+    {
+      tab->reload(true);
+    }
   }
 
   static void
-  cmd_stop(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_stop(MainWindow&, Tab* tab, const Glib::ustring&)
   {
-    tab.stop_loading();
+    if (tab)
+    {
+      tab->stop_loading();
+    }
   }
 
   static void
-  cmd_tab_prev(MainWindow& window, Tab&, const Glib::ustring&)
+  cmd_tab_prev(MainWindow& window, Tab*, const Glib::ustring&)
   {
     window.prev_tab();
   }
 
   static void
-  cmd_tab_next(MainWindow& window, Tab&, const Glib::ustring&)
+  cmd_tab_next(MainWindow& window, Tab*, const Glib::ustring&)
   {
     window.next_tab();
   }

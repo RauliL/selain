@@ -62,7 +62,7 @@ namespace selain::utils
    * result.
    */
   template<TrimableString T>
-  T string_trim(const T& input)
+  T trim(const T& input)
   {
     const auto length = input.length();
     std::size_t i;

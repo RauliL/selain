@@ -26,7 +26,6 @@
 #pragma once
 
 #include <functional>
-#include <string>
 
 #include <glibmm.h>
 
@@ -35,17 +34,17 @@ namespace selain
   class MainWindow;
   class Tab;
 
-  using CommandCallback = std::function<void(
-    MainWindow&,
-    Tab&,
-    const Glib::ustring&
-  )>;
-
   struct Command
   {
+    using callback_type = std::function<void(
+      MainWindow&,
+      Tab*,
+      const Glib::ustring&
+    )>;
+
     const char* name;
     const char* name_shortcut;
-    CommandCallback callback;
+    callback_type callback;
   };
 }
 

@@ -178,7 +178,7 @@ namespace selain
     m_notebook.remove_page(index);
     if (m_notebook.get_current_page() < 0)
     {
-      std::exit(EXIT_SUCCESS);
+      close();
     }
   }
 
@@ -235,10 +235,7 @@ namespace selain
   MainWindow::on_command_received(const Glib::ustring& command)
   {
     set_mode(Mode::NORMAL);
-    if (const auto tab = get_current_tab())
-    {
-      tab->execute_command(command);
-    }
+    execute_command(command);
   }
 
   void

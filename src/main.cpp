@@ -28,6 +28,7 @@
 
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
+#include <selain/setting.hpp>
 #include <selain/theme.hpp>
 
 static selain::MainWindow*
@@ -110,8 +111,10 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
 
   if (argc == 1 && !window->get_current_tab())
   {
-    // TODO: Make the initial home page URL customizable through settings.
-    window->open_tab("https://duckduckgo.com");
+    if (const auto homepage = selain::setting::get("homepage"))
+    {
+      window->open_tab(*homepage);
+    }
   }
 
   return EXIT_SUCCESS;
@@ -121,7 +124,7 @@ int
 main(int argc, char** argv)
 {
   const auto app = Gtk::Application::create(
-    "pw.rauli.selain",
+    "dev.rauli.selain",
     Gio::Application::Flags::HANDLES_COMMAND_LINE
   );
 

@@ -24,6 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <selain/main-window.hpp>
+#include <selain/setting.hpp>
 #include <selain/utils.hpp>
 
 #include <format>
@@ -38,6 +39,7 @@ namespace selain
   static void cmd_quit_all(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_reload(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_force_reload(MainWindow&, Tab*, const Glib::ustring&);
+  static void cmd_set(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_stop(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_tab_next(MainWindow&, Tab*, const Glib::ustring&);
   static void cmd_tab_prev(MainWindow&, Tab*, const Glib::ustring&);
@@ -52,6 +54,7 @@ namespace selain
     { "quit-all", "qa", cmd_quit_all },
     { "reload", "r", cmd_reload },
     { "reload!", "r!", cmd_force_reload },
+    { "set", "se", cmd_set },
     { "stop", "s", cmd_stop },
     { "tab-next", "tn", cmd_tab_next },
     { "tab-prev", "tp", cmd_tab_prev },
@@ -194,6 +197,48 @@ namespace selain
     if (tab)
     {
       tab->reload(true);
+    }
+  }
+
+  static void
+  cmd_set(MainWindow& window, Tab*, const Glib::ustring& args)
+  {
+    const auto index = args.find('=');
+
+    if (index != Glib::ustring::npos)
+    {
+      const auto name = utils::trim(args.substr(0, index));
+      const auto value = utils::trim(args.substr(index + 1));
+
+      if (!setting::set(name, value))
+      {
+        window.get_command_entry().show_notification(
+          std::format("Error: Unknown setting: {}", name.raw()),
+          Notification::Type::ERROR
+        );
+      }
+    }
+    else if (utils::is_blank(args))
+    {
+      window.get_command_entry().show_notification(
+        "Error: Missing setting name",
+        Notification::Type::ERROR
+      );
+    } else {
+      const auto name = utils::trim(args);
+
+      if (const auto value = setting::get(name))
+      {
+        window.get_command_entry().show_notification(
+          std::format("  {}={}", name.raw(), value->raw()),
+          Notification::Type::INFO
+        );
+      } else {
+        window.get_command_entry().show_notification(
+          std::format("Error: Unknown setting: {}", name.raw()),
+          Notification::Type::ERROR
+        );
+      }
     }
   }
 

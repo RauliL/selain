@@ -78,8 +78,8 @@ namespace selain
   {
     const auto tab = get_current_tab();
 
-    // Skip empty commands.
-    if (utils::is_blank(command))
+    // Skip empty commands and comments.
+    if (utils::is_blank(command) || command[0] == '"')
     {
       return;
     }

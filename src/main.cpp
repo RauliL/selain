@@ -23,6 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <filesystem>
+#include <fstream>
+
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
 #include <selain/theme.hpp>
@@ -44,6 +47,28 @@ get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
   return window;
 }
 
+static void
+run_init(selain::MainWindow* window)
+{
+  const auto path = Glib::build_filename(
+    Glib::get_user_config_dir(),
+    "selain",
+    "init.selain"
+  );
+
+  if (std::filesystem::exists(path))
+  {
+    std::ifstream is(path);
+    std::string line;
+
+    while (std::getline(is, line))
+    {
+      window->execute_command(Glib::ustring(line));
+    }
+    is.close();
+  }
+}
+
 static int
 on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
                 const Glib::RefPtr<Gtk::Application>& app)
@@ -52,6 +77,7 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
   auto argv = command_line->get_arguments(argc);
   static bool keyboard_initialized = false;
   static bool theme_initialized = false;
+  static bool init_run = false;
 
   app->activate();
 
@@ -69,6 +95,12 @@ on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
   {
     selain::theme::initialize();
     theme_initialized = true;
+  }
+
+  if (!init_run)
+  {
+    run_init(window);
+    init_run = true;
   }
 
   for (int i = 1; i < argc; ++i)

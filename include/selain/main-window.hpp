@@ -185,6 +185,11 @@ namespace selain
      * Shows, hides, or toggles the download list side panel.
      */
     void toggle_downloads();
+    void hide_downloads();
+    bool downloads_visible() const;
+    bool cancel_latest_download();
+    void clear_finished_downloads();
+    bool open_latest_download_folder();
 
     /**
      * Unique URIs from the back/forward history of every tab and split,

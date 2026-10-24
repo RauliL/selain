@@ -77,9 +77,11 @@ namespace selain
     );
 
     void cancel(std::uint64_t id);
+    bool cancel_latest_active();
     void clear_finished();
     void remove_entry(std::uint64_t id);
     void open_containing_folder(std::uint64_t id);
+    bool open_latest_finished_folder();
 
   private:
     struct Entry

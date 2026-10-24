@@ -399,11 +399,56 @@ namespace selain
   }
 
   static bool
-  cmd_downloads(MainWindow& window, const Glib::ustring&)
+  cmd_downloads(MainWindow& window, const Glib::ustring& args)
   {
-    window.toggle_downloads();
+    const auto action = args.lowercase();
 
-    return true;
+    if (action.empty())
+    {
+      window.toggle_downloads();
+
+      return true;
+    }
+    if (action == "cancel" || action == "c")
+    {
+      if (!window.cancel_latest_download())
+      {
+        window.show_error("No active download.");
+
+        return false;
+      }
+
+      return true;
+    }
+    if (action == "clear" || action == "cl")
+    {
+      window.clear_finished_downloads();
+
+      return true;
+    }
+    if (action == "open" || action == "o" || action == "folder" || action == "f")
+    {
+      if (!window.open_latest_download_folder())
+      {
+        window.show_error("No finished download.");
+
+        return false;
+      }
+
+      return true;
+    }
+    if (action == "hide" || action == "h" || action == "close")
+    {
+      window.hide_downloads();
+
+      return true;
+    }
+
+    window.show_error(
+      "Usage: :downloads [cancel|clear|open|hide]"
+    );
+
+    return false;
   }
 
   static bool

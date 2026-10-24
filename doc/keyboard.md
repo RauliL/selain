@@ -9,6 +9,7 @@ all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
 |---|-------------------|
 |`:`|Enter command mode.|
 |`i`|Enter insert mode. |
+|`Escape`|Hide download list if visible (otherwise unused in normal mode).|
 
 ## Tab management
 

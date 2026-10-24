@@ -88,6 +88,24 @@ namespace selain
     }
   }
 
+  bool
+  DownloadManager::cancel_latest_active()
+  {
+    for (auto it = m_entries.rbegin(); it != m_entries.rend(); ++it)
+    {
+      if (it->download &&
+          (it->info.state == DownloadState::PENDING ||
+           it->info.state == DownloadState::ACTIVE))
+      {
+        ::webkit_download_cancel(it->download);
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   void
   DownloadManager::clear_finished()
   {
@@ -162,6 +180,23 @@ namespace selain
         }
       }
     );
+  }
+
+  bool
+  DownloadManager::open_latest_finished_folder()
+  {
+    for (auto it = m_entries.rbegin(); it != m_entries.rend(); ++it)
+    {
+      if (it->info.state == DownloadState::FINISHED &&
+          !it->info.destination.empty())
+      {
+        open_containing_folder(it->info.id);
+
+        return true;
+      }
+    }
+
+    return false;
   }
 
   void

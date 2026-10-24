@@ -7,7 +7,7 @@ Selain currently supports following commands:
 |`:back`       |`:b`    |Goes back in browsing history.         |
 |`:bind`       |        |Add keyboard binding.                  |
 |`:command`    |`:c`    |Switches to command mode.              |
-|`:downloads`  |`:dl`   |Toggles the download list panel.       |
+|`:downloads`  |`:dl`   |Download list (see below).             |
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
 |`:hint`       |`:h`    |Switches to hint mode.                 |
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |
@@ -41,3 +41,15 @@ result (or an error) as a notification. Example: `:js document.title`.
 
 `:split` and `:vsplit` accept an optional URI argument. Without one, the new
 split loads the same URI as the current view.
+
+`:downloads` (or `:dl`) manages the download list panel:
+
+|Argument |Shortcut|                                      |
+|---------|--------|--------------------------------------|
+|(none)   |        |Toggle the download list panel.       |
+|`hide`   |`h`     |Hide the download list panel.         |
+|`cancel` |`c`     |Cancel the newest active download.    |
+|`clear`  |`cl`    |Remove finished/failed/cancelled rows.|
+|`open`   |`o`/`f` |Open folder of the newest finished file.|
+
+In normal mode, `Escape` also hides the download list when it is visible.

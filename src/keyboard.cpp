@@ -301,6 +301,14 @@ namespace selain::keyboard
     }
     last_keypress = now;
 
+    if (keyval == GDK_KEY_Escape && !is_control && window.downloads_visible())
+    {
+      last_mapping.reset();
+      window.hide_downloads();
+
+      return TRUE;
+    }
+
     if (is_control)
     {
       entry = last_mapping->control_mapping.find(keyval);

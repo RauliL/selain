@@ -282,6 +282,36 @@ namespace selain
     m_download_list.toggle_panel();
   }
 
+  void
+  MainWindow::hide_downloads()
+  {
+    m_download_list.hide_panel();
+  }
+
+  bool
+  MainWindow::downloads_visible() const
+  {
+    return m_download_list.is_panel_visible();
+  }
+
+  bool
+  MainWindow::cancel_latest_download()
+  {
+    return m_download_manager.cancel_latest_active();
+  }
+
+  void
+  MainWindow::clear_finished_downloads()
+  {
+    m_download_manager.clear_finished();
+  }
+
+  bool
+  MainWindow::open_latest_download_folder()
+  {
+    return m_download_manager.open_latest_finished_folder();
+  }
+
   std::vector<Glib::ustring>
   MainWindow::get_history_uris() const
   {

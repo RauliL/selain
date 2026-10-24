@@ -49,6 +49,8 @@ namespace selain
   static bool cmd_only(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_open(MainWindow&, const Glib::ustring&);
   static bool cmd_open_tab(MainWindow&, const Glib::ustring&);
+  static bool cmd_paste(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_paste_tab(MainWindow&, const Glib::ustring&);
   static bool cmd_quit(MainWindow&, const Glib::ustring&);
   static bool cmd_quit_all(MainWindow&, const Glib::ustring&);
   static bool cmd_reload(MainWindow&, Tab&, const Glib::ustring&);
@@ -60,6 +62,7 @@ namespace selain
   static bool cmd_tab_next(MainWindow&, const Glib::ustring&);
   static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
   static bool cmd_vsplit(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_yank(MainWindow&, Tab&, const Glib::ustring&);
   static void js_command_callback(::GObject*, ::GAsyncResult*, ::gpointer);
 
   static const std::vector<Command> command_list =
@@ -75,6 +78,8 @@ namespace selain
     { "only", "on", tab_command(cmd_only) },
     { "open", "o", cmd_open },
     { "open-tab", "ot", cmd_open_tab },
+    { "paste", "p", tab_command(cmd_paste) },
+    { "paste-tab", "pt", cmd_paste_tab },
     { "quit", "q", cmd_quit },
     { "quit-all", "qa", cmd_quit_all },
     { "reload", "r", tab_command(cmd_reload) },
@@ -88,6 +93,7 @@ namespace selain
     { "tab-prev", "tp", cmd_tab_prev },
     { "vsplit", "vs", tab_command(cmd_vsplit) },
     { "vsp", nullptr, tab_command(cmd_vsplit) },
+    { "yank", "y", tab_command(cmd_yank) },
   };
 
   void
@@ -344,6 +350,58 @@ namespace selain
   }
 
   static bool
+  do_paste(
+    MainWindow& window,
+    const std::function<void(const Glib::ustring&)>& callback
+  )
+  {
+    const auto clipboard = window.get_clipboard();
+
+    clipboard->read_text_async(
+      [callback, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result)
+      {
+        try
+        {
+          const auto uri = clipboard->read_text_finish(result);
+
+          // TODO: Do not even attempt if it doesn't look like an URI.
+          if (!uri.empty())
+          {
+            callback(uri);
+          }
+        }
+        catch (const Glib::Error&) {}
+      }
+    );
+
+    return true;
+  }
+
+  static bool
+  cmd_paste(MainWindow& window, Tab& tab, const Glib::ustring&)
+  {
+    return do_paste(
+      window,
+      [&tab](const Glib::ustring& uri)
+      {
+        tab.load_uri(uri);
+      }
+    );
+  }
+
+  static bool
+  cmd_paste_tab(MainWindow& window, const Glib::ustring&)
+  {
+    return do_paste(
+      window,
+      [&window](const Glib::ustring& uri)
+      {
+        window.open_tab(uri);
+      }
+    );
+  }
+
+  static bool
   cmd_quit(MainWindow& window, const Glib::ustring&)
   {
     if (const auto tab = window.get_current_tab())
@@ -480,5 +538,21 @@ namespace selain
   cmd_vsplit(MainWindow&, Tab& tab, const Glib::ustring& args)
   {
     return do_split(tab, true, args);
+  }
+
+  static bool
+  cmd_yank(MainWindow& window, Tab& tab, const Glib::ustring&)
+  {
+    const auto clipboard = window.get_clipboard();
+    const auto uri = tab.get_uri();
+
+    if (uri.empty())
+    {
+      return false;
+    }
+    clipboard->set_text(uri);
+    window.show_info("Yanked " + uri.raw());
+
+    return true;
   }
 }

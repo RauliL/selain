@@ -15,6 +15,8 @@ Selain currently supports following commands:
 |`:only`       |`:on`   |Closes all splits except the current.  |
 |`:open`       |`:o`    |Opens URI given as argument.           |
 |`:open-tab`   |`:ot`   |Opens URI given as argument in new tab.|
+|`:paste`      |`:p`    |Opens URI from clipboard.              |
+|`:paste-tab`  |`:pt`   |Opens URI from clipboard in new tab.   |
 |`:quit`       |`:q`    |Closes current split, or tab if alone. |
 |`:qall`       |`:qa`   |Closes all tabs.                       |
 |`:reload`     |`:r`    |Reloads page.                          |
@@ -27,6 +29,7 @@ Selain currently supports following commands:
 |`:tabnext`    |`:tn`   |Switches to next tab.                  |
 |`:tabprev`    |`:tp`   |Switches to previous tab.              |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
+|`:yank`       |`:y`    |Copies current URI to clipboard.       |
 
 `:js` takes a JavaScript expression or statement as argument and shows the
 result (or an error) as a notification. Example: `:js document.title`.

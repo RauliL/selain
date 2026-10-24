@@ -73,9 +73,6 @@ namespace selain
   static void bind_scroll_right(MainWindow&, Tab&);
   static void bind_scroll_top(MainWindow&, Tab&);
   static void bind_scroll_bottom(MainWindow&, Tab&);
-  static void bind_paste(MainWindow&, Tab&);
-  static void bind_paste_open_tab(MainWindow&, Tab&);
-  static void bind_yank(MainWindow&, Tab&);
 
   namespace keyboard
   {
@@ -124,11 +121,11 @@ namespace selain
       add_mapping(U"L", "forward");
       add_mapping(U"o", "command :open ");
       add_mapping(U"O", "command :open-tab ");
-      add_mapping(U"p", bind_paste);
-      add_mapping(U"P", bind_paste_open_tab);
+      add_mapping(U"p", "paste");
+      add_mapping(U"P", "paste-tab");
       add_mapping(U"u", bind_scroll_page_up);
       add_mapping(U"<Page_Up>", bind_scroll_page_up);
-      add_mapping(U"yy", bind_yank);
+      add_mapping(U"yy", "yank");
 
       // Searching.
       add_mapping(U"/", "command /");
@@ -463,67 +460,5 @@ namespace selain
     tab.execute_script(
       "window.scrollTo({ top: document.body.scrollHeight });"
     );
-  }
-
-  static void
-  bind_paste(MainWindow& window, Tab& tab)
-  {
-    const auto clipboard = window.get_clipboard();
-
-    clipboard->read_text_async(
-      [&tab, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result)
-      {
-        try
-        {
-          const auto uri = clipboard->read_text_finish(result);
-
-          if (!uri.empty())
-          {
-            tab.load_uri(uri);
-          }
-        }
-        catch (const Glib::Error&)
-        {
-        }
-      }
-    );
-  }
-
-  static void
-  bind_paste_open_tab(MainWindow& window, Tab&)
-  {
-    const auto clipboard = window.get_clipboard();
-
-    clipboard->read_text_async(
-      [&window, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result)
-      {
-        try
-        {
-          const auto uri = clipboard->read_text_finish(result);
-
-          if (!uri.empty())
-          {
-            window.open_tab(uri);
-          }
-        }
-        catch (const Glib::Error&)
-        {
-        }
-      }
-    );
-  }
-
-  static void
-  bind_yank(MainWindow& window, Tab& tab)
-  {
-    const auto clipboard = window.get_clipboard();
-    const auto uri = tab.get_uri();
-
-    if (uri.empty())
-    {
-      return;
-    }
-    clipboard->set_text(uri);
-    window.show_info("Yanked " + uri.raw());
   }
 }

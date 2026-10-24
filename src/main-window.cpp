@@ -347,6 +347,17 @@ namespace selain
     } else {
       m_status_bar.set_status(Glib::ustring());
     }
+    // Notebook page changes leave focus on the tab bar (after this signal).
+    // Restore it on the web view so J/K and other shortcuts keep working.
+    Glib::signal_idle().connect_once(
+      [this]()
+      {
+        if (const auto tab = get_current_tab())
+        {
+          tab->grab_focus();
+        }
+      }
+    );
   }
 
   bool

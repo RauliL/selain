@@ -40,8 +40,6 @@ namespace selain
     , m_box(Gtk::Orientation::VERTICAL)
     , m_command_entry_key_controller(Gtk::EventControllerKey::create())
   {
-    initialize_commands();
-
     set_title("Selain");
     set_icon_name("selain");
     set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT);

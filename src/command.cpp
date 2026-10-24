@@ -29,16 +29,23 @@
 
 #include <format>
 
+#include <glibmm/ustring_hash.h>
+
 namespace selain
 {
-  using tab_command_callback = std::function<bool(
+  using callback = std::function<bool(
+    MainWindow&,
+    const Glib::ustring&
+  )>;
+
+  using tab_callback = std::function<bool(
     MainWindow&,
     Tab&,
     const Glib::ustring&
   )>;
 
-  static Command::callback_type switch_mode(Mode);
-  static Command::callback_type tab_command(const tab_command_callback&);
+  static callback switch_mode(Mode);
+  static callback require_tab(const tab_callback&);
 
   static bool cmd_back(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_command(MainWindow&, const Glib::ustring&);
@@ -63,52 +70,78 @@ namespace selain
   static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
   static bool cmd_vsplit(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_yank(MainWindow&, Tab&, const Glib::ustring&);
-  static void js_command_callback(::GObject*, ::GAsyncResult*, ::gpointer);
 
-  static const std::vector<Command> command_list =
+  static std::unordered_map<Glib::ustring, callback> mapping =
   {
-    { "back", "b", tab_command(cmd_back) },
-    { "command", "c", cmd_command },
-    { "forward", "b", tab_command(cmd_forward) },
-    { "hint", "h", switch_mode(Mode::HINT) },
-    { "hint-tab", "ht", switch_mode(Mode::HINT_NEW_TAB) },
-    { "insert", "i", switch_mode(Mode::INSERT) },
-    { "inspector", "insp", tab_command(cmd_inspector) },
-    { "js", nullptr, tab_command(cmd_js) },
-    { "only", "on", tab_command(cmd_only) },
-    { "open", "o", cmd_open },
-    { "open-tab", "ot", cmd_open_tab },
-    { "paste", "p", tab_command(cmd_paste) },
-    { "paste-tab", "pt", cmd_paste_tab },
-    { "quit", "q", cmd_quit },
-    { "quit-all", "qa", cmd_quit_all },
-    { "reload", "r", tab_command(cmd_reload) },
-    { "reload!", "r!", tab_command(cmd_force_reload) },
-    { "search-next", "sen", tab_command(cmd_search_next) },
-    { "search-prev", "sep", tab_command(cmd_search_prev) },
-    { "set", "se", cmd_set },
-    { "split", "sp", tab_command(cmd_split) },
-    { "stop", "s", tab_command(cmd_stop) },
-    { "tab-next", "tn", cmd_tab_next },
-    { "tab-prev", "tp", cmd_tab_prev },
-    { "vsplit", "vs", tab_command(cmd_vsplit) },
-    { "vsp", nullptr, tab_command(cmd_vsplit) },
-    { "yank", "y", tab_command(cmd_yank) },
+    { "b", require_tab(cmd_back) },
+    { "back", require_tab(cmd_back) },
+    { "c", cmd_command },
+    { "command", cmd_command },
+    { "f", require_tab(cmd_forward) },
+    { "forward", require_tab(cmd_forward) },
+    { "h", switch_mode(Mode::HINT) },
+    { "hint", switch_mode(Mode::HINT) },
+    { "hint-tab", switch_mode(Mode::HINT_NEW_TAB) },
+    { "ht", switch_mode(Mode::HINT_NEW_TAB) },
+    { "i", switch_mode(Mode::INSERT) },
+    { "insert", switch_mode(Mode::INSERT) },
+    { "insp", require_tab(cmd_inspector) },
+    { "inspector", require_tab(cmd_inspector) },
+    { "js", require_tab(cmd_js) },
+    { "o", cmd_open },
+    { "on", require_tab(cmd_only) },
+    { "only", require_tab(cmd_only) },
+    { "open", cmd_open },
+    { "open-tab", cmd_open_tab },
+    { "ot", cmd_open_tab },
+    { "p", require_tab(cmd_paste) },
+    { "paste", require_tab(cmd_paste) },
+    { "paste-tab", cmd_paste_tab },
+    { "pt", cmd_paste_tab },
+    { "q", cmd_quit },
+    { "qa", cmd_quit_all },
+    { "quit", cmd_quit },
+    { "quit-all", cmd_quit_all },
+    { "r!", require_tab(cmd_force_reload) },
+    { "r", require_tab(cmd_reload) },
+    { "reload!", require_tab(cmd_force_reload) },
+    { "reload", require_tab(cmd_reload) },
+    { "s", require_tab(cmd_stop) },
+    { "se", cmd_set },
+    { "search-next", require_tab(cmd_search_next) },
+    { "search-prev", require_tab(cmd_search_prev) },
+    { "sen", require_tab(cmd_search_next) },
+    { "sep", require_tab(cmd_search_prev) },
+    { "set", cmd_set },
+    { "sp", require_tab(cmd_split) },
+    { "split", require_tab(cmd_split) },
+    { "stop", require_tab(cmd_stop) },
+    { "tab-next", cmd_tab_next },
+    { "tab-prev", cmd_tab_prev },
+    { "tn", cmd_tab_next },
+    { "tp", cmd_tab_prev },
+    { "vs", require_tab(cmd_vsplit) },
+    { "vsp", require_tab(cmd_vsplit) },
+    { "vsplit", require_tab(cmd_vsplit) },
+    { "y", require_tab(cmd_yank) },
+    { "yank", require_tab(cmd_yank) },
   };
 
-  void
-  MainWindow::initialize_commands()
+  namespace command
   {
-    for (const auto& command : command_list)
+    std::vector<Glib::ustring>
+    names()
     {
-      if (command.name && *command.name)
+      std::vector<Glib::ustring> result;
+
+      result.reserve(mapping.size());
+      for (const auto& [key, _] : mapping)
       {
-        m_command_mapping[command.name] = command;
+        result.push_back(key);
       }
-      if (command.name_shortcut && *command.name_shortcut)
-      {
-        m_command_mapping[command.name_shortcut] = command;
-      }
+      std::sort(std::begin(result), std::end(result));
+
+      return result;
     }
   }
 
@@ -135,7 +168,6 @@ namespace selain
   {
     Glib::ustring name;
     Glib::ustring args;
-    command_mapping_type::const_iterator entry;
 
     // Skip empty commands and comments.
     if (
@@ -186,10 +218,11 @@ namespace selain
       return false;
     }
 
-    entry = m_command_mapping.find(name.raw());
-    if (entry != std::end(m_command_mapping))
+    const auto entry = mapping.find(name);
+
+    if (entry != std::end(mapping))
     {
-      return entry->second.callback(*this, args);
+      return entry->second(*this, args);
     }
 
     show_error("Unknown command: " + command);
@@ -197,7 +230,7 @@ namespace selain
     return false;
   }
 
-  static Command::callback_type
+  static callback
   switch_mode(Mode mode)
   {
     return [mode](MainWindow& window, const Glib::ustring&)
@@ -208,8 +241,8 @@ namespace selain
     };
   }
 
-  static Command::callback_type
-  tab_command(const tab_command_callback& callback)
+  static callback
+  require_tab(const tab_callback& callback)
   {
     return [callback](MainWindow& window, const Glib::ustring& args)
     {
@@ -232,29 +265,12 @@ namespace selain
     return true;
   }
 
-  static bool
-  cmd_js(MainWindow& window, Tab& tab, const Glib::ustring& args)
-  {
-    if (utils::is_blank(args))
-    {
-      window.show_error("Usage: :js <script>");
-
-      return false;
-    }
-    tab.execute_script(
-      args,
-      nullptr,
-      js_command_callback,
-      static_cast<void*>(&tab)
-    );
-
-    return true; // TODO: Try to get JavaScript execution status.
-  }
-
   static void
-  js_command_callback(::GObject* web_view_object,
-                      ::GAsyncResult* result,
-                      ::gpointer tab_data)
+  js_command_callback(
+    ::GObject* web_view_object,
+    ::GAsyncResult* result,
+    ::gpointer tab_data
+  )
   {
     const auto tab = static_cast<Tab*>(tab_data);
     const auto window = tab ? tab->get_main_window() : nullptr;
@@ -280,9 +296,11 @@ namespace selain
 
     if (window)
     {
-      if (const auto exception = ::jsc_context_get_exception(
-            ::jsc_value_get_context(value)
-          ))
+      const auto exception = ::jsc_context_get_exception(
+        ::jsc_value_get_context(value)
+      );
+
+      if (exception)
       {
         window->show_error(::jsc_exception_get_message(exception));
       } else {
@@ -290,6 +308,25 @@ namespace selain
       }
     }
     ::g_object_unref(value);
+  }
+
+  static bool
+  cmd_js(MainWindow& window, Tab& tab, const Glib::ustring& args)
+  {
+    if (utils::is_blank(args))
+    {
+      window.show_error("Usage: :js <script>");
+
+      return false;
+    }
+    tab.execute_script(
+      args,
+      nullptr,
+      js_command_callback,
+      static_cast<void*>(&tab)
+    );
+
+    return true; // TODO: Try to get JavaScript execution status.
   }
 
   static bool

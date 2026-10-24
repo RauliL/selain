@@ -25,24 +25,14 @@
  */
 #pragma once
 
-#include <functional>
+#include <vector>
 
 #include <glibmm.h>
 
-namespace selain
+namespace selain::command
 {
-  class MainWindow;
-
-  struct Command
-  {
-    using callback_type = std::function<bool(
-      MainWindow&,
-      const Glib::ustring&
-    )>;
-
-    const char* name;
-    const char* name_shortcut;
-    callback_type callback;
-  };
+  /**
+   * Returns all known command names in alphabetical order.
+   */
+  std::vector<Glib::ustring> names();
 }
-

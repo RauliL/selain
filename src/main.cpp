@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,14 +100,16 @@ run_init(selain::MainWindow* window)
 }
 
 static int
-on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
-                const Glib::RefPtr<Gtk::Application>& app)
+on_command_line(
+  const Glib::RefPtr<Gio::ApplicationCommandLine>& command_line,
+  const Glib::RefPtr<Gtk::Application>& app
+)
 {
-  int argc = 0;
-  auto argv = command_line->get_arguments(argc);
   static bool keyboard_initialized = false;
   static bool theme_initialized = false;
   static bool init_run = false;
+  int argc = 0;
+  auto argv = command_line->get_arguments(argc);
 
   app->activate();
 

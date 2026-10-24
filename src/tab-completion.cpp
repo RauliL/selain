@@ -25,8 +25,7 @@
  */
 #include <algorithm>
 
-#include <glib.h>
-
+#include <selain/command.hpp>
 #include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/tab-completion.hpp>
@@ -34,141 +33,148 @@
 
 namespace selain
 {
-  namespace
+  static Glib::ustring
+  longest_common_prefix(const std::vector<Glib::ustring>& matches)
   {
-    Glib::ustring
-    longest_common_prefix(const std::vector<Glib::ustring>& matches)
+    if (matches.empty())
     {
-      if (matches.empty())
-      {
-        return Glib::ustring();
-      }
-
-      Glib::ustring prefix = matches.front();
-
-      for (std::size_t i = 1; i < matches.size(); ++i)
-      {
-        const auto& candidate = matches[i];
-        std::size_t n = 0;
-        const auto limit = std::min(prefix.length(), candidate.length());
-
-        while (n < limit && prefix[n] == candidate[n])
-        {
-          ++n;
-        }
-        prefix = prefix.substr(0, n);
-        if (prefix.empty())
-        {
-          break;
-        }
-      }
-
-      return prefix;
+      return Glib::ustring();
     }
 
-    bool
-    starts_with(const Glib::ustring& value, const Glib::ustring& prefix)
+    Glib::ustring prefix = matches.front();
+
+    for (std::size_t i = 1; i < matches.size(); ++i)
     {
-      return value.size() >= prefix.size() &&
-             value.compare(0, prefix.size(), prefix) == 0;
+      const auto& candidate = matches[i];
+      std::size_t n = 0;
+      const auto limit = std::min(prefix.length(), candidate.length());
+
+      while (n < limit && prefix[n] == candidate[n])
+      {
+        ++n;
+      }
+      prefix = prefix.substr(0, n);
+      if (prefix.empty())
+      {
+        break;
+      }
     }
 
-    bool
-    has_uri_scheme(const Glib::ustring& token)
+    return prefix;
+  }
+
+  static bool
+  has_uri_scheme(const Glib::ustring& token)
+  {
+    if (auto* scheme = ::g_uri_parse_scheme(token.c_str()))
     {
-      if (auto* scheme = ::g_uri_parse_scheme(token.c_str()))
+      g_free(scheme);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  static std::vector<Glib::ustring>
+  filter_prefix(
+    const std::vector<Glib::ustring>& candidates,
+    const Glib::ustring& prefix
+  )
+  {
+    std::vector<Glib::ustring> matches;
+
+    for (const auto& candidate : candidates)
+    {
+      if (utils::starts_with(candidate, prefix))
       {
-        g_free(scheme);
-
-        return true;
+        matches.push_back(candidate);
       }
+    }
 
+    return matches;
+  }
+
+  /**
+   * Like filter_prefix, but if \p prefix has no URI scheme, also match
+   * candidates as if the user had typed "http://" or "https://" first.
+   */
+  static std::vector<Glib::ustring>
+  filter_uri_prefix(
+    const std::vector<Glib::ustring>& candidates,
+    const Glib::ustring& prefix
+  )
+  {
+    if (prefix.empty() || has_uri_scheme(prefix))
+    {
+      return filter_prefix(candidates, prefix);
+    }
+
+    const auto http_prefix = "http://" + prefix;
+    const auto https_prefix = "https://" + prefix;
+    std::vector<Glib::ustring> matches;
+
+    for (const auto& candidate : candidates)
+    {
+      if (
+        utils::starts_with(candidate, prefix) ||
+        utils::starts_with(candidate, http_prefix) ||
+        utils::starts_with(candidate, https_prefix)
+      )
+      {
+        matches.push_back(candidate);
+      }
+    }
+
+    return matches;
+  }
+
+  static bool
+  completion_extends_token(
+    const Glib::ustring& common,
+    const Glib::ustring& token,
+    bool uri_completion
+  )
+  {
+    if (common.length() <= token.length())
+    {
+      return false;
+    }
+    if (utils::starts_with(common, token))
+    {
+      return true;
+    }
+    if (!uri_completion || has_uri_scheme(token))
+    {
       return false;
     }
 
-    std::vector<Glib::ustring>
-    filter_prefix(const std::vector<Glib::ustring>& candidates,
-                  const Glib::ustring& prefix)
-    {
-      std::vector<Glib::ustring> matches;
+    return (
+      utils::starts_with(common, "http://" + token) ||
+      utils::starts_with(common, "https://" + token)
+    );
+  }
 
-      for (const auto& candidate : candidates)
-      {
-        if (starts_with(candidate, prefix))
-        {
-          matches.push_back(candidate);
-        }
-      }
+  static inline bool
+  is_set_command(const Glib::ustring& name)
+  {
+    return name == "set" || name == "se";
+  }
 
-      return matches;
-    }
-
-    /**
-     * Like filter_prefix, but if \p prefix has no URI scheme, also match
-     * candidates as if the user had typed "http://" or "https://" first.
-     */
-    std::vector<Glib::ustring>
-    filter_uri_prefix(const std::vector<Glib::ustring>& candidates,
-                      const Glib::ustring& prefix)
-    {
-      if (prefix.empty() || has_uri_scheme(prefix))
-      {
-        return filter_prefix(candidates, prefix);
-      }
-
-      const auto http_prefix = "http://" + prefix;
-      const auto https_prefix = "https://" + prefix;
-      std::vector<Glib::ustring> matches;
-
-      for (const auto& candidate : candidates)
-      {
-        if (starts_with(candidate, prefix) ||
-            starts_with(candidate, http_prefix) ||
-            starts_with(candidate, https_prefix))
-        {
-          matches.push_back(candidate);
-        }
-      }
-
-      return matches;
-    }
-
-    bool
-    completion_extends_token(const Glib::ustring& common,
-                             const Glib::ustring& token,
-                             bool uri_completion)
-    {
-      if (common.length() <= token.length())
-      {
-        return false;
-      }
-      if (starts_with(common, token))
-      {
-        return true;
-      }
-      if (!uri_completion || has_uri_scheme(token))
-      {
-        return false;
-      }
-
-      return starts_with(common, "http://" + token) ||
-             starts_with(common, "https://" + token);
-    }
-
-    bool
-    is_set_command(const Glib::ustring& name)
-    {
-      return name == "set" || name == "se";
-    }
-
-    bool
-    is_uri_command(const Glib::ustring& name)
-    {
-      return name == "open" || name == "o" ||
-             name == "open-tab" || name == "ot" ||
-             name == "split" || name == "sp" ||
-             name == "vsplit" || name == "vs" || name == "vsp";
-    }
+  static inline bool
+  is_uri_command(const Glib::ustring& name)
+  {
+    return (
+      name == "open" ||
+      name == "o" ||
+      name == "open-tab" ||
+      name == "ot" ||
+      name == "split" ||
+      name == "sp" ||
+      name == "vsplit" ||
+      name == "vs" ||
+      name == "vsp"
+    );
   }
 
   void
@@ -202,19 +208,7 @@ namespace selain
       // Complete command name: ":op" → ":open"
       line_prefix = ":";
       token = body;
-      for (const auto& [key, command] : window.get_command_mapping())
-      {
-        if (key == command.name ||
-            (command.name_shortcut && key == command.name_shortcut))
-        {
-          candidates.push_back(key);
-        }
-      }
-      std::sort(std::begin(candidates), std::end(candidates));
-      candidates.erase(
-        std::unique(std::begin(candidates), std::end(candidates)),
-        std::end(candidates)
-      );
+      candidates = command::names();
     } else {
       const auto command_name = utils::trim(body.substr(0, space));
       const auto args = body.substr(space + 1);

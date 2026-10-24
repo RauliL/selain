@@ -25,12 +25,10 @@
  */
 #pragma once
 
-#include <unordered_map>
 #include <vector>
 
 #include <gtkmm.h>
 
-#include <selain/command.hpp>
 #include <selain/command-entry.hpp>
 #include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
@@ -44,26 +42,8 @@ namespace selain
   class MainWindow : public Gtk::ApplicationWindow
   {
   public:
-    using command_mapping_type = std::unordered_map<std::string, Command>;
-
     explicit MainWindow(const Glib::RefPtr<Gtk::Application>& application);
     ~MainWindow() override;
-
-    /**
-     * Returns the mapping of all known browser commands.
-     */
-    inline command_mapping_type& get_command_mapping()
-    {
-      return m_command_mapping;
-    }
-
-    /**
-     * Returns the mapping of all known browser commands.
-     */
-    inline const command_mapping_type& get_command_mapping() const
-    {
-      return m_command_mapping;
-    }
 
     /**
      * Executes an command.
@@ -206,8 +186,6 @@ namespace selain
     std::vector<Glib::ustring> get_history_uris() const;
 
   private:
-    void initialize_commands();
-
     bool on_command_entry_key_pressed(
       guint keyval,
       guint,
@@ -219,7 +197,6 @@ namespace selain
     bool on_tab_list_scroll(double dx, double dy);
 
   private:
-    command_mapping_type m_command_mapping;
     Glib::RefPtr<WebContext> m_web_context;
     Glib::RefPtr<WebSettings> m_web_settings;
     Mode m_mode;

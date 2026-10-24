@@ -60,6 +60,15 @@ namespace selain::utils
   }
 
   template<typename T>
+  inline bool starts_with(const T& input, const T& prefix)
+  {
+    return (
+      input.length() >= prefix.length() &&
+      !input.compare(0, prefix.length(), prefix)
+    );
+  }
+
+  template<typename T>
   inline bool starts_with(const T& input, typename T::value_type c)
   {
     return !input.empty() && input[0] == c;

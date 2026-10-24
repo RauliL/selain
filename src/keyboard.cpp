@@ -65,14 +65,6 @@ namespace selain
   static void bind_split_focus_right(MainWindow&, Tab&);
   static void bind_split_cycle(MainWindow&, Tab&);
   static void bind_split_cycle_prev(MainWindow&, Tab&);
-  static void bind_scroll_left(MainWindow&, Tab&);
-  static void bind_scroll_down(MainWindow&, Tab&);
-  static void bind_scroll_up(MainWindow&, Tab&);
-  static void bind_scroll_page_down(MainWindow&, Tab&);
-  static void bind_scroll_page_up(MainWindow&, Tab&);
-  static void bind_scroll_right(MainWindow&, Tab&);
-  static void bind_scroll_top(MainWindow&, Tab&);
-  static void bind_scroll_bottom(MainWindow&, Tab&);
 
   namespace keyboard
   {
@@ -109,22 +101,22 @@ namespace selain
       add_mapping(U"^wW", bind_split_cycle_prev);
 
       // Navigation.
-      add_mapping(U"d", bind_scroll_page_down);
-      add_mapping(U"<Page_Down>", bind_scroll_page_down);
-      add_mapping(U"h", bind_scroll_left);
-      add_mapping(U"j", bind_scroll_down);
-      add_mapping(U"k", bind_scroll_up);
-      add_mapping(U"l", bind_scroll_right);
-      add_mapping(U"gg", bind_scroll_top);
-      add_mapping(U"G", bind_scroll_bottom);
+      add_mapping(U"d", "js window.scrollBy({ top: window.innerHeight / 2 });");
+      add_mapping(U"<Page_Down>", "js window.scrollBy({ top: window.innerHeight / 2 });");
+      add_mapping(U"h", "js window.scrollBy({ left: -100 });");
+      add_mapping(U"j", "js window.scrollBy({ top: 100 });");
+      add_mapping(U"k", "js window.scrollBy({ top: -100 });");
+      add_mapping(U"l", "js window.scrollBy({ left: 100 });");
+      add_mapping(U"gg", "js window.scrollTo({ top: 0 });");
+      add_mapping(U"G", "js window.scrollTo({ top: document.body.scrollHeight });");
       add_mapping(U"H", "back");
       add_mapping(U"L", "forward");
       add_mapping(U"o", "command :open ");
       add_mapping(U"O", "command :open-tab ");
       add_mapping(U"p", "paste");
       add_mapping(U"P", "paste-tab");
-      add_mapping(U"u", bind_scroll_page_up);
-      add_mapping(U"<Page_Up>", bind_scroll_page_up);
+      add_mapping(U"u", "js window.scrollBy({ top: -(window.innerHeight / 2) });");
+      add_mapping(U"<Page_Up>", "js window.scrollBy({ top: -(window.innerHeight / 2) });");
       add_mapping(U"yy", "yank");
 
       // Searching.
@@ -410,55 +402,5 @@ namespace selain
   bind_split_cycle_prev(MainWindow&, Tab& tab)
   {
     tab.cycle_view(true);
-  }
-
-  static void
-  bind_scroll_left(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollBy({ left: -100 });");
-  }
-
-  static void
-  bind_scroll_right(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollBy({ left: 100 });");
-  }
-
-  static void
-  bind_scroll_up(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollBy({ top: -100 });");
-  }
-
-  static void
-  bind_scroll_down(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollBy({ top: 100 });");
-  }
-
-  static void
-  bind_scroll_page_up(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollBy({ top: -(window.innerHeight / 2) });");
-  }
-
-  static void
-  bind_scroll_page_down(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollBy({ top: window.innerHeight / 2 });");
-  }
-
-  static void
-  bind_scroll_top(MainWindow&, Tab& tab)
-  {
-    tab.execute_script("window.scrollTo({ top: 0 });");
-  }
-
-  static void
-  bind_scroll_bottom(MainWindow&, Tab& tab)
-  {
-    tab.execute_script(
-      "window.scrollTo({ top: document.body.scrollHeight });"
-    );
   }
 }

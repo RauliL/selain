@@ -46,6 +46,14 @@ namespace selain
      */
     ::WebKitWebView* create_web_view();
 
+    /**
+     * Returns the network session used by views created from this context.
+     */
+    inline ::WebKitNetworkSession* network_session() const
+    {
+      return m_session;
+    }
+
   private:
     explicit WebContext();
     ~WebContext() override;

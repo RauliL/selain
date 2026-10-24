@@ -10,6 +10,8 @@ ADD_EXECUTABLE(
   selain
   src/command.cpp
   src/command-entry.cpp
+  src/download-list.cpp
+  src/download-manager.cpp
   src/hint-context.cpp
   src/keyboard.cpp
   src/main.cpp

@@ -30,6 +30,8 @@
 #include <gtkmm.h>
 
 #include <selain/command-entry.hpp>
+#include <selain/download-list.hpp>
+#include <selain/download-manager.hpp>
 #include <selain/status-bar.hpp>
 #include <selain/tab.hpp>
 #include <selain/tab-completion.hpp>
@@ -180,6 +182,11 @@ namespace selain
     }
 
     /**
+     * Shows, hides, or toggles the download list side panel.
+     */
+    void toggle_downloads();
+
+    /**
      * Unique URIs from the back/forward history of every tab and split,
      * sorted alphabetically.
      */
@@ -201,7 +208,10 @@ namespace selain
     Glib::RefPtr<WebSettings> m_web_settings;
     Mode m_mode;
     Gtk::Box m_box;
+    Gtk::Box m_content;
     Gtk::Notebook m_notebook;
+    DownloadList m_download_list;
+    DownloadManager m_download_manager;
     StatusBar m_status_bar;
     CommandEntry m_command_entry;
     Glib::RefPtr<Gtk::EventControllerKey> m_command_entry_key_controller;

@@ -38,6 +38,7 @@ namespace selain
     , m_web_settings(WebSettings::create())
     , m_mode(Mode::NORMAL)
     , m_box(Gtk::Orientation::VERTICAL)
+    , m_content(Gtk::Orientation::HORIZONTAL)
     , m_command_entry_key_controller(Gtk::EventControllerKey::create())
   {
     set_title("Selain");
@@ -46,10 +47,20 @@ namespace selain
 
     m_notebook.set_hexpand(true);
     m_notebook.set_vexpand(true);
-    m_box.append(m_notebook);
+    m_content.set_hexpand(true);
+    m_content.set_vexpand(true);
+    m_content.append(m_notebook);
+    m_content.append(m_download_list);
+    m_box.append(m_content);
     m_box.append(m_status_bar);
     m_box.append(m_command_entry);
     set_child(m_box);
+
+    m_download_manager.attach(
+      *this,
+      m_download_list,
+      m_web_context->network_session()
+    );
 
     m_notebook.signal_switch_page().connect(sigc::mem_fun(
       *this,
@@ -263,6 +274,12 @@ namespace selain
   MainWindow::prev_tab()
   {
     m_notebook.prev_page();
+  }
+
+  void
+  MainWindow::toggle_downloads()
+  {
+    m_download_list.toggle_panel();
   }
 
   std::vector<Glib::ustring>

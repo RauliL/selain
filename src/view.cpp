@@ -558,10 +558,25 @@ namespace selain
       return FALSE;
     }
 
+    if (decision_type == WEBKIT_POLICY_DECISION_TYPE_RESPONSE)
+    {
+      auto* response_decision = WEBKIT_RESPONSE_POLICY_DECISION(decision);
+
+      if (!::webkit_response_policy_decision_is_mime_type_supported(
+            response_decision
+          ))
+      {
+        ::webkit_policy_decision_download(decision);
+
+        return TRUE;
+      }
+
+      return FALSE;
+    }
+
     if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
         decision_type != WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
     {
-      // RESPONSE etc.: let WebKit's default MIME / download handling run.
       return FALSE;
     }
 

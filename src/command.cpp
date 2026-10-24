@@ -51,6 +51,7 @@ namespace selain
   static bool cmd_back(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_bind(MainWindow&, const Glib::ustring&);
   static bool cmd_command(MainWindow&, const Glib::ustring&);
+  static bool cmd_downloads(MainWindow&, const Glib::ustring&);
   static bool cmd_force_reload(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_forward(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_inspector(MainWindow&, Tab&, const Glib::ustring&);
@@ -83,6 +84,8 @@ namespace selain
     { "bind", cmd_bind },
     { "c", cmd_command },
     { "command", cmd_command },
+    { "dl", cmd_downloads },
+    { "downloads", cmd_downloads },
     { "f", require_tab(cmd_forward) },
     { "forward", require_tab(cmd_forward) },
     { "h", switch_mode(Mode::HINT) },
@@ -391,6 +394,14 @@ namespace selain
       window.get_command_entry().set_text(args);
     }
     window.set_mode(Mode::COMMAND);
+
+    return true;
+  }
+
+  static bool
+  cmd_downloads(MainWindow& window, const Glib::ustring&)
+  {
+    window.toggle_downloads();
 
     return true;
   }

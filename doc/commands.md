@@ -7,6 +7,7 @@ Selain currently supports following commands:
 |`:back`       |`:b`    |Goes back in browsing history.         |
 |`:bind`       |        |Add keyboard binding.                  |
 |`:command`    |`:c`    |Switches to command mode.              |
+|`:downloads`  |`:dl`   |Toggles the download list panel.       |
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
 |`:hint`       |`:h`    |Switches to hint mode.                 |
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |

@@ -2,9 +2,10 @@
 
 Selain currently supports following commands:
 
-|Command     |Shortcut|                                       |
+|Command       |Shortcut|                                       |
 |--------------|--------|---------------------------------------|
 |`:back`       |`:b`    |Goes back in browsing history.         |
+|`:command`    |`:c`    |Switches to command mode.              |
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
 |`:hint`       |`:h`    |Switches to hint mode.                 |
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |

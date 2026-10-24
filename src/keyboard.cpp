@@ -59,7 +59,6 @@ namespace selain
     std::u32string::size_type&
   );
 
-  static void bind_mode_command(MainWindow&, Tab&);
   static void bind_split_focus_left(MainWindow&, Tab&);
   static void bind_split_focus_down(MainWindow&, Tab&);
   static void bind_split_focus_up(MainWindow&, Tab&);
@@ -74,13 +73,9 @@ namespace selain
   static void bind_scroll_right(MainWindow&, Tab&);
   static void bind_scroll_top(MainWindow&, Tab&);
   static void bind_scroll_bottom(MainWindow&, Tab&);
-  static void bind_complete_open(MainWindow&, Tab&);
-  static void bind_complete_open_tab(MainWindow&, Tab&);
   static void bind_paste(MainWindow&, Tab&);
   static void bind_paste_open_tab(MainWindow&, Tab&);
   static void bind_yank(MainWindow&, Tab&);
-  static void bind_search_forwards(MainWindow&, Tab&);
-  static void bind_search_backwards(MainWindow&, Tab&);
 
   namespace keyboard
   {
@@ -88,7 +83,7 @@ namespace selain
     initialize()
     {
       // Switching between modes.
-      add_mapping(U":", bind_mode_command);
+      add_mapping(U":", "command :");
       add_mapping(U"i", "insert");
       add_mapping(U"f", "hint");
       add_mapping(U"F", "hint-tab");
@@ -127,8 +122,8 @@ namespace selain
       add_mapping(U"G", bind_scroll_bottom);
       add_mapping(U"H", "back");
       add_mapping(U"L", "forward");
-      add_mapping(U"o", bind_complete_open);
-      add_mapping(U"O", bind_complete_open_tab);
+      add_mapping(U"o", "command :open ");
+      add_mapping(U"O", "command :open-tab ");
       add_mapping(U"p", bind_paste);
       add_mapping(U"P", bind_paste_open_tab);
       add_mapping(U"u", bind_scroll_page_up);
@@ -136,8 +131,8 @@ namespace selain
       add_mapping(U"yy", bind_yank);
 
       // Searching.
-      add_mapping(U"/", bind_search_forwards);
-      add_mapping(U"?", bind_search_backwards);
+      add_mapping(U"/", "command /");
+      add_mapping(U"?", "command ?");
       add_mapping(U"n", "search-next");
       add_mapping(U"N", "search-prev");
 
@@ -385,13 +380,6 @@ namespace selain
   }
 
   static void
-  bind_mode_command(MainWindow& window, Tab&)
-  {
-    window.get_command_entry().set_text(":");
-    window.set_mode(Mode::COMMAND);
-  }
-
-  static void
   bind_split_focus_left(MainWindow&, Tab& tab)
   {
     tab.focus_view(FocusDirection::LEFT);
@@ -478,20 +466,6 @@ namespace selain
   }
 
   static void
-  bind_complete_open(MainWindow& window, Tab&)
-  {
-    window.get_command_entry().set_text(":open ");
-    window.set_mode(Mode::COMMAND);
-  }
-
-  static void
-  bind_complete_open_tab(MainWindow& window, Tab&)
-  {
-    window.get_command_entry().set_text(":open-tab ");
-    window.set_mode(Mode::COMMAND);
-  }
-
-  static void
   bind_paste(MainWindow& window, Tab& tab)
   {
     const auto clipboard = window.get_clipboard();
@@ -551,19 +525,5 @@ namespace selain
     }
     clipboard->set_text(uri);
     window.show_info("Yanked " + uri.raw());
-  }
-
-  static void
-  bind_search_forwards(MainWindow& window, Tab&)
-  {
-    window.get_command_entry().set_text("/");
-    window.set_mode(Mode::COMMAND);
-  }
-
-  static void
-  bind_search_backwards(MainWindow& window, Tab&)
-  {
-    window.get_command_entry().set_text("?");
-    window.set_mode(Mode::COMMAND);
   }
 }

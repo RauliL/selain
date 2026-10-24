@@ -34,6 +34,7 @@ namespace selain
   static Command::callback_type switch_mode(Mode);
 
   static bool cmd_back(MainWindow&, const Glib::ustring&);
+  static bool cmd_command(MainWindow&, const Glib::ustring&);
   static bool cmd_force_reload(MainWindow&, const Glib::ustring&);
   static bool cmd_forward(MainWindow&, const Glib::ustring&);
   static bool cmd_inspector(MainWindow&, const Glib::ustring&);
@@ -57,7 +58,8 @@ namespace selain
   static const std::vector<Command> command_list =
   {
     { "back", "b", cmd_back },
-    { "back", "b", cmd_forward },
+    { "command", "c", cmd_command },
+    { "forward", "b", cmd_forward },
     { "hint", "h", switch_mode(Mode::HINT) },
     { "hint-tab", "ht", switch_mode(Mode::HINT_NEW_TAB) },
     { "insert", "i", switch_mode(Mode::INSERT) },
@@ -287,6 +289,18 @@ namespace selain
     window.show_error("No tab open.");
 
     return false;
+  }
+
+  static bool
+  cmd_command(MainWindow& window, const Glib::ustring& args)
+  {
+    if (!args.empty())
+    {
+      window.get_command_entry().set_text(args);
+    }
+    window.set_mode(Mode::COMMAND);
+
+    return true;
   }
 
   static bool

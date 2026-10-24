@@ -21,10 +21,12 @@ Selain currently supports following commands:
 |`:qall`       |`:qa`   |Closes all tabs.                       |
 |`:reload`     |`:r`    |Reloads page.                          |
 |`:reload!`    |`:r!`   |Reloads page bypassing the cache.      |
+|`:scroll`     |`:sc`   |Scrolls the current tab.               |
 |`:search-next`|`:sen`  |Goes to next search result.            |
 |`:search-prev`|`:sep`  |Goes to previous search result.        |
 |`:set`        |`:se`   |Views/changes an setting.              |
 |`:split`      |`:sp`   |Splits the current view horizontally.  |
+|`:split-focus`|`:spf`  |Changes focus of splitted view.        |
 |`:stop`       |`:s`    |Stops page from loading content.       |
 |`:tabnext`    |`:tn`   |Switches to next tab.                  |
 |`:tabprev`    |`:tp`   |Switches to previous tab.              |

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,38 +25,17 @@
  */
 #pragma once
 
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <unordered_map>
+#include <glibmm.h>
 
-namespace selain
+namespace selain::keyboard
 {
-  class MainWindow;
-  class Tab;
+  /**
+   * Initializes all builtin keyboard bindings. Must be called during the
+   * application startup before the UI is being shown.
+   */
+  void initialize();
 
-  namespace keyboard
-  {
-    using BindingCallback = std::function<void(MainWindow&, Tab&)>;
+  void bind(const Glib::ustring&, const Glib::ustring&);
 
-    struct Mapping
-    {
-      using mapping_type = std::unordered_map<
-        std::uint32_t,
-        std::shared_ptr<Mapping>
-      >;
-
-      std::uint32_t value;
-      BindingCallback callback;
-      mapping_type mapping;
-      mapping_type control_mapping;
-    };
-
-    /**
-     * Initializes all builtin keyboard bindings. Must be called during the
-     * application startup before the UI is being shown.
-     */
-    void initialize();
-  }
+  void unbind(const Glib::ustring&);
 }
-

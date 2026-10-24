@@ -41,23 +41,25 @@ These bindings follow Vim's `Ctrl-W` window commands.
 
 ## Navigating the page
 
-|Key|                                     |
-|---|-------------------------------------|
-|`f`|Open link in current tab.            |
-|`F`|Open link in new tab.                |
-|`k`|Scroll up.                           |
-|`j`|Scroll down.                         |
-|`h`|Scroll left.                         |
-|`l`|Scroll right.                        |
-|`d`|Scroll a half page down.             |
-|`Page Down`|Scroll a half page down.       |
-|`u`|Scroll a half page up.               |
-|`Page Up`|Scroll a half page up.             |
-|`gg`|Scroll to top of the page.          |
-|`G`|Scroll to bottom of the page.        |
-|`p`|Open URI from clipboard.             |
-|`P`|Open URI from clipboard in a new tab.|
-|`yy`|Copy current URI to clipboard.      |
+|Key        |                                     |
+|-----------|-------------------------------------|
+|`f`        |Open link in current tab.            |
+|`F`        |Open link in new tab.                |
+|`k`        |Scroll up.                           |
+|`j`        |Scroll down.                         |
+|`h`        |Scroll left.                         |
+|`l`        |Scroll right.                        |
+|`d`        |Scroll a half page down.             |
+|`Page Down`|Scroll a half page down.             |
+|`u`        |Scroll a half page up.               |
+|`Page Up`  |Scroll a half page up.               |
+|`gg`       |Scroll to top of the page.           |
+|`Home`     |Scroll to top of the page.           |
+|`G`        |Scroll to bottom of the page.        |
+|`End`      |Scroll to bottom of the page.        |
+|`p`        |Open URI from clipboard.             |
+|`P`        |Open URI from clipboard in a new tab.|
+|`yy`       |Copy current URI to clipboard.       |
 
 ## Navigating history
 

@@ -61,10 +61,12 @@ namespace selain
   static bool cmd_quit(MainWindow&, const Glib::ustring&);
   static bool cmd_quit_all(MainWindow&, const Glib::ustring&);
   static bool cmd_reload(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_scroll(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_search_next(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_search_prev(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_set(MainWindow&, const Glib::ustring&);
   static bool cmd_split(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_split_focus(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_stop(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_tab_next(MainWindow&, const Glib::ustring&);
   static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
@@ -107,6 +109,8 @@ namespace selain
     { "reload!", require_tab(cmd_force_reload) },
     { "reload", require_tab(cmd_reload) },
     { "s", require_tab(cmd_stop) },
+    { "sc", require_tab(cmd_scroll) },
+    { "scroll", require_tab(cmd_scroll) },
     { "se", cmd_set },
     { "search-next", require_tab(cmd_search_next) },
     { "search-prev", require_tab(cmd_search_prev) },
@@ -114,7 +118,9 @@ namespace selain
     { "sep", require_tab(cmd_search_prev) },
     { "set", cmd_set },
     { "sp", require_tab(cmd_split) },
+    { "spf", require_tab(cmd_split_focus) },
     { "split", require_tab(cmd_split) },
+    { "split-focus", require_tab(cmd_split_focus) },
     { "stop", require_tab(cmd_stop) },
     { "tab-next", cmd_tab_next },
     { "tab-prev", cmd_tab_prev },
@@ -480,6 +486,78 @@ namespace selain
   }
 
   static bool
+  cmd_scroll(MainWindow& window, Tab& tab, const Glib::ustring& args)
+  {
+    // TODO: Allow finer control by accepting direction _and_ amount as
+    // arguments.
+    const auto arg = utils::trim(args);
+    Glib::ustring method = "scrollBy";
+    Glib::ustring direction;
+    Glib::ustring value;
+
+    if (arg.empty())
+    {
+      window.show_error("Missing direction/amount.");
+
+      return false;
+    }
+    else if (arg == "top")
+    {
+      method = "scrollTo";
+      direction = "top";
+      value = "0";
+    }
+    else if (arg == "bottom")
+    {
+      method = "scrollTo";
+      direction = "top";
+      value = "document.body.scrollHeight";
+    }
+    else if (arg == "left")
+    {
+      direction = "left";
+      value = "-100";
+    }
+    else if (arg == "right")
+    {
+      direction = "left";
+      value = "100";
+    }
+    else if (arg == "up")
+    {
+      direction = "top";
+      value = "-100";
+    }
+    else if (arg == "down")
+    {
+      direction = "top";
+      value = "100";
+    }
+    else if (arg == "page-up")
+    {
+      direction = "top";
+      value = "-(window.innerHeight / 2)";
+    }
+    else if (arg == "page-down")
+    {
+      direction = "top";
+      value = "window.innerHeight / 2";
+    } else {
+      window.show_error("Unrecognized direction.");
+
+      return false;
+    }
+    tab.execute_script(std::format(
+      "window.{}({{ {}: {} }});",
+      method.raw(),
+      direction.raw(),
+      value.raw()
+    ));
+
+    return true;
+  }
+
+  static bool
   cmd_search_next(MainWindow&, Tab& tab, const Glib::ustring&)
   {
     tab.search_next();
@@ -545,6 +623,55 @@ namespace selain
   cmd_split(MainWindow&, Tab& tab, const Glib::ustring& args)
   {
     return do_split(tab, false, args);
+  }
+
+  static bool
+  cmd_split_focus(MainWindow& window, Tab& tab, const Glib::ustring& args)
+  {
+    FocusDirection direction;
+    const auto arg = utils::trim(args);
+
+    if (arg.empty())
+    {
+      window.show_error("Missing direction.");
+
+      return false;
+    }
+    else if (arg == "left")
+    {
+      direction = FocusDirection::LEFT;
+    }
+    else if (arg == "right")
+    {
+      direction = FocusDirection::RIGHT;
+    }
+    else if (arg == "up")
+    {
+      direction = FocusDirection::UP;
+    }
+    else if (arg == "down")
+    {
+      direction = FocusDirection::DOWN;
+    }
+    else if (arg == "next")
+    {
+      tab.cycle_view(false);
+
+      return true;
+    }
+    else if (arg == "prev")
+    {
+      tab.cycle_view(true);
+
+      return true;
+    } else {
+      window.show_error("Unrecognized direction.");
+
+      return false;
+    }
+    tab.focus_view(direction);
+
+    return true;
   }
 
   static bool

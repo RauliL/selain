@@ -37,5 +37,5 @@ namespace selain::keyboard
 
   void bind(const Glib::ustring&, const Glib::ustring&);
 
-  void unbind(const Glib::ustring&);
+  bool unbind(const Glib::ustring&);
 }

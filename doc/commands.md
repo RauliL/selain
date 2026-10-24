@@ -5,6 +5,7 @@ Selain currently supports following commands:
 |Command       |Shortcut|                                       |
 |--------------|--------|---------------------------------------|
 |`:back`       |`:b`    |Goes back in browsing history.         |
+|`:bind`       |        |Add keyboard binding.                  |
 |`:command`    |`:c`    |Switches to command mode.              |
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
 |`:hint`       |`:h`    |Switches to hint mode.                 |
@@ -30,6 +31,7 @@ Selain currently supports following commands:
 |`:stop`       |`:s`    |Stops page from loading content.       |
 |`:tabnext`    |`:tn`   |Switches to next tab.                  |
 |`:tabprev`    |`:tp`   |Switches to previous tab.              |
+|`:unbind`     |        |Remove keyboard binding.               |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |
 

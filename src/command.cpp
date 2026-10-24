@@ -23,6 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/utils.hpp>
@@ -48,6 +49,7 @@ namespace selain
   static callback require_tab(const tab_callback&);
 
   static bool cmd_back(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_bind(MainWindow&, const Glib::ustring&);
   static bool cmd_command(MainWindow&, const Glib::ustring&);
   static bool cmd_force_reload(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_forward(MainWindow&, Tab&, const Glib::ustring&);
@@ -70,6 +72,7 @@ namespace selain
   static bool cmd_stop(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_tab_next(MainWindow&, const Glib::ustring&);
   static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
+  static bool cmd_unbind(MainWindow&, const Glib::ustring&);
   static bool cmd_vsplit(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_yank(MainWindow&, Tab&, const Glib::ustring&);
 
@@ -77,6 +80,7 @@ namespace selain
   {
     { "b", require_tab(cmd_back) },
     { "back", require_tab(cmd_back) },
+    { "bind", cmd_bind },
     { "c", cmd_command },
     { "command", cmd_command },
     { "f", require_tab(cmd_forward) },
@@ -126,6 +130,7 @@ namespace selain
     { "tab-prev", cmd_tab_prev },
     { "tn", cmd_tab_next },
     { "tp", cmd_tab_prev },
+    { "unbind", cmd_unbind },
     { "vs", require_tab(cmd_vsplit) },
     { "vsp", require_tab(cmd_vsplit) },
     { "vsplit", require_tab(cmd_vsplit) },
@@ -339,6 +344,41 @@ namespace selain
   cmd_back(MainWindow&, Tab& tab, const Glib::ustring&)
   {
     tab.go_back();
+
+    return true;
+  }
+
+  static bool
+  cmd_bind(MainWindow& window, const Glib::ustring& args)
+  {
+    const auto trimmed = utils::trim(args);
+
+    if (utils::is_blank(trimmed))
+    {
+      window.show_error("Missing sequence.");
+
+      return false;
+    }
+
+    const auto pos = trimmed.find(' ');
+
+    if (pos == Glib::ustring::npos)
+    {
+      window.show_error("Missing command.");
+
+      return false;
+    }
+
+    const auto sequence = utils::trim(trimmed.substr(0, pos));
+    const auto command = utils::trim(trimmed.substr(pos + 1));
+
+    if (command.empty())
+    {
+      window.show_error("Missing command.");
+
+      return false;
+    }
+    keyboard::bind(sequence, command);
 
     return true;
   }
@@ -696,6 +736,22 @@ namespace selain
     window.next_tab();
 
     return true;
+  }
+
+  static bool
+  cmd_unbind(MainWindow& window, const Glib::ustring& args)
+  {
+    if (utils::is_blank(args))
+    {
+      window.show_error("Missing sequence.");
+    }
+    else if (keyboard::unbind(utils::trim(args)))
+    {
+      return true;
+    }
+    window.show_error("No such binding.");
+
+    return false;
   }
 
   static bool

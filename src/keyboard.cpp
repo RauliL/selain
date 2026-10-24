@@ -24,6 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <chrono>
+#include <vector>
 
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
@@ -185,6 +186,85 @@ namespace selain::keyboard
     }
 
     current_mapping->command = command;
+  }
+
+  bool
+  unbind(const Glib::ustring& sequence)
+  {
+    struct Step
+    {
+      std::shared_ptr<Mapping> parent;
+      bool is_control;
+      std::uint32_t key;
+    };
+
+    const auto length = sequence.length();
+    std::shared_ptr<Mapping> current_mapping;
+    std::vector<Step> path;
+
+    if (!length || !top_mapping)
+    {
+      return false;
+    }
+    current_mapping = top_mapping;
+
+    for (Glib::ustring::size_type i = 0; i < length; ++i)
+    {
+      bool is_control = false;
+
+      if (sequence[i] == '^' && i + 1 < length)
+      {
+        ++i;
+        is_control = true;
+      }
+
+      const auto c = parse_key_token(sequence, i);
+      auto& map = is_control
+        ? current_mapping->control_mapping
+        : current_mapping->mapping;
+      auto entry = map.find(c);
+
+      if (entry == std::end(map))
+      {
+        return false;
+      }
+
+      path.push_back({current_mapping, is_control, c});
+      current_mapping = entry->second;
+    }
+
+    if (current_mapping->command.empty())
+    {
+      return false;
+    }
+    current_mapping->command.clear();
+
+    // Remove empty mappings from the leaf upward so orphaned prefixes
+    // do not linger after the binding has been removed.
+    for (auto it = path.rbegin(); it != path.rend(); ++it)
+    {
+      auto& map = it->is_control
+        ? it->parent->control_mapping
+        : it->parent->mapping;
+      auto entry = map.find(it->key);
+
+      if (entry == std::end(map))
+      {
+        break;
+      }
+
+      const auto& node = entry->second;
+
+      if (!node->command.empty() ||
+          !node->mapping.empty() ||
+          !node->control_mapping.empty())
+      {
+        break;
+      }
+      map.erase(entry);
+    }
+
+    return true;
   }
 
   static ::gboolean

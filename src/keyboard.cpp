@@ -60,7 +60,6 @@ namespace selain
   );
 
   static void bind_mode_command(MainWindow&, Tab&);
-  static void bind_mode_hint_new_tab(MainWindow&, Tab&);
   static void bind_split_focus_left(MainWindow&, Tab&);
   static void bind_split_focus_down(MainWindow&, Tab&);
   static void bind_split_focus_up(MainWindow&, Tab&);
@@ -75,8 +74,6 @@ namespace selain
   static void bind_scroll_right(MainWindow&, Tab&);
   static void bind_scroll_top(MainWindow&, Tab&);
   static void bind_scroll_bottom(MainWindow&, Tab&);
-  static void bind_history_prev(MainWindow&, Tab&);
-  static void bind_history_next(MainWindow&, Tab&);
   static void bind_complete_open(MainWindow&, Tab&);
   static void bind_complete_open_tab(MainWindow&, Tab&);
   static void bind_paste(MainWindow&, Tab&);
@@ -84,9 +81,6 @@ namespace selain
   static void bind_yank(MainWindow&, Tab&);
   static void bind_search_forwards(MainWindow&, Tab&);
   static void bind_search_backwards(MainWindow&, Tab&);
-  static void bind_search_next(MainWindow&, Tab&);
-  static void bind_search_prev(MainWindow&, Tab&);
-  static void bind_toggle_inspector(MainWindow&, Tab&);
 
   namespace keyboard
   {
@@ -97,7 +91,7 @@ namespace selain
       add_mapping(U":", bind_mode_command);
       add_mapping(U"i", "insert");
       add_mapping(U"f", "hint");
-      add_mapping(U"F", bind_mode_hint_new_tab);
+      add_mapping(U"F", "hint-tab");
 
       // Tab management.
       add_mapping(U"r", "reload");
@@ -131,8 +125,8 @@ namespace selain
       add_mapping(U"l", bind_scroll_right);
       add_mapping(U"gg", bind_scroll_top);
       add_mapping(U"G", bind_scroll_bottom);
-      add_mapping(U"H", bind_history_prev);
-      add_mapping(U"L", bind_history_next);
+      add_mapping(U"H", "back");
+      add_mapping(U"L", "forward");
       add_mapping(U"o", bind_complete_open);
       add_mapping(U"O", bind_complete_open_tab);
       add_mapping(U"p", bind_paste);
@@ -144,11 +138,11 @@ namespace selain
       // Searching.
       add_mapping(U"/", bind_search_forwards);
       add_mapping(U"?", bind_search_backwards);
-      add_mapping(U"n", bind_search_next);
-      add_mapping(U"N", bind_search_prev);
+      add_mapping(U"n", "search-next");
+      add_mapping(U"N", "search-prev");
 
       // Developer tools.
-      add_mapping(U"<F12>", bind_toggle_inspector);
+      add_mapping(U"<F12>", "inspector");
     }
 
     ::gboolean
@@ -398,12 +392,6 @@ namespace selain
   }
 
   static void
-  bind_mode_hint_new_tab(MainWindow& window, Tab&)
-  {
-    window.set_mode(Mode::HINT_NEW_TAB);
-  }
-
-  static void
   bind_split_focus_left(MainWindow&, Tab& tab)
   {
     tab.focus_view(FocusDirection::LEFT);
@@ -487,18 +475,6 @@ namespace selain
     tab.execute_script(
       "window.scrollTo({ top: document.body.scrollHeight });"
     );
-  }
-
-  static void
-  bind_history_prev(MainWindow&, Tab& tab)
-  {
-    tab.go_back();
-  }
-
-  static void
-  bind_history_next(MainWindow&, Tab& tab)
-  {
-    tab.go_forward();
   }
 
   static void
@@ -589,23 +565,5 @@ namespace selain
   {
     window.get_command_entry().set_text("?");
     window.set_mode(Mode::COMMAND);
-  }
-
-  static void
-  bind_search_next(MainWindow&, Tab& tab)
-  {
-    tab.search_next();
-  }
-
-  static void
-  bind_search_prev(MainWindow&, Tab& tab)
-  {
-    tab.search_prev();
-  }
-
-  static void
-  bind_toggle_inspector(MainWindow&, Tab& tab)
-  {
-    tab.toggle_inspector();
   }
 }

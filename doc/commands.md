@@ -2,24 +2,30 @@
 
 Selain currently supports following commands:
 
-|Command    |Shortcut|                                       |
-|-----------|--------|---------------------------------------|
-|`:hint`    |`:h`    |Switches to hint mode.                 |
-|`:insert`  |`:i`    |Switches to insert mode.               |
-|`:js`      |        |Runs JavaScript in the current tab.    |
-|`:only`    |`:on`   |Closes all splits except the current.  |
-|`:open`    |`:o`    |Opens URI given as argument.           |
-|`:open-tab`|`:ot`   |Opens URI given as argument in new tab.|
-|`:quit`    |`:q`    |Closes current split, or tab if alone. |
-|`:qall`    |`:qa`   |Closes all tabs.                       |
-|`:reload`  |`:r`    |Reloads page.                          |
-|`:reload!` |`:r!`   |Reloads page bypassing the cache.      |
-|`:set`     |`:se`   |Views/changes an setting.              |
-|`:split`   |`:sp`   |Splits the current view horizontally.  |
-|`:stop`    |`:s`    |Stops page from loading content.       |
-|`:tabnext` |`:tn`   |Switches to next tab.                  |
-|`:tabprev` |`:tp`   |Switches to previous tab.              |
-|`:vsplit`  |`:vs`   |Splits the current view vertically.    |
+|Command     |Shortcut|                                       |
+|--------------|--------|---------------------------------------|
+|`:back`       |`:b`    |Goes back in browsing history.         |
+|`:forward`    |`:f`    |Goes forward in browsing history.      |
+|`:hint`       |`:h`    |Switches to hint mode.                 |
+|`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |
+|`:insert`     |`:i`    |Switches to insert mode.               |
+|`:inspector`  |`:insp` |Toggles developer tools.               |
+|`:js`         |        |Runs JavaScript in the current tab.    |
+|`:only`       |`:on`   |Closes all splits except the current.  |
+|`:open`       |`:o`    |Opens URI given as argument.           |
+|`:open-tab`   |`:ot`   |Opens URI given as argument in new tab.|
+|`:quit`       |`:q`    |Closes current split, or tab if alone. |
+|`:qall`       |`:qa`   |Closes all tabs.                       |
+|`:reload`     |`:r`    |Reloads page.                          |
+|`:reload!`    |`:r!`   |Reloads page bypassing the cache.      |
+|`:search-next`|`:sen`  |Goes to next search result.            |
+|`:search-prev`|`:sep`  |Goes to previous search result.        |
+|`:set`        |`:se`   |Views/changes an setting.              |
+|`:split`      |`:sp`   |Splits the current view horizontally.  |
+|`:stop`       |`:s`    |Stops page from loading content.       |
+|`:tabnext`    |`:tn`   |Switches to next tab.                  |
+|`:tabprev`    |`:tp`   |Switches to previous tab.              |
+|`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 
 `:js` takes a JavaScript expression or statement as argument and shows the
 result (or an error) as a notification. Example: `:js document.title`.

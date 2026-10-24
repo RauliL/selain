@@ -32,14 +32,13 @@ namespace selain::keyboard
 {
   struct Mapping
   {
-    using callback_type = std::function<void(MainWindow&, Tab&)>;
     using mapping_type = std::unordered_map<
       std::uint32_t,
       std::shared_ptr<Mapping>
     >;
 
     std::uint32_t value;
-    callback_type callback;
+    Glib::ustring command;
     mapping_type mapping;
     mapping_type control_mapping;
   };
@@ -140,8 +139,8 @@ namespace selain::keyboard
     return ::gdk_unicode_to_keyval(sequence[i]);
   }
 
-  static void
-  bind(const Glib::ustring& sequence, const Mapping::callback_type& callback)
+  void
+  bind(const Glib::ustring& sequence, const Glib::ustring& command)
   {
     const auto length = sequence.length();
     std::shared_ptr<Mapping> current_mapping;
@@ -185,25 +184,12 @@ namespace selain::keyboard
       }
     }
 
-    current_mapping->callback = callback;
-  }
-
-  void
-  bind(const Glib::ustring& sequence, const Glib::ustring& command)
-  {
-    bind(
-      sequence,
-      [command](MainWindow& window, Tab&)
-      {
-        window.run_command(command, false);
-      }
-    );
+    current_mapping->command = command;
   }
 
   static ::gboolean
   key_event_normal_mode(
     MainWindow& window,
-    Tab& tab,
     ::guint keyval,
     ::GdkModifierType state
   )
@@ -250,9 +236,9 @@ namespace selain::keyboard
       }
     }
 
-    if (entry->second->callback)
+    if (!entry->second->command.empty())
     {
-      entry->second->callback(window, tab);
+      window.run_command(entry->second->command, false);
       last_mapping.reset();
     }
     else if (
@@ -342,7 +328,7 @@ namespace selain::keyboard
     switch (window->get_mode())
     {
       case Mode::NORMAL:
-        return key_event_normal_mode(*window, *tab, keyval, state);
+        return key_event_normal_mode(*window, keyval, state);
 
       case Mode::INSERT:
         return key_event_insert_mode(*window, keyval);

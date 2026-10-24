@@ -50,25 +50,17 @@ namespace selain
     const std::u32string&,
     const keyboard::BindingCallback&
   );
+  static void add_mapping(
+    const std::u32string&,
+    const Glib::ustring&
+  );
   static ::guint parse_key_token(
     const std::u32string&,
     std::u32string::size_type&
   );
 
   static void bind_mode_command(MainWindow&, Tab&);
-  static void bind_mode_insert(MainWindow&, Tab&);
-  static void bind_mode_hint(MainWindow&, Tab&);
   static void bind_mode_hint_new_tab(MainWindow&, Tab&);
-  static void bind_tab_reload(MainWindow&, Tab&);
-  static void bind_tab_reload_bypass_cache(MainWindow&, Tab&);
-  static void bind_tab_open(MainWindow&, Tab&);
-  static void bind_tab_close(MainWindow&, Tab&);
-  static void bind_tab_prev(MainWindow&, Tab&);
-  static void bind_tab_next(MainWindow&, Tab&);
-  static void bind_split(MainWindow&, Tab&);
-  static void bind_vsplit(MainWindow&, Tab&);
-  static void bind_split_close(MainWindow&, Tab&);
-  static void bind_split_only(MainWindow&, Tab&);
   static void bind_split_focus_left(MainWindow&, Tab&);
   static void bind_split_focus_down(MainWindow&, Tab&);
   static void bind_split_focus_up(MainWindow&, Tab&);
@@ -103,25 +95,25 @@ namespace selain
     {
       // Switching between modes.
       add_mapping(U":", bind_mode_command);
-      add_mapping(U"i", bind_mode_insert);
-      add_mapping(U"f", bind_mode_hint);
+      add_mapping(U"i", "insert");
+      add_mapping(U"f", "hint");
       add_mapping(U"F", bind_mode_hint_new_tab);
 
       // Tab management.
-      add_mapping(U"r", bind_tab_reload);
-      add_mapping(U"R", bind_tab_reload_bypass_cache);
-      add_mapping(U"t", bind_tab_open);
-      add_mapping(U"x", bind_tab_close);
-      add_mapping(U"J", bind_tab_prev);
-      add_mapping(U"K", bind_tab_next);
+      add_mapping(U"r", "reload");
+      add_mapping(U"R", "reload!");
+      add_mapping(U"t", "open-tab");
+      add_mapping(U"x", "quit");
+      add_mapping(U"J", "tab-prev");
+      add_mapping(U"K", "tab-next");
 
       // Split management (Vim Ctrl-W).
-      add_mapping(U"^ws", bind_split);
-      add_mapping(U"^wS", bind_split);
-      add_mapping(U"^wv", bind_vsplit);
-      add_mapping(U"^wq", bind_split_close);
-      add_mapping(U"^wc", bind_split_close);
-      add_mapping(U"^wo", bind_split_only);
+      add_mapping(U"^ws", "split");
+      add_mapping(U"^wS", "split");
+      add_mapping(U"^wv", "vsplit");
+      add_mapping(U"^wq", "quit");
+      add_mapping(U"^wc", "quit");
+      add_mapping(U"^wo", "only");
       add_mapping(U"^wh", bind_split_focus_left);
       add_mapping(U"^wj", bind_split_focus_down);
       add_mapping(U"^wk", bind_split_focus_up);
@@ -354,6 +346,18 @@ namespace selain
     current_mapping->callback = callback;
   }
 
+  static void
+  add_mapping(const std::u32string& sequence, const Glib::ustring& command)
+  {
+    add_mapping(
+      sequence,
+      [command](MainWindow& window, Tab&)
+      {
+        window.run_command(command, false);
+      }
+    );
+  }
+
   static ::guint
   parse_key_token(const std::u32string& sequence,
                   std::u32string::size_type& i)
@@ -394,81 +398,9 @@ namespace selain
   }
 
   static void
-  bind_mode_insert(MainWindow& window, Tab&)
-  {
-    window.set_mode(Mode::INSERT);
-  }
-
-  static void
-  bind_mode_hint(MainWindow& window, Tab&)
-  {
-    window.set_mode(Mode::HINT);
-  }
-
-  static void
   bind_mode_hint_new_tab(MainWindow& window, Tab&)
   {
     window.set_mode(Mode::HINT_NEW_TAB);
-  }
-
-  static void
-  bind_tab_reload(MainWindow&, Tab& tab)
-  {
-    tab.reload();
-  }
-
-  static void
-  bind_tab_reload_bypass_cache(MainWindow&, Tab& tab)
-  {
-    tab.reload(true);
-  }
-
-  static void
-  bind_tab_open(MainWindow& window, Tab&)
-  {
-    window.open_tab();
-  }
-
-  static void
-  bind_tab_close(MainWindow& window, Tab& tab)
-  {
-    window.close_tab(tab);
-  }
-
-  static void
-  bind_tab_next(MainWindow& window, Tab&)
-  {
-    window.next_tab();
-  }
-
-  static void
-  bind_tab_prev(MainWindow& window, Tab&)
-  {
-    window.prev_tab();
-  }
-
-  static void
-  bind_split(MainWindow&, Tab& tab)
-  {
-    tab.split(false);
-  }
-
-  static void
-  bind_vsplit(MainWindow&, Tab& tab)
-  {
-    tab.split(true);
-  }
-
-  static void
-  bind_split_close(MainWindow&, Tab& tab)
-  {
-    tab.close_active_view();
-  }
-
-  static void
-  bind_split_only(MainWindow&, Tab& tab)
-  {
-    tab.close_other_views();
   }
 
   static void

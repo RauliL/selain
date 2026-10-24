@@ -31,56 +31,63 @@
 
 namespace selain
 {
-  static Command::callback_type switch_mode(Mode);
+  using tab_command_callback = std::function<bool(
+    MainWindow&,
+    Tab&,
+    const Glib::ustring&
+  )>;
 
-  static bool cmd_back(MainWindow&, const Glib::ustring&);
+  static Command::callback_type switch_mode(Mode);
+  static Command::callback_type tab_command(const tab_command_callback&);
+
+  static bool cmd_back(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_command(MainWindow&, const Glib::ustring&);
-  static bool cmd_force_reload(MainWindow&, const Glib::ustring&);
-  static bool cmd_forward(MainWindow&, const Glib::ustring&);
-  static bool cmd_inspector(MainWindow&, const Glib::ustring&);
-  static bool cmd_js(MainWindow&, const Glib::ustring&);
-  static bool cmd_only(MainWindow&, const Glib::ustring&);
+  static bool cmd_force_reload(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_forward(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_inspector(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_js(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_only(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_open(MainWindow&, const Glib::ustring&);
   static bool cmd_open_tab(MainWindow&, const Glib::ustring&);
   static bool cmd_quit(MainWindow&, const Glib::ustring&);
   static bool cmd_quit_all(MainWindow&, const Glib::ustring&);
-  static bool cmd_reload(MainWindow&, const Glib::ustring&);
-  static bool cmd_search_next(MainWindow&, const Glib::ustring&);
-  static bool cmd_search_prev(MainWindow&, const Glib::ustring&);
+  static bool cmd_reload(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_search_next(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_search_prev(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_set(MainWindow&, const Glib::ustring&);
-  static bool cmd_split(MainWindow&, const Glib::ustring&);
-  static bool cmd_stop(MainWindow&, const Glib::ustring&);
+  static bool cmd_split(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_stop(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_tab_next(MainWindow&, const Glib::ustring&);
   static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
-  static bool cmd_vsplit(MainWindow&, const Glib::ustring&);
+  static bool cmd_vsplit(MainWindow&, Tab&, const Glib::ustring&);
   static void js_command_callback(::GObject*, ::GAsyncResult*, ::gpointer);
 
   static const std::vector<Command> command_list =
   {
-    { "back", "b", cmd_back },
+    { "back", "b", tab_command(cmd_back) },
     { "command", "c", cmd_command },
-    { "forward", "b", cmd_forward },
+    { "forward", "b", tab_command(cmd_forward) },
     { "hint", "h", switch_mode(Mode::HINT) },
     { "hint-tab", "ht", switch_mode(Mode::HINT_NEW_TAB) },
     { "insert", "i", switch_mode(Mode::INSERT) },
-    { "inspector", "insp", cmd_inspector },
-    { "js", nullptr, cmd_js },
-    { "only", "on", cmd_only },
+    { "inspector", "insp", tab_command(cmd_inspector) },
+    { "js", nullptr, tab_command(cmd_js) },
+    { "only", "on", tab_command(cmd_only) },
     { "open", "o", cmd_open },
     { "open-tab", "ot", cmd_open_tab },
     { "quit", "q", cmd_quit },
     { "quit-all", "qa", cmd_quit_all },
-    { "reload", "r", cmd_reload },
-    { "reload!", "r!", cmd_force_reload },
-    { "search-next", "sen", cmd_search_next },
-    { "search-prev", "sep", cmd_search_prev },
+    { "reload", "r", tab_command(cmd_reload) },
+    { "reload!", "r!", tab_command(cmd_force_reload) },
+    { "search-next", "sen", tab_command(cmd_search_next) },
+    { "search-prev", "sep", tab_command(cmd_search_prev) },
     { "set", "se", cmd_set },
-    { "split", "sp", cmd_split },
-    { "stop", "s", cmd_stop },
+    { "split", "sp", tab_command(cmd_split) },
+    { "stop", "s", tab_command(cmd_stop) },
     { "tab-next", "tn", cmd_tab_next },
     { "tab-prev", "tp", cmd_tab_prev },
-    { "vsplit", "vs", cmd_vsplit },
-    { "vsp", nullptr, cmd_vsplit },
+    { "vsplit", "vs", tab_command(cmd_vsplit) },
+    { "vsp", nullptr, tab_command(cmd_vsplit) },
   };
 
   void
@@ -195,23 +202,32 @@ namespace selain
     };
   }
 
-  static bool
-  cmd_inspector(MainWindow& window, const Glib::ustring&)
+  static Command::callback_type
+  tab_command(const tab_command_callback& callback)
   {
-    // TODO: Add support for argument such as on/off.
-    if (const auto tab = window.get_current_tab())
+    return [callback](MainWindow& window, const Glib::ustring& args)
     {
-      tab->toggle_inspector();
+      if (const auto tab = window.get_current_tab())
+      {
+        return callback(window, *tab, args);
+      }
+      window.show_error("No tab open.");
 
-      return true;
-    }
-    window.show_error("No tab open.");
-
-    return false;
+      return false;
+    };
   }
 
   static bool
-  cmd_js(MainWindow& window, const Glib::ustring& args)
+  cmd_inspector(MainWindow&, Tab& tab, const Glib::ustring&)
+  {
+    // TODO: Add support for argument such as on/off.
+    tab.toggle_inspector();
+
+    return true;
+  }
+
+  static bool
+  cmd_js(MainWindow& window, Tab& tab, const Glib::ustring& args)
   {
     if (utils::is_blank(args))
     {
@@ -219,21 +235,14 @@ namespace selain
 
       return false;
     }
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->execute_script(
-        args,
-        nullptr,
-        js_command_callback,
-        static_cast<void*>(tab)
-      );
+    tab.execute_script(
+      args,
+      nullptr,
+      js_command_callback,
+      static_cast<void*>(&tab)
+    );
 
-      return true; // TODO: Try to get JavaScript execution status.
-    }
-
-    window.show_error("No tab to run JavaScript in.");
-
-    return false;
+    return true; // TODO: Try to get JavaScript execution status.
   }
 
   static void
@@ -278,17 +287,11 @@ namespace selain
   }
 
   static bool
-  cmd_back(MainWindow& window, const Glib::ustring&)
+  cmd_back(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->go_back();
+    tab.go_back();
 
-      return true;
-    }
-    window.show_error("No tab open.");
-
-    return false;
+    return true;
   }
 
   static bool
@@ -304,17 +307,11 @@ namespace selain
   }
 
   static bool
-  cmd_forward(MainWindow& window, const Glib::ustring&)
+  cmd_forward(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->go_forward();
+    tab.go_forward();
 
-      return true;
-    }
-    window.show_error("No tab open.");
-
-    return false;
+    return true;
   }
 
   static bool
@@ -339,17 +336,11 @@ namespace selain
   }
 
   static bool
-  cmd_only(MainWindow& window, const Glib::ustring&)
+  cmd_only(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->close_other_views();
+    tab.close_other_views();
 
-      return true;
-    }
-    window.show_error("No tab to display.");
-
-    return false;
+    return true;
   }
 
   static bool
@@ -374,57 +365,39 @@ namespace selain
   }
 
   static bool
-  do_reload(MainWindow& window, bool force)
+  do_reload(Tab& tab, bool force)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->reload(force);
+    tab.reload(force);
 
-      return true;
-    }
-    window.show_error("No tab to reload.");
-
-    return false;
+    return true;
   }
 
   static bool
-  cmd_reload(MainWindow& window, const Glib::ustring&)
+  cmd_reload(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    return do_reload(window, false);
+    return do_reload(tab, false);
   }
 
   static bool
-  cmd_force_reload(MainWindow& window, const Glib::ustring&)
+  cmd_force_reload(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    return do_reload(window, true);
+    return do_reload(tab, true);
   }
 
   static bool
-  cmd_search_next(MainWindow& window, const Glib::ustring&)
+  cmd_search_next(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->search_next();
+    tab.search_next();
 
-      return true;
-    }
-    window.show_error("No tab open.");
-
-    return false;
+    return true;
   }
 
   static bool
-  cmd_search_prev(MainWindow& window, const Glib::ustring&)
+  cmd_search_prev(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->search_prev();
+    tab.search_prev();
 
-      return true;
-    }
-    window.show_error("No tab open.");
-
-    return false;
+    return true;
   }
 
   static bool
@@ -466,37 +439,25 @@ namespace selain
   }
 
   static bool
-  do_split(MainWindow& window, bool vertical, const Glib::ustring& uri)
+  do_split(Tab& tab, bool vertical, const Glib::ustring& uri)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->split(vertical, uri);
+    tab.split(vertical, uri);
 
-      return true;
-    }
-    window.show_error("No tab to split.");
-
-    return false;
+    return true;
   }
 
   static bool
-  cmd_split(MainWindow& window, const Glib::ustring& args)
+  cmd_split(MainWindow&, Tab& tab, const Glib::ustring& args)
   {
-    return do_split(window, false, args);
+    return do_split(tab, false, args);
   }
 
   static bool
-  cmd_stop(MainWindow& window, const Glib::ustring&)
+  cmd_stop(MainWindow&, Tab& tab, const Glib::ustring&)
   {
-    if (const auto tab = window.get_current_tab())
-    {
-      tab->stop_loading();
+    tab.stop_loading();
 
-      return true;
-    }
-    window.show_error("No tab to stop loading of.");
-
-    return false;
+    return true;
   }
 
   static bool
@@ -516,8 +477,8 @@ namespace selain
   }
 
   static bool
-  cmd_vsplit(MainWindow& window, const Glib::ustring& args)
+  cmd_vsplit(MainWindow&, Tab& tab, const Glib::ustring& args)
   {
-    return do_split(window, true, args);
+    return do_split(tab, true, args);
   }
 }

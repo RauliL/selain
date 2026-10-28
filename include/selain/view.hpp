@@ -79,6 +79,17 @@ namespace selain
      */
     static View* from_web_view(::WebKitWebView* web_view);
 
+    /**
+     * Records one Gemini redirect hop. Returns false if the hop limit was
+     * exceeded.
+     */
+    bool consume_gemini_redirect_hop();
+
+    /**
+     * Clears the Gemini redirect hop counter after a non-redirect response.
+     */
+    void reset_gemini_redirect_hops();
+
     void execute_script(
       const Glib::ustring& script,
       ::GCancellable* cancellable = nullptr,
@@ -112,5 +123,6 @@ namespace selain
     ::WebKitWebView* m_web_view;
     Glib::ustring m_status;
     Glib::ustring m_permanent_status;
+    int m_gemini_redirect_hops = 0;
   };
 }

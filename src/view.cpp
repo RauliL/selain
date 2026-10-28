@@ -227,6 +227,27 @@ namespace selain
     window->prompt_gemini_input(this, uri, prompt, sensitive);
   }
 
+  bool
+  View::consume_gemini_redirect_hop()
+  {
+    constexpr int max_gemini_redirects = 5;
+
+    if (m_gemini_redirect_hops >= max_gemini_redirects)
+    {
+      return false;
+    }
+
+    ++m_gemini_redirect_hops;
+
+    return true;
+  }
+
+  void
+  View::reset_gemini_redirect_hops()
+  {
+    m_gemini_redirect_hops = 0;
+  }
+
   Tab*
   View::get_tab()
   {

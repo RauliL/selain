@@ -34,7 +34,7 @@ namespace selain
 {
   struct GeminiResponse
   {
-    /** Final URI after following redirects. */
+    /** Requested URI for this response. */
     std::string uri;
     /** Two-digit Gemini status code, or 0 on transport failure. */
     int status = 0;
@@ -49,10 +49,19 @@ namespace selain
   using GeminiFetchCallback = std::function<void(GeminiResponse)>;
 
   /**
+   * Resolves @p reference against @p base_uri (for Gemini redirects and links).
+   */
+  std::string gemini_resolve_uri(
+    const std::string& base_uri,
+    const std::string& reference
+  );
+
+  /**
    * Performs an asynchronous Gemini request for @p uri.
    *
    * Self-signed certificates are accepted for now (TOFU can be added later).
-   * Redirects (3x) are followed up to a small limit.
+   * Redirect responses (3x) are returned to the caller so the UI can update the
+   * address bar by navigating to the target URI.
    */
   void gemini_fetch(const std::string& uri, GeminiFetchCallback callback);
 }

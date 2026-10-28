@@ -161,6 +161,68 @@ namespace selain
       );
     }
 
+    std::string
+    js_string_escape(std::string_view text)
+    {
+      std::string out;
+
+      out.reserve(text.size());
+      for (const char c : text)
+      {
+        switch (c)
+        {
+          case '\\':
+          case '\'':
+          case '"':
+            out += '\\';
+            out += c;
+            break;
+
+          case '\n':
+            out += "\\n";
+            break;
+
+          case '\r':
+            out += "\\r";
+            break;
+
+          case '<':
+            out += "\\u003c";
+            break;
+
+          default:
+            out += c;
+            break;
+        }
+      }
+
+      return out;
+    }
+
+    std::string
+    make_redirect_page(const std::string& target_uri)
+    {
+      const auto escaped_html = html_escape(target_uri);
+      const auto escaped_js = js_string_escape(target_uri);
+
+      return std::format(
+        "<!DOCTYPE html>\n"
+        "<html><head><meta charset=\"utf-8\"/>"
+        "<meta http-equiv=\"refresh\" content=\"0;url={}\"/>"
+        "<title>Redirecting</title>"
+        "<script>location.replace(\"{}\");</script>"
+        "</head><body><main>"
+        "<p>Redirecting to <a href=\"{}\">{}</a>…</p>"
+        "<p>If nothing happens, activate the link or press "
+        "<kbd>Enter</kbd> on it.</p>"
+        "</main></body></html>\n",
+        escaped_html,
+        escaped_js,
+        escaped_html,
+        escaped_html
+      );
+    }
+
     void
     finish_with_bytes(
       ::WebKitURISchemeRequest* request,
@@ -264,6 +326,48 @@ namespace selain
       g_idle_add(prompt_gemini_input_idle, data);
     }
 
+    void
+    handle_redirect(
+      ::WebKitURISchemeRequest* request,
+      const GeminiResponse& response
+    )
+    {
+      auto* web_view = webkit_uri_scheme_request_get_web_view(request);
+      auto* view = View::from_web_view(web_view);
+
+      if (response.meta.empty())
+      {
+        finish_with_html(
+          request,
+          make_error_page(
+            "Redirect failed",
+            "Redirect response was missing a target URI."
+          )
+        );
+
+        return;
+      }
+
+      if (view && !view->consume_gemini_redirect_hop())
+      {
+        finish_with_html(
+          request,
+          make_error_page("Too many redirects", "Redirect limit exceeded.")
+        );
+
+        return;
+      }
+
+      const auto target = gemini_resolve_uri(response.uri, response.meta);
+
+      if (view)
+      {
+        view->set_status(std::format("Redirecting to {}…", target));
+      }
+
+      finish_with_html(request, make_redirect_page(target));
+    }
+
     std::string
     body_as_text(const GeminiResponse& response)
     {
@@ -333,6 +437,12 @@ namespace selain
     {
       if (!response.error.empty())
       {
+        if (auto* view = View::from_web_view(
+              webkit_uri_scheme_request_get_web_view(request)
+            ))
+        {
+          view->reset_gemini_redirect_hops();
+        }
         finish_with_html(
           request,
           make_error_page("Gemini request failed", response.error)
@@ -347,50 +457,64 @@ namespace selain
       switch (class_digit)
       {
         case 1:
+          if (auto* view = View::from_web_view(
+                webkit_uri_scheme_request_get_web_view(request)
+              ))
+          {
+            view->reset_gemini_redirect_hops();
+          }
           schedule_gemini_input_prompt(request, response);
           break;
 
         case 2:
+          if (auto* view = View::from_web_view(
+                webkit_uri_scheme_request_get_web_view(request)
+              ))
+          {
+            view->reset_gemini_redirect_hops();
+          }
           handle_success(request, response);
           break;
 
+        case 3:
+          handle_redirect(request, response);
+          break;
+
         case 4:
-          finish_with_html(
-            request,
-            make_error_page(
-              std::format("Temporary failure ({})", response.status),
-              response.meta.empty()
-                ? "The capsule reported a temporary failure."
-                : response.meta
-            )
-          );
-          break;
-
         case 5:
-          finish_with_html(
-            request,
-            make_error_page(
-              std::format("Permanent failure ({})", response.status),
-              response.meta.empty()
-                ? "The capsule reported a permanent failure."
-                : response.meta
-            )
-          );
-          break;
-
         case 6:
+          if (auto* view = View::from_web_view(
+                webkit_uri_scheme_request_get_web_view(request)
+              ))
+          {
+            view->reset_gemini_redirect_hops();
+          }
           finish_with_html(
             request,
             make_error_page(
-              std::format("Certificate required ({})", response.status),
+              class_digit == 4
+                ? std::format("Temporary failure ({})", response.status)
+                : class_digit == 5
+                  ? std::format("Permanent failure ({})", response.status)
+                  : std::format("Certificate required ({})", response.status),
               response.meta.empty()
-                ? "This capsule requires a client certificate."
+                ? (class_digit == 4
+                     ? "The capsule reported a temporary failure."
+                     : class_digit == 5
+                       ? "The capsule reported a permanent failure."
+                       : "This capsule requires a client certificate.")
                 : response.meta
             )
           );
           break;
 
         default:
+          if (auto* view = View::from_web_view(
+                webkit_uri_scheme_request_get_web_view(request)
+              ))
+          {
+            view->reset_gemini_redirect_hops();
+          }
           finish_with_html(
             request,
             make_error_page(

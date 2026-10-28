@@ -37,7 +37,6 @@ namespace selain
   namespace
   {
     constexpr int default_port = 1965;
-    constexpr int max_redirects = 5;
     constexpr gsize max_header_bytes = 1024 + 2;
     constexpr gsize read_chunk_size = 16 * 1024;
 
@@ -45,7 +44,6 @@ namespace selain
     {
       std::string uri;
       GeminiFetchCallback callback;
-      int redirects_left = max_redirects;
       ::GSocketClient* client = nullptr;
       ::GSocketConnection* connection = nullptr;
       ::GInputStream* input = nullptr;
@@ -96,29 +94,6 @@ namespace selain
       response.uri = state->uri;
       response.error = message;
       complete(std::move(state), std::move(response));
-    }
-
-    void
-    release_connection(FetchState& state)
-    {
-      if (state.connection)
-      {
-        g_io_stream_close(G_IO_STREAM(state.connection), nullptr, nullptr);
-      }
-      if (state.buffer)
-      {
-        g_byte_array_unref(state.buffer);
-        state.buffer = nullptr;
-      }
-      g_clear_object(&state.connection);
-      g_clear_object(&state.client);
-      state.input = nullptr;
-      state.output = nullptr;
-      state.request_bytes.clear();
-      state.request_offset = 0;
-      state.header_done = false;
-      state.status = 0;
-      state.meta.clear();
     }
 
     std::string
@@ -177,34 +152,6 @@ namespace selain
       return normalized;
     }
 
-    std::string
-    resolve_redirect(const std::string& base_uri, const std::string& target)
-    {
-      ::GError* error = nullptr;
-      char* resolved = ::g_uri_resolve_relative(
-        base_uri.c_str(),
-        target.c_str(),
-        G_URI_FLAGS_ENCODED,
-        &error
-      );
-
-      if (!resolved)
-      {
-        if (error)
-        {
-          g_error_free(error);
-        }
-
-        return target;
-      }
-
-      std::string result(resolved);
-
-      g_free(resolved);
-
-      return result;
-    }
-
     bool
     parse_header_line(const std::string& line, int& status, std::string& meta)
     {
@@ -259,36 +206,6 @@ namespace selain
     }
 
     void
-    follow_redirect(FetchStatePtr state)
-    {
-      if (state->redirects_left <= 0)
-      {
-        fail(std::move(state), "Too many redirects");
-
-        return;
-      }
-      if (state->meta.empty())
-      {
-        fail(std::move(state), "Redirect response missing target URI");
-
-        return;
-      }
-
-      auto next_uri = resolve_redirect(state->uri, state->meta);
-      auto callback = std::move(state->callback);
-      const int redirects_left = state->redirects_left - 1;
-
-      release_connection(*state);
-
-      auto next = std::make_unique<FetchState>();
-
-      next->uri = std::move(next_uri);
-      next->callback = std::move(callback);
-      next->redirects_left = redirects_left;
-      start_fetch(std::move(next));
-    }
-
-    void
     process_completed_header(FetchStatePtr state, gsize header_end)
     {
       std::string header_line(
@@ -321,16 +238,7 @@ namespace selain
       g_byte_array_set_size(state->buffer, static_cast<guint>(remaining));
       state->header_done = true;
 
-      const int class_digit = state->status / 10;
-
-      if (class_digit == 3)
-      {
-        follow_redirect(std::move(state));
-
-        return;
-      }
-
-      if (class_digit != 2)
+      if (state->status / 10 != 2)
       {
         GeminiResponse response;
 
@@ -629,6 +537,34 @@ namespace selain
         raw
       );
     }
+  }
+
+  std::string
+  gemini_resolve_uri(const std::string& base_uri, const std::string& reference)
+  {
+    ::GError* error = nullptr;
+    char* resolved = ::g_uri_resolve_relative(
+      base_uri.c_str(),
+      reference.c_str(),
+      G_URI_FLAGS_ENCODED,
+      &error
+    );
+
+    if (!resolved)
+    {
+      if (error)
+      {
+        g_error_free(error);
+      }
+
+      return reference;
+    }
+
+    std::string result(resolved);
+
+    g_free(resolved);
+
+    return result;
   }
 
   void

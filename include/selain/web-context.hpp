@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 namespace selain
 {
   /**
-   * Wrapper for the WebKitNetworkSession type.
+   * Owns the shared WebKitWebContext and WebKitNetworkSession used by views.
    */
   class WebContext : public Glib::Object
   {
@@ -42,7 +42,7 @@ namespace selain
     static Glib::RefPtr<WebContext> create();
 
     /**
-     * Creates new web view using the wrapped network session.
+     * Creates new web view using the wrapped web context and network session.
      */
     ::WebKitWebView* create_web_view();
 
@@ -51,7 +51,7 @@ namespace selain
     ~WebContext() override;
 
   private:
+    ::WebKitWebContext* m_context;
     ::WebKitNetworkSession* m_session;
   };
 }
-

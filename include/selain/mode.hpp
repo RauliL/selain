@@ -42,6 +42,11 @@ namespace selain
     HINT,
     /** Hint mode where links are opened into new tab. */
     HINT_NEW_TAB,
+    /**
+     * Prompt mode for Gemini status 10/11 input. Typed text is submitted as a
+     * query string, not as a command.
+     */
+    GEMINI_INPUT,
   };
 
   /**

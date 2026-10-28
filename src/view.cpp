@@ -93,6 +93,8 @@ namespace selain
     }
   }
 
+  static constexpr const char* view_quark = "selain-view";
+
   View::View(const Glib::RefPtr<WebContext>& context,
              const Glib::RefPtr<WebSettings>& settings)
     : Gtk::Box(Gtk::Orientation::VERTICAL)
@@ -100,6 +102,7 @@ namespace selain
   {
     const auto key_controller = ::gtk_event_controller_key_new();
 
+    ::g_object_set_data(G_OBJECT(m_web_view), view_quark, this);
     ::g_signal_connect(
       G_OBJECT(m_web_view),
       "load-changed",
@@ -176,6 +179,14 @@ namespace selain
       return;
     }
 
+    if (const auto tab = get_tab())
+    {
+      if (const auto window = tab->get_main_window())
+      {
+        window->cancel_gemini_input_for(this);
+      }
+    }
+    ::g_object_set_data(G_OBJECT(m_web_view), view_quark, nullptr);
     ::g_signal_handlers_disconnect_by_data(m_web_view, this);
     if (::gtk_widget_get_parent(GTK_WIDGET(m_web_view)) == GTK_WIDGET(gobj()))
     {
@@ -185,6 +196,57 @@ namespace selain
     m_web_view = nullptr;
   }
 
+  View*
+  View::from_web_view(::WebKitWebView* web_view)
+  {
+    if (!web_view)
+    {
+      return nullptr;
+    }
+
+    return static_cast<View*>(
+      ::g_object_get_data(G_OBJECT(web_view), view_quark)
+    );
+  }
+
+  void
+  View::request_gemini_input(
+    const Glib::ustring& uri,
+    const Glib::ustring& prompt,
+    bool sensitive
+  )
+  {
+    const auto tab = get_tab();
+    const auto window = tab ? tab->get_main_window() : nullptr;
+
+    if (!window)
+    {
+      return;
+    }
+
+    window->prompt_gemini_input(this, uri, prompt, sensitive);
+  }
+
+  bool
+  View::consume_gemini_redirect_hop()
+  {
+    constexpr int max_gemini_redirects = 5;
+
+    if (m_gemini_redirect_hops >= max_gemini_redirects)
+    {
+      return false;
+    }
+
+    ++m_gemini_redirect_hops;
+
+    return true;
+  }
+
+  void
+  View::reset_gemini_redirect_hops()
+  {
+    m_gemini_redirect_hops = 0;
+  }
 
   Tab*
   View::get_tab()
@@ -412,7 +474,9 @@ namespace selain
     const auto tab = get_tab();
     const auto window = tab ? tab->get_main_window() : nullptr;
 
-    if (window && window->get_mode() == Mode::COMMAND)
+    if (window
+        && (window->get_mode() == Mode::COMMAND
+            || window->get_mode() == Mode::GEMINI_INPUT))
     {
       window->get_command_entry().grab_focus();
     }

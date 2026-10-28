@@ -7,6 +7,7 @@ uses [WebKit] as it's engine.
 
 - Vim style modes and keyboard bindings.
 - Vim style splitted views.
+- [Gemini](https://geminiprotocol.net/) protocol support (`gemini://`).
 
 ## How to compile
 

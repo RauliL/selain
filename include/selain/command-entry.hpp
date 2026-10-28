@@ -55,6 +55,16 @@ namespace selain
     void set_text(const Glib::ustring& text);
 
     /**
+     * Shows or hides typed characters. Used for Gemini sensitive input (11).
+     */
+    void set_visibility(bool visible);
+
+    /**
+     * Sets placeholder text shown when the entry is empty.
+     */
+    void set_placeholder_text(const Glib::ustring& text);
+
+    /**
      * Displays an notification to the user. If there already is an
      * notification being displayed, the new one will be added to the
      * notification queue.

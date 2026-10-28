@@ -26,11 +26,41 @@
 #include <algorithm>
 
 #include <selain/main-window.hpp>
+#include <selain/view.hpp>
 
 namespace selain
 {
   static const int DEFAULT_WIDTH = 640;
   static const int DEFAULT_HEIGHT = 480;
+
+  static Glib::ustring
+  uri_without_query(const Glib::ustring& uri)
+  {
+    const auto pos = uri.find('?');
+
+    if (pos == Glib::ustring::npos)
+    {
+      return uri;
+    }
+
+    return uri.substr(0, pos);
+  }
+
+  static Glib::ustring
+  append_gemini_query(const Glib::ustring& uri, const Glib::ustring& input)
+  {
+    char* escaped = ::g_uri_escape_string(input.c_str(), nullptr, TRUE);
+    Glib::ustring result = uri_without_query(uri);
+
+    result += '?';
+    if (escaped)
+    {
+      result += escaped;
+      g_free(escaped);
+    }
+
+    return result;
+  }
 
   MainWindow::MainWindow(const Glib::RefPtr<Gtk::Application>& application)
     : Gtk::ApplicationWindow(application)
@@ -116,10 +146,21 @@ namespace selain
         context.reset();
       }
     }
+    if (m_mode == Mode::GEMINI_INPUT && mode != Mode::GEMINI_INPUT)
+    {
+      clear_gemini_input_ui();
+      m_gemini_input.reset();
+    }
     m_status_bar.set_mode(mode);
     switch (m_mode = mode)
     {
       case Mode::COMMAND:
+        m_command_entry.set_visibility(true);
+        m_command_entry.set_placeholder_text(Glib::ustring());
+        m_command_entry.grab_focus();
+        break;
+
+      case Mode::GEMINI_INPUT:
         m_command_entry.grab_focus();
         break;
 
@@ -134,12 +175,86 @@ namespace selain
 
       default:
         m_command_entry.set_text(Glib::ustring());
+        m_command_entry.set_visibility(true);
+        m_command_entry.set_placeholder_text(Glib::ustring());
         if (tab)
         {
           tab->grab_focus();
         }
         break;
     }
+  }
+
+  void
+  MainWindow::prompt_gemini_input(
+    View* view,
+    const Glib::ustring& uri,
+    const Glib::ustring& prompt,
+    bool sensitive
+  )
+  {
+    if (!view || uri.empty())
+    {
+      return;
+    }
+
+    m_gemini_input = GeminiInputRequest{
+      .view = view,
+      .uri = uri,
+      .prompt = prompt,
+      .sensitive = sensitive
+    };
+    m_command_entry.set_text(Glib::ustring());
+    m_command_entry.set_visibility(!sensitive);
+    m_command_entry.set_placeholder_text(
+      sensitive
+        ? "Sensitive input (Enter to submit, Esc to cancel)"
+        : "Input (Enter to submit, Esc to cancel)"
+    );
+    set_mode(Mode::GEMINI_INPUT);
+    m_status_bar.set_status(
+      prompt.empty() ? "Gemini input required" : prompt
+    );
+  }
+
+  void
+  MainWindow::cancel_gemini_input_for(View* view)
+  {
+    if (!m_gemini_input || m_gemini_input->view != view)
+    {
+      return;
+    }
+
+    m_gemini_input.reset();
+    if (m_mode == Mode::GEMINI_INPUT)
+    {
+      set_mode(Mode::NORMAL);
+    }
+  }
+
+  void
+  MainWindow::clear_gemini_input_ui()
+  {
+    m_command_entry.set_visibility(true);
+    m_command_entry.set_placeholder_text(Glib::ustring());
+    m_command_entry.set_text(Glib::ustring());
+  }
+
+  void
+  MainWindow::complete_gemini_input(const Glib::ustring& text)
+  {
+    const auto request = m_gemini_input;
+
+    m_gemini_input.reset();
+    clear_gemini_input_ui();
+    set_mode(Mode::NORMAL);
+
+    if (!request || !request->view)
+    {
+      return;
+    }
+
+    request->view->load_uri(append_gemini_query(request->uri, text));
   }
 
   Tab*
@@ -301,6 +416,12 @@ namespace selain
       return true;
     }
 
+    // Gemini input is free-form text; do not run tab completion.
+    if (m_mode == Mode::GEMINI_INPUT)
+    {
+      return false;
+    }
+
     const bool shift = static_cast<bool>(
       state & static_cast<Gdk::ModifierType>(GDK_SHIFT_MASK)
     );
@@ -324,6 +445,13 @@ namespace selain
   void
   MainWindow::on_command_received(const Glib::ustring& command)
   {
+    if (m_mode == Mode::GEMINI_INPUT || m_gemini_input)
+    {
+      complete_gemini_input(command);
+
+      return;
+    }
+
     set_mode(Mode::NORMAL);
     run_command(command, true);
   }

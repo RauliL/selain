@@ -10,6 +10,9 @@ ADD_EXECUTABLE(
   selain
   src/command.cpp
   src/command-entry.cpp
+  src/gemini-client.cpp
+  src/gemini-scheme.cpp
+  src/gemtext.cpp
   src/hint-context.cpp
   src/keyboard.cpp
   src/main.cpp

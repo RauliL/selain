@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,8 @@
  */
 #include <selain/web-context.hpp>
 
+#include <selain/gemini-scheme.hpp>
+
 namespace selain
 {
   static ::WebKitNetworkSession* create_network_session();
@@ -37,13 +39,16 @@ namespace selain
 
   WebContext::WebContext()
     : Glib::ObjectBase(typeid(WebContext))
+    , m_context(::webkit_web_context_new())
     , m_session(create_network_session())
   {
+    register_gemini_scheme(m_context);
   }
 
   WebContext::~WebContext()
   {
     g_clear_object(&m_session);
+    g_clear_object(&m_context);
   }
 
   ::WebKitWebView*
@@ -51,19 +56,12 @@ namespace selain
   {
     return WEBKIT_WEB_VIEW(::g_object_new(
       WEBKIT_TYPE_WEB_VIEW,
+      "web-context",
+      m_context,
       "network-session",
       m_session,
       nullptr
     ));
-  }
-
-  static inline void
-  free_string(::gchar* str)
-  {
-    if (str)
-    {
-      g_free(str);
-    }
   }
 
   static ::WebKitNetworkSession*

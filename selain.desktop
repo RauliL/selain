@@ -8,4 +8,4 @@ Icon=selain
 Exec=selain %u
 StartupNotify=false
 Categories=Application;Network;
-MimeType=text/html;text/xml;application/xhtml+xml;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/gemini;

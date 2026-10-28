@@ -20,6 +20,8 @@ all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
 |`x`|Close current tab.                  |
 |`J`|Switch to previous tab.             |
 |`K`|Switch to next tab.                 |
+|`Alt-1` … `Alt-9`|Switch to tab 1–9.       |
+|`Alt-0`|Switch to tab 10.                   |
 
 ## Split management
 

@@ -156,6 +156,13 @@ namespace selain
     void schedule_close();
 
     void set_current_tab(const Glib::RefPtr<Tab>& tab);
+
+    /**
+     * Switches to the tab at the given zero-based index. Does nothing if the
+     * index is out of range.
+     */
+    void set_current_tab(int index);
+
     void next_tab();
     void prev_tab();
 

@@ -245,9 +245,13 @@ namespace selain
   void
   MainWindow::set_current_tab(const Glib::RefPtr<Tab>& tab)
   {
-    const auto index = m_notebook.page_num(*tab.get());
+    set_current_tab(m_notebook.page_num(*tab.get()));
+  }
 
-    if (index >= 0)
+  void
+  MainWindow::set_current_tab(int index)
+  {
+    if (index >= 0 && index < m_notebook.get_n_pages())
     {
       m_notebook.set_current_page(index);
     }

@@ -42,7 +42,64 @@ namespace selain::keyboard
     Glib::ustring command;
     mapping_type mapping;
     mapping_type control_mapping;
+    mapping_type alt_mapping;
   };
+
+  enum class Modifier
+  {
+    NONE,
+    CONTROL,
+    ALT
+  };
+
+  static Mapping::mapping_type&
+  select_mapping(Mapping& mapping, Modifier modifier)
+  {
+    switch (modifier)
+    {
+      case Modifier::CONTROL:
+        return mapping.control_mapping;
+
+      case Modifier::ALT:
+        return mapping.alt_mapping;
+
+      default:
+        return mapping.mapping;
+    }
+  }
+
+  static inline bool
+  has_child_mappings(const Mapping& mapping)
+  {
+    return (
+      !mapping.mapping.empty() ||
+      !mapping.control_mapping.empty() ||
+      !mapping.alt_mapping.empty()
+    );
+  }
+
+  static Modifier
+  parse_modifier(const Glib::ustring& sequence, Glib::ustring::size_type& i)
+  {
+    if (i + 1 >= sequence.length())
+    {
+      return Modifier::NONE;
+    }
+    if (sequence[i] == '^')
+    {
+      ++i;
+
+      return Modifier::CONTROL;
+    }
+    if (sequence[i] == '~')
+    {
+      ++i;
+
+      return Modifier::ALT;
+    }
+
+    return Modifier::NONE;
+  }
 
   static constexpr int keypress_timeout = 2;
   static std::shared_ptr<Mapping> top_mapping;
@@ -62,6 +119,16 @@ namespace selain::keyboard
     bind("x", "quit");
     bind("J", "tab-prev");
     bind("K", "tab-next");
+    bind("~1", "tab 1");
+    bind("~2", "tab 2");
+    bind("~3", "tab 3");
+    bind("~4", "tab 4");
+    bind("~5", "tab 5");
+    bind("~6", "tab 6");
+    bind("~7", "tab 7");
+    bind("~8", "tab 8");
+    bind("~9", "tab 9");
+    bind("~0", "tab 10");
 
     // Split management (Vim Ctrl-W).
     bind("^ws", "split");
@@ -159,18 +226,9 @@ namespace selain::keyboard
 
     for (Glib::ustring::size_type i = 0; i < length; ++i)
     {
-      bool is_control = false;
-
-      if (sequence[i] == '^' && i + 1 < length)
-      {
-        ++i;
-        is_control = true;
-      }
-
+      const auto modifier = parse_modifier(sequence, i);
       const auto c = parse_key_token(sequence, i);
-      auto& map = is_control
-        ? current_mapping->control_mapping
-        : current_mapping->mapping;
+      auto& map = select_mapping(*current_mapping, modifier);
       auto entry = map.find(c);
 
       if (entry == std::end(map))
@@ -194,7 +252,7 @@ namespace selain::keyboard
     struct Step
     {
       std::shared_ptr<Mapping> parent;
-      bool is_control;
+      Modifier modifier;
       std::uint32_t key;
     };
 
@@ -210,18 +268,9 @@ namespace selain::keyboard
 
     for (Glib::ustring::size_type i = 0; i < length; ++i)
     {
-      bool is_control = false;
-
-      if (sequence[i] == '^' && i + 1 < length)
-      {
-        ++i;
-        is_control = true;
-      }
-
+      const auto modifier = parse_modifier(sequence, i);
       const auto c = parse_key_token(sequence, i);
-      auto& map = is_control
-        ? current_mapping->control_mapping
-        : current_mapping->mapping;
+      auto& map = select_mapping(*current_mapping, modifier);
       auto entry = map.find(c);
 
       if (entry == std::end(map))
@@ -229,7 +278,7 @@ namespace selain::keyboard
         return false;
       }
 
-      path.push_back({current_mapping, is_control, c});
+      path.push_back({current_mapping, modifier, c});
       current_mapping = entry->second;
     }
 
@@ -243,9 +292,7 @@ namespace selain::keyboard
     // do not linger after the binding has been removed.
     for (auto it = path.rbegin(); it != path.rend(); ++it)
     {
-      auto& map = it->is_control
-        ? it->parent->control_mapping
-        : it->parent->mapping;
+      auto& map = select_mapping(*it->parent, it->modifier);
       auto entry = map.find(it->key);
 
       if (entry == std::end(map))
@@ -255,9 +302,7 @@ namespace selain::keyboard
 
       const auto& node = entry->second;
 
-      if (!node->command.empty() ||
-          !node->mapping.empty() ||
-          !node->control_mapping.empty())
+      if (!node->command.empty() || has_child_mappings(*node))
       {
         break;
       }
@@ -280,6 +325,10 @@ namespace selain::keyboard
     static time_point<system_clock> last_keypress;
 
     const bool is_control = state & GDK_CONTROL_MASK;
+    const bool is_alt = (state & GDK_ALT_MASK) && !is_control;
+    const auto modifier = is_control
+      ? Modifier::CONTROL
+      : (is_alt ? Modifier::ALT : Modifier::NONE);
     const auto now = system_clock::now();
     Mapping::mapping_type::const_iterator entry;
 
@@ -301,19 +350,12 @@ namespace selain::keyboard
     }
     last_keypress = now;
 
-    if (is_control)
+    const auto& map = select_mapping(*last_mapping, modifier);
+
+    entry = map.find(keyval);
+    if (entry == std::end(map))
     {
-      entry = last_mapping->control_mapping.find(keyval);
-      if (entry == std::end(last_mapping->control_mapping))
-      {
-        return TRUE;
-      }
-    } else {
-      entry = last_mapping->mapping.find(keyval);
-      if (entry == std::end(last_mapping->mapping))
-      {
-        return TRUE;
-      }
+      return TRUE;
     }
 
     if (!entry->second->command.empty())
@@ -321,10 +363,7 @@ namespace selain::keyboard
       window.run_command(entry->second->command, false);
       last_mapping.reset();
     }
-    else if (
-      !entry->second->mapping.empty() ||
-      !entry->second->control_mapping.empty()
-    )
+    else if (has_child_mappings(*entry->second))
     {
       last_mapping = entry->second;
     }

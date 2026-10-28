@@ -70,6 +70,7 @@ namespace selain
   static bool cmd_split(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_split_focus(MainWindow&, Tab&, const Glib::ustring&);
   static bool cmd_stop(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_tab(MainWindow&, const Glib::ustring&);
   static bool cmd_tab_next(MainWindow&, const Glib::ustring&);
   static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
   static bool cmd_unbind(MainWindow&, const Glib::ustring&);
@@ -126,6 +127,7 @@ namespace selain
     { "split", require_tab(cmd_split) },
     { "split-focus", require_tab(cmd_split_focus) },
     { "stop", require_tab(cmd_stop) },
+    { "tab", cmd_tab },
     { "tab-next", cmd_tab_next },
     { "tab-prev", cmd_tab_prev },
     { "tn", cmd_tab_next },
@@ -720,6 +722,40 @@ namespace selain
     tab.stop_loading();
 
     return true;
+  }
+
+  static bool
+  cmd_tab(MainWindow& window, const Glib::ustring& args)
+  {
+    const auto arg = utils::trim(args);
+
+    if (arg.empty())
+    {
+      window.show_error("Missing tab number.");
+
+      return false;
+    }
+
+    try
+    {
+      const auto number = std::stoi(arg.raw());
+
+      if (number < 1)
+      {
+        window.show_error("Invalid tab number.");
+
+        return false;
+      }
+      window.set_current_tab(number - 1);
+
+      return true;
+    }
+    catch (const std::exception&)
+    {
+      window.show_error("Invalid tab number.");
+
+      return false;
+    }
   }
 
   static bool

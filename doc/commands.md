@@ -29,8 +29,9 @@ Selain currently supports following commands:
 |`:split`      |`:sp`   |Splits the current view horizontally.  |
 |`:split-focus`|`:spf`  |Changes focus of splitted view.        |
 |`:stop`       |`:s`    |Stops page from loading content.       |
-|`:tabnext`    |`:tn`   |Switches to next tab.                  |
-|`:tabprev`    |`:tp`   |Switches to previous tab.              |
+|`:tab`        |        |Switches to tab given as 1-based index.|
+|`:tab-next`   |`:tn`   |Switches to next tab.                  |
+|`:tab-prev`   |`:tp`   |Switches to previous tab.              |
 |`:unbind`     |        |Remove keyboard binding.               |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |

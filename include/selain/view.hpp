@@ -27,6 +27,8 @@
 
 #include <vector>
 
+#include <gtkmm.h>
+
 #include <selain/hint-context.hpp>
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
@@ -61,6 +63,21 @@ namespace selain
     void load_uri(const Glib::ustring& uri);
     void reload(bool bypass_cache = false);
     void stop_loading();
+
+    /**
+     * Asks the parent window to collect Gemini input for @p uri via the
+     * command bar (keyboard only).
+     */
+    void request_gemini_input(
+      const Glib::ustring& uri,
+      const Glib::ustring& prompt,
+      bool sensitive
+    );
+
+    /**
+     * Returns the View associated with @p web_view, or null if none.
+     */
+    static View* from_web_view(::WebKitWebView* web_view);
 
     void execute_script(
       const Glib::ustring& script,

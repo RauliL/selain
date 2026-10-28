@@ -27,6 +27,7 @@
 
 #include <selain/gemini-client.hpp>
 #include <selain/gemtext.hpp>
+#include <selain/view.hpp>
 
 #include <cctype>
 #include <cstring>
@@ -111,19 +112,6 @@ namespace selain
     }
 
     std::string
-    uri_without_query(const std::string& uri)
-    {
-      const auto pos = uri.find('?');
-
-      if (pos == std::string::npos)
-      {
-        return uri;
-      }
-
-      return uri.substr(0, pos);
-    }
-
-    std::string
     make_document(const std::string& title, const std::string& body_html)
     {
       return std::format(
@@ -158,30 +146,17 @@ namespace selain
     }
 
     std::string
-    make_input_page(const std::string& uri, const std::string& prompt, bool sensitive)
+    make_input_waiting_page(const std::string& prompt, bool sensitive)
     {
-      const auto action_base = html_escape(uri_without_query(uri));
-      const char* input_type = sensitive ? "password" : "text";
-
       return make_document(
         "Input required",
         std::format(
           "<h1>Input required</h1>"
           "<p>{}</p>"
-          "<form id=\"gemini-input\">"
-          "<input id=\"value\" type=\"{}\" autocomplete=\"off\" autofocus/>"
-          "<div><button type=\"submit\">Submit</button></div>"
-          "</form>"
-          "<script>"
-          "document.getElementById('gemini-input').addEventListener('submit', function (event) {{"
-          "  event.preventDefault();"
-          "  var value = document.getElementById('value').value;"
-          "  location.href = '{}' + '?' + encodeURIComponent(value);"
-          "}});"
-          "</script>",
+          "<p>Type your {} in the command bar, then press "
+          "<kbd>Enter</kbd> to submit or <kbd>Esc</kbd> to cancel.</p>",
           html_escape(prompt.empty() ? "This capsule requests input." : prompt),
-          input_type,
-          action_base
+          sensitive ? "sensitive input" : "reply"
         )
       );
     }
@@ -232,6 +207,61 @@ namespace selain
 
       webkit_uri_scheme_request_finish_error(request, error);
       g_error_free(error);
+    }
+
+    struct GeminiInputPrompt
+    {
+      View* view = nullptr;
+      Glib::ustring uri;
+      Glib::ustring prompt;
+      bool sensitive = false;
+    };
+
+    gboolean
+    prompt_gemini_input_idle(gpointer user_data)
+    {
+      auto* data = static_cast<GeminiInputPrompt*>(user_data);
+
+      if (data->view)
+      {
+        data->view->request_gemini_input(
+          data->uri,
+          data->prompt,
+          data->sensitive
+        );
+      }
+      delete data;
+
+      return G_SOURCE_REMOVE;
+    }
+
+    void
+    schedule_gemini_input_prompt(
+      ::WebKitURISchemeRequest* request,
+      const GeminiResponse& response
+    )
+    {
+      auto* web_view = webkit_uri_scheme_request_get_web_view(request);
+      auto* view = View::from_web_view(web_view);
+
+      finish_with_html(
+        request,
+        make_input_waiting_page(response.meta, response.status == 11)
+      );
+
+      if (!view)
+      {
+        return;
+      }
+
+      auto* data = new GeminiInputPrompt{
+        .view = view,
+        .uri = response.uri,
+        .prompt = response.meta,
+        .sensitive = response.status == 11
+      };
+
+      g_idle_add(prompt_gemini_input_idle, data);
     }
 
     std::string
@@ -317,14 +347,7 @@ namespace selain
       switch (class_digit)
       {
         case 1:
-          finish_with_html(
-            request,
-            make_input_page(
-              response.uri,
-              response.meta,
-              response.status == 11
-            )
-          );
+          schedule_gemini_input_prompt(request, response);
           break;
 
         case 2:

@@ -100,8 +100,21 @@ namespace selain
   }
 
   void
+  CommandEntry::set_visibility(bool visible)
+  {
+    m_entry.set_visibility(visible);
+  }
+
+  void
+  CommandEntry::set_placeholder_text(const Glib::ustring& text)
+  {
+    m_entry.set_placeholder_text(text);
+  }
+
+  void
   CommandEntry::grab_focus()
   {
+    set_visible_child(m_entry);
     m_entry.grab_focus_without_selecting();
     m_entry.set_position(static_cast<int>(m_entry.get_text().length()));
   }

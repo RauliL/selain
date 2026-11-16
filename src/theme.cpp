@@ -30,6 +30,7 @@
 #include <inja/inja.hpp>
 
 #include <selain/theme.hpp>
+#include <selain/utils.hpp>
 
 CMRC_DECLARE(selain::rc);
 
@@ -47,13 +48,8 @@ namespace selain::theme
   const Gdk::RGBA mode_bar_insert_foreground("#262626");
 
   static void
-  load_default_css()
+  add_theme_colors(nlohmann::json& data)
   {
-    auto provider = Gtk::CssProvider::create();
-    auto fs = cmrc::selain::rc::get_filesystem();
-    auto stylesheet = fs.open("src/theme.css");
-    nlohmann::json data;
-
     data["window-background"] = window_background.to_string().raw();
     data["window-foreground"] = window_foreground.to_string().raw();
     data["status-bar-background"] = status_bar_background.to_string().raw();
@@ -64,7 +60,17 @@ namespace selain::theme
     data["mode-bar-normal-foreground"] = mode_bar_normal_foreground.to_string().raw();
     data["mode-bar-insert-background"] = mode_bar_insert_background.to_string().raw();
     data["mode-bar-insert-foreground"] = mode_bar_insert_foreground.to_string().raw();
+  }
 
+  static void
+  load_default_css()
+  {
+    auto provider = Gtk::CssProvider::create();
+    auto fs = cmrc::selain::rc::get_filesystem();
+    auto stylesheet = fs.open("src/theme.css");
+    nlohmann::json data;
+
+    add_theme_colors(data);
     provider->load_from_string(inja::render(
       std::string(std::begin(stylesheet), std::end(stylesheet)),
       data
@@ -103,5 +109,19 @@ namespace selain::theme
   {
     load_default_css();
     load_custom_css();
+  }
+
+  std::string
+  render_document(const std::string& title, const std::string& body)
+  {
+    auto fs = cmrc::selain::rc::get_filesystem();
+    auto tmpl = fs.open("src/document.html");
+    nlohmann::json data;
+
+    add_theme_colors(data);
+    data["title"] = utils::html_escape(title);
+    data["body"] = body;
+
+    return inja::render(std::string(std::begin(tmpl), std::end(tmpl)), data);
   }
 }

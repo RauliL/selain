@@ -23,124 +23,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/gopher-scheme.hpp>
-
-#include <selain/gopher-client.hpp>
-#include <selain/gopher-menu.hpp>
-
 #include <cctype>
 #include <cstdint>
 #include <format>
-#include <string>
-#include <string_view>
+
+#include <selain/gopher-client.hpp>
+#include <selain/gopher-menu.hpp>
+#include <selain/gopher-scheme.hpp>
+#include <selain/theme.hpp>
+#include <selain/utils.hpp>
 
 namespace selain
 {
   namespace
   {
     std::string
-    html_escape(std::string_view text)
-    {
-      std::string out;
-
-      out.reserve(text.size());
-      for (const char c : text)
-      {
-        switch (c)
-        {
-          case '&':
-            out += "&amp;";
-            break;
-
-          case '<':
-            out += "&lt;";
-            break;
-
-          case '>':
-            out += "&gt;";
-            break;
-
-          case '"':
-            out += "&quot;";
-            break;
-
-          default:
-            out += c;
-            break;
-        }
-      }
-
-      return out;
-    }
-
-    std::string
-    js_string_escape(std::string_view text)
-    {
-      std::string out;
-
-      out.reserve(text.size());
-      for (const char c : text)
-      {
-        switch (c)
-        {
-          case '\\':
-          case '\'':
-          case '"':
-            out += '\\';
-            out += c;
-            break;
-
-          case '\n':
-            out += "\\n";
-            break;
-
-          case '\r':
-            out += "\\r";
-            break;
-
-          case '<':
-            out += "\\u003c";
-            break;
-
-          default:
-            out += c;
-            break;
-        }
-      }
-
-      return out;
-    }
-
-    std::string
-    make_document(const std::string& title, const std::string& body_html)
-    {
-      return std::format(
-        "<!DOCTYPE html>\n"
-        "<html><head><meta charset=\"utf-8\"/>"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>"
-        "<title>{}</title>"
-        "<style>"
-        "html,body{{margin:0;background:#262626;color:#b3deef;"
-        "font:16px/1.55 system-ui,sans-serif}}"
-        "main{{max-width:46rem;margin:0 auto;padding:1.5rem 1.25rem 3rem}}"
-        "a{{color:#a7d6f8}} input,button{{font:inherit;margin-top:.75rem}}"
-        "input{{width:min(100%,24rem);padding:.4rem .55rem}}"
-        "button{{padding:.4rem .8rem}}"
-        "</style></head><body><main>{}</main></body></html>\n",
-        html_escape(title),
-        body_html
-      );
-    }
-
-    std::string
     make_error_page(const std::string& title, const std::string& message)
     {
-      return make_document(
+      return theme::render_document(
         title,
         std::format(
           "<h1>{}</h1><p>{}</p>",
-          html_escape(title),
-          html_escape(message)
+          utils::html_escape(title),
+          utils::html_escape(message)
         )
       );
     }
@@ -148,9 +53,9 @@ namespace selain
     std::string
     make_search_page(const std::string& uri)
     {
-      const auto escaped_js = js_string_escape(uri);
+      const auto escaped_js = utils::js_string_escape(uri);
 
-      return make_document(
+      return theme::render_document(
         "Gopher search",
         std::format(
           "<h1>Gopher search</h1>"
@@ -315,9 +220,9 @@ namespace selain
 
       if (is_text_type(response.type))
       {
-        const auto html = make_document(
+        const auto html = theme::render_document(
           "Gopher text",
-          std::format("<pre>{}</pre>", html_escape(body_as_text(response)))
+          std::format("<pre>{}</pre>", utils::html_escape(body_as_text(response)))
         );
 
         finish_with_html(request, html);

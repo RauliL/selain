@@ -51,4 +51,77 @@ namespace selain::utils
 
     return Glib::ustring();
   }
+
+  std::string
+  html_escape(std::string_view text)
+  {
+    std::string out;
+
+    out.reserve(text.size());
+    for (const char c : text)
+    {
+      switch (c)
+      {
+        case '&':
+          out += "&amp;";
+          break;
+
+        case '<':
+          out += "&lt;";
+          break;
+
+        case '>':
+          out += "&gt;";
+          break;
+
+        case '"':
+          out += "&quot;";
+          break;
+
+        default:
+          out += c;
+          break;
+      }
+    }
+
+    return out;
+  }
+
+  std::string
+  js_string_escape(std::string_view text)
+  {
+    std::string out;
+
+    out.reserve(text.size());
+    for (const char c : text)
+    {
+      switch (c)
+      {
+        case '\\':
+        case '\'':
+        case '"':
+          out += '\\';
+          out += c;
+          break;
+
+        case '\n':
+          out += "\\n";
+          break;
+
+        case '\r':
+          out += "\\r";
+          break;
+
+        case '<':
+          out += "\\u003c";
+          break;
+
+        default:
+          out += c;
+          break;
+      }
+    }
+
+    return out;
+  }
 }

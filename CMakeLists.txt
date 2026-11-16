@@ -24,6 +24,7 @@ CMRC_ADD_RESOURCE_LIBRARY(
     selain::rc
   NAMESPACE
     selain::rc
+  src/document.html
   src/hint-mode.js
   src/theme.css
 )

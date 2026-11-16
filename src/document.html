@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <style>
+      html, body {
+        margin: 0;
+        background: {{ window-background }};
+        color: {{ window-foreground }};
+        font: 16px/1.55 system-ui, sans-serif;
+      }
+
+      main {
+        max-width: 46rem;
+        margin:0 auto;
+        padding: 1.5rem 1.25rem 3rem
+      }
+
+      a {
+        color: {{ status-bar-foreground }};
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      h1 {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+
+      input, button {
+        font: inherit;
+        margin-top:.75rem;
+      }
+
+      input {
+        width: min(100%, 24rem);
+        padding:.4rem .55rem;
+      }
+
+      button {
+        padding: .4rem .8rem;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: 4.5rem 1fr;
+        gap: 0.55rem;
+        padding: 0.2rem 0;
+      }
+
+      .type {
+        color: {{ mode-bar-insert-background }};
+        font: 13px/1.55 ui-monospace, monospace;
+        text-align: right;
+      }
+
+      .info .label {
+        color: #7aa6c2;
+      }
+
+      .error .label {
+        color: #ff875f;
+      }
+
+      pre {
+        overflow-x: auto;
+        white-space: pre-wrap;
+        padding: 0.85rem 1rem;
+        background: #1c1c1c;
+        border-radius: 4px;
+        font: 14px/1.45 ui-monospace, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <main>{{ body }}</main>
+  </body>
+</html>

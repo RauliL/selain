@@ -45,4 +45,9 @@ namespace selain::theme
    * application startup before the UI is being shown.
    */
   void initialize();
+
+  std::string render_document(
+    const std::string& title,
+    const std::string& body
+  );
 }

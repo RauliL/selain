@@ -146,4 +146,14 @@ namespace selain::utils
    * Returns textual representation of given JavaScript value.
    */
   Glib::ustring js_value_to_text(::JSCValue* value);
+
+  /**
+   * Escapes HTML entities from given string.
+   */
+  std::string html_escape(std::string_view text);
+
+  /**
+   * Escapes JavaScript string literal escape sequences from given string.
+   */
+  std::string js_string_escape(std::string_view text);
 }

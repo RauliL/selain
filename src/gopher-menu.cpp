@@ -23,56 +23,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/gopher-menu.hpp>
-
-#include <selain/gopher-client.hpp>
-
-#include <glib.h>
-
 #include <cctype>
 #include <sstream>
-#include <string>
-#include <vector>
+
+#include <selain/gopher-menu.hpp>
+#include <selain/gopher-client.hpp>
+#include <selain/theme.hpp>
+#include <selain/utils.hpp>
 
 namespace selain
 {
   namespace
   {
-    std::string
-    html_escape(std::string_view text)
-    {
-      std::string out;
-
-      out.reserve(text.size());
-      for (const char c : text)
-      {
-        switch (c)
-        {
-          case '&':
-            out += "&amp;";
-            break;
-
-          case '<':
-            out += "&lt;";
-            break;
-
-          case '>':
-            out += "&gt;";
-            break;
-
-          case '"':
-            out += "&quot;";
-            break;
-
-          default:
-            out += c;
-            break;
-        }
-      }
-
-      return out;
-    }
-
     std::string
     document_scheme(std::string_view base_uri)
     {
@@ -200,75 +162,6 @@ namespace selain
 
       return parts;
     }
-
-    std::string
-    wrap_document(const std::string& title, const std::string& body_html)
-    {
-      std::ostringstream html;
-
-      html
-        << "<!DOCTYPE html>\n"
-        << "<html>\n"
-        << "<head>\n"
-        << "<meta charset=\"utf-8\"/>\n"
-        << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
-        << "<title>" << html_escape(title) << "</title>\n"
-        << "<style>\n"
-        << "  :root {\n"
-        << "    color-scheme: dark;\n"
-        << "    --bg: #262626;\n"
-        << "    --fg: #b3deef;\n"
-        << "    --muted: #7aa6c2;\n"
-        << "    --link: #a7d6f8;\n"
-        << "    --type: #d7d75f;\n"
-        << "    --error: #ff875f;\n"
-        << "    --pre-bg: #1c1c1c;\n"
-        << "  }\n"
-        << "  html, body {\n"
-        << "    margin: 0;\n"
-        << "    padding: 0;\n"
-        << "    background: var(--bg);\n"
-        << "    color: var(--fg);\n"
-        << "    font: 16px/1.55 system-ui, sans-serif;\n"
-        << "  }\n"
-        << "  main {\n"
-        << "    max-width: 52rem;\n"
-        << "    margin: 0 auto;\n"
-        << "    padding: 1.5rem 1.25rem 3rem;\n"
-        << "  }\n"
-        << "  h1 { font-size: 1.4rem; font-weight: 600; }\n"
-        << "  a { color: var(--link); text-decoration: none; }\n"
-        << "  a:hover { text-decoration: underline; }\n"
-        << "  .item {\n"
-        << "    display: grid;\n"
-        << "    grid-template-columns: 4.5rem 1fr;\n"
-        << "    gap: 0.55rem;\n"
-        << "    padding: 0.2rem 0;\n"
-        << "  }\n"
-        << "  .type {\n"
-        << "    color: var(--type);\n"
-        << "    font: 13px/1.55 ui-monospace, monospace;\n"
-        << "    text-align: right;\n"
-        << "  }\n"
-        << "  .info .label { color: var(--muted); }\n"
-        << "  .error .label { color: var(--error); }\n"
-        << "  pre {\n"
-        << "    overflow-x: auto;\n"
-        << "    white-space: pre-wrap;\n"
-        << "    padding: 0.85rem 1rem;\n"
-        << "    background: var(--pre-bg);\n"
-        << "    border-radius: 4px;\n"
-        << "    font: 14px/1.45 ui-monospace, monospace;\n"
-        << "  }\n"
-        << "</style>\n"
-        << "</head>\n"
-        << "<body><main>\n"
-        << body_html
-        << "</main></body>\n"
-        << "</html>\n";
-
-      return html.str();
-    }
   }
 
   std::string
@@ -335,13 +228,13 @@ namespace selain
           : "item";
 
       body << "<div class=\"" << css_class << "\">";
-      body << "<span class=\"type\">" << html_escape(type_label(type)) << "</span>";
+      body << "<span class=\"type\">" << utils::html_escape(type_label(type)) << "</span>";
 
       if (type == 'i' || type == '3' || !is_linkable_type(type) || host.empty())
       {
         body
           << "<span class=\"label\">"
-          << html_escape(label)
+          << utils::html_escape(label)
           << "</span>";
       } else {
         std::string href;
@@ -362,9 +255,9 @@ namespace selain
 
         body
           << "<a class=\"label\" href=\""
-          << html_escape(href)
+          << utils::html_escape(href)
           << "\">"
-          << html_escape(label)
+          << utils::html_escape(label)
           << "</a>";
       }
 
@@ -377,7 +270,7 @@ namespace selain
       start = end + 1;
     }
 
-    return wrap_document("Gopher menu", body.str());
+    return theme::render_document("Gopher menu", body.str());
   }
 
   std::string
@@ -424,9 +317,9 @@ namespace selain
       start = end + 1;
     }
 
-    return wrap_document(
+    return theme::render_document(
       "Gopher text",
-      std::string("<pre>") + html_escape(cleaned) + "</pre>\n"
+      std::string("<pre>") + utils::html_escape(cleaned) + "</pre>\n"
     );
   }
 }

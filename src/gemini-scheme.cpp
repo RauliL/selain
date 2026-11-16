@@ -23,57 +23,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/gemini-scheme.hpp>
-
-#include <selain/gemini-client.hpp>
-#include <selain/gemtext.hpp>
-#include <selain/view.hpp>
-
 #include <cctype>
 #include <cstring>
 #include <format>
-#include <string>
-#include <string_view>
+
+#include <selain/gemini-client.hpp>
+#include <selain/gemini-scheme.hpp>
+#include <selain/gemtext.hpp>
+#include <selain/theme.hpp>
+#include <selain/utils.hpp>
+#include <selain/view.hpp>
 
 namespace selain
 {
   namespace
   {
-    std::string
-    html_escape(std::string_view text)
-    {
-      std::string out;
-
-      out.reserve(text.size());
-      for (const char c : text)
-      {
-        switch (c)
-        {
-          case '&':
-            out += "&amp;";
-            break;
-
-          case '<':
-            out += "&lt;";
-            break;
-
-          case '>':
-            out += "&gt;";
-            break;
-
-          case '"':
-            out += "&quot;";
-            break;
-
-          default:
-            out += c;
-            break;
-        }
-      }
-
-      return out;
-    }
-
     std::string
     mime_type_without_parameters(std::string_view meta)
     {
@@ -112,35 +76,14 @@ namespace selain
     }
 
     std::string
-    make_document(const std::string& title, const std::string& body_html)
-    {
-      return std::format(
-        "<!DOCTYPE html>\n"
-        "<html><head><meta charset=\"utf-8\"/>"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>"
-        "<title>{}</title>"
-        "<style>"
-        "html,body{{margin:0;background:#262626;color:#b3deef;"
-        "font:16px/1.55 system-ui,sans-serif}}"
-        "main{{max-width:46rem;margin:0 auto;padding:1.5rem 1.25rem 3rem}}"
-        "a{{color:#a7d6f8}} input,button{{font:inherit;margin-top:.75rem}}"
-        "input{{width:min(100%,24rem);padding:.4rem .55rem}}"
-        "button{{padding:.4rem .8rem}}"
-        "</style></head><body><main>{}</main></body></html>\n",
-        html_escape(title),
-        body_html
-      );
-    }
-
-    std::string
     make_error_page(const std::string& title, const std::string& message)
     {
-      return make_document(
+      return theme::render_document(
         title,
         std::format(
           "<h1>{}</h1><p>{}</p>",
-          html_escape(title),
-          html_escape(message)
+          utils::html_escape(title),
+          utils::html_escape(message)
         )
       );
     }
@@ -148,62 +91,24 @@ namespace selain
     std::string
     make_input_waiting_page(const std::string& prompt, bool sensitive)
     {
-      return make_document(
+      return theme::render_document(
         "Input required",
         std::format(
           "<h1>Input required</h1>"
           "<p>{}</p>"
           "<p>Type your {} in the command bar, then press "
           "<kbd>Enter</kbd> to submit or <kbd>Esc</kbd> to cancel.</p>",
-          html_escape(prompt.empty() ? "This capsule requests input." : prompt),
+          utils::html_escape(prompt.empty() ? "This capsule requests input." : prompt),
           sensitive ? "sensitive input" : "reply"
         )
       );
     }
 
     std::string
-    js_string_escape(std::string_view text)
-    {
-      std::string out;
-
-      out.reserve(text.size());
-      for (const char c : text)
-      {
-        switch (c)
-        {
-          case '\\':
-          case '\'':
-          case '"':
-            out += '\\';
-            out += c;
-            break;
-
-          case '\n':
-            out += "\\n";
-            break;
-
-          case '\r':
-            out += "\\r";
-            break;
-
-          case '<':
-            out += "\\u003c";
-            break;
-
-          default:
-            out += c;
-            break;
-        }
-      }
-
-      return out;
-    }
-
-    std::string
     make_redirect_page(const std::string& target_uri)
     {
-      const auto escaped_html = html_escape(target_uri);
-      const auto escaped_js = js_string_escape(target_uri);
+      const auto escaped_html = utils::html_escape(target_uri);
+      const auto escaped_js = utils::js_string_escape(target_uri);
 
       return std::format(
         "<!DOCTYPE html>\n"
@@ -401,9 +306,9 @@ namespace selain
 
       if (starts_with_ci(mime, "text/"))
       {
-        const auto html = make_document(
+        const auto html = theme::render_document(
           mime,
-          std::format("<pre>{}</pre>", html_escape(body_as_text(response)))
+          std::format("<pre>{}</pre>", utils::html_escape(body_as_text(response)))
         );
 
         finish_with_html(request, html);

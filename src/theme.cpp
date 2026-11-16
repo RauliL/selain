@@ -23,10 +23,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/theme.hpp>
-
 #include <filesystem>
 #include <format>
+
+#include <cmrc/cmrc.hpp>
+#include <inja/inja.hpp>
+
+#include <selain/theme.hpp>
+
+CMRC_DECLARE(selain::rc);
 
 namespace selain::theme
 {
@@ -45,83 +50,25 @@ namespace selain::theme
   load_default_css()
   {
     auto provider = Gtk::CssProvider::create();
+    auto fs = cmrc::selain::rc::get_filesystem();
+    auto stylesheet = fs.open("src/theme.css");
+    nlohmann::json data;
 
-    provider->load_from_string(
-      std::format(
-        "* {{\n"
-        "  --selain-window-background: {};\n"
-        "  --selain-window-foreground: {};\n"
-        "  --selain-status-bar-background: {};\n"
-        "  --selain-status-bar-foreground: {};\n"
-        "  --selain-status-bar-error-background: {};\n"
-        "  --selain-status-bar-error-foreground: {};\n"
-        "  --selain-mode-bar-normal-background: {};\n"
-        "  --selain-mode-bar-normal-foreground: {};\n"
-        "  --selain-mode-bar-insert-background: {};\n"
-        "  --selain-mode-bar-insert-foreground: {};\n"
-        "}}\n"
-        ".selain-window {{\n"
-        "  background-color: var(--selain-window-background);\n"
-        "}}\n"
-        ".selain-status-bar {{\n"
-        "  background-color: var(--selain-status-bar-background);\n"
-        "}}\n"
-        ".selain-status-bar label {{\n"
-        "  font-family: monospace;\n"
-        "  padding: 0.1em 0.4em;\n"
-        "}}\n"
-        ".selain-status-bar .mode-label {{\n"
-        "  background-color: var(--selain-mode-bar-normal-background);\n"
-        "  color: var(--selain-mode-bar-normal-foreground);\n"
-        "}}\n"
-        ".selain-status-bar .mode-label.mode-insert {{\n"
-        "  background-color: var(--selain-mode-bar-insert-background);\n"
-        "  color: var(--selain-mode-bar-insert-foreground);\n"
-        "}}\n"
-        ".selain-status-bar .status-label {{\n"
-        "  background-color: var(--selain-status-bar-background);\n"
-        "  color: var(--selain-status-bar-foreground);\n"
-        "}}\n"
-        ".selain-command-entry {{\n"
-        "  background-color: var(--selain-window-background);\n"
-        "}}\n"
-        ".selain-command-entry entry {{\n"
-        "  background: var(--selain-window-background);\n"
-        "  border: none;\n"
-        "  color: var(--selain-status-bar-error-foreground);\n"
-        "  font-family: monospace;\n"
-        "  margin: 0;\n"
-        "  outline: none;\n"
-        "  padding: 0.2em;\n"
-        "}}\n"
-        ".selain-command-entry .notification-info {{\n"
-        "  background-color: var(--selain-window-background);\n"
-        "  color: var(--selain-window-foreground);\n"
-        "  font-family: monospace;\n"
-        "}}\n"
-        ".selain-command-entry .notification-error {{\n"
-        "  background-color: var(--selain-status-bar-error-background);\n"
-        "  color: var(--selain-status-bar-error-foreground);\n"
-        "  font-family: monospace;\n"
-        "}}\n"
-        ".selain-view {{\n"
-        "  border: 1px solid transparent;\n"
-        "}}\n"
-        ".selain-view-active {{\n"
-        "  border-color: var(--selain-window-foreground);\n"
-        "}}\n",
-        window_background.to_string().raw(),
-        window_foreground.to_string().raw(),
-        status_bar_background.to_string().raw(),
-        status_bar_foreground.to_string().raw(),
-        status_bar_error_background.to_string().raw(),
-        status_bar_error_foreground.to_string().raw(),
-        mode_bar_normal_background.to_string().raw(),
-        mode_bar_normal_foreground.to_string().raw(),
-        mode_bar_insert_background.to_string().raw(),
-        mode_bar_insert_foreground.to_string().raw()
-      )
-    );
+    data["window-background"] = window_background.to_string().raw();
+    data["window-foreground"] = window_foreground.to_string().raw();
+    data["status-bar-background"] = status_bar_background.to_string().raw();
+    data["status-bar-foreground"] = status_bar_foreground.to_string().raw();
+    data["status-bar-error-background"] = status_bar_error_background.to_string().raw();
+    data["status-bar-error-foreground"] = status_bar_error_foreground.to_string().raw();
+    data["mode-bar-normal-background"] = mode_bar_normal_background.to_string().raw();
+    data["mode-bar-normal-foreground"] = mode_bar_normal_foreground.to_string().raw();
+    data["mode-bar-insert-background"] = mode_bar_insert_background.to_string().raw();
+    data["mode-bar-insert-foreground"] = mode_bar_insert_foreground.to_string().raw();
+
+    provider->load_from_string(inja::render(
+      std::string(std::begin(stylesheet), std::end(stylesheet)),
+      data
+    ));
     Gtk::StyleProvider::add_provider_for_display(
       Gdk::Display::get_default(),
       provider,

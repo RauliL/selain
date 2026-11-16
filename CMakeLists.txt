@@ -6,7 +6,17 @@ FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GTKMM gtkmm-4.0 REQUIRED)
 PKG_CHECK_MODULES(WEBKITGTK webkitgtk-6.0 REQUIRED)
 
+INCLUDE(FetchContent)
 INCLUDE(cmake/CMakeRC.cmake)
+
+FETCHCONTENT_DECLARE(
+  inja
+  GIT_REPOSITORY
+    https://github.com/pantor/inja.git
+  GIT_TAG
+    v3.5.0
+)
+FETCHCONTENT_MAKEAVAILABLE(inja)
 
 CMRC_ADD_RESOURCE_LIBRARY(
   selain-resources
@@ -15,6 +25,7 @@ CMRC_ADD_RESOURCE_LIBRARY(
   NAMESPACE
     selain::rc
   src/hint-mode.js
+  src/theme.css
 )
 
 ADD_EXECUTABLE(
@@ -79,6 +90,7 @@ TARGET_LINK_LIBRARIES(
   PRIVATE
     ${GTKMM_LIBRARIES}
     ${WEBKITGTK_LIBRARIES}
+    inja
     selain::rc
 )
 

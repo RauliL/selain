@@ -1,0 +1,74 @@
+* {
+  --selain-window-background: {{ window-background }};
+  --selain-window-foreground: {{ window-foreground }};
+  --selain-status-bar-background: {{ status-bar-background }};
+  --selain-status-bar-foreground: {{ status-bar-foreground }};
+  --selain-status-bar-error-background: {{ status-bar-error-background }};
+  --selain-status-bar-error-foreground: {{ status-bar-error-foreground }};
+  --selain-mode-bar-normal-background: {{ mode-bar-normal-background }};
+  --selain-mode-bar-normal-foreground: {{ mode-bar-normal-foreground }};
+  --selain-mode-bar-insert-background: {{ mode-bar-insert-background }};
+  --selain-mode-bar-insert-foreground: {{ mode-bar-insert-foreground }};
+}
+
+.selain-window {
+  background-color: var(--selain-window-background);
+}
+
+.selain-status-bar {
+  background-color: var(--selain-status-bar-background);
+}
+
+.selain-status-bar label {
+  font-family: monospace;
+  padding: 0.1em 0.4em;
+}
+
+.selain-status-bar .mode-label {
+  background-color: var(--selain-mode-bar-normal-background);
+  color: var(--selain-mode-bar-normal-foreground);
+}
+
+.selain-status-bar .mode-label.mode-insert {
+  background-color: var(--selain-mode-bar-insert-background);
+  color: var(--selain-mode-bar-insert-foreground);
+}
+
+.selain-status-bar .status-label {
+  background-color: var(--selain-status-bar-background);
+  color: var(--selain-status-bar-foreground);
+}
+
+.selain-command-entry {
+  background-color: var(--selain-window-background);
+}
+
+.selain-command-entry entry {
+  background: var(--selain-window-background);
+  border: none;
+  color: var(--selain-status-bar-error-foreground);
+  font-family: monospace;
+  margin: 0;
+  outline: none;
+  padding: 0.2em;
+}
+
+.selain-command-entry .notification-info {
+  background-color: var(--selain-window-background);
+  color: var(--selain-window-foreground);
+  font-family: monospace;
+}
+
+.selain-command-entry .notification-error {
+  background-color: var(--selain-status-bar-error-background);
+  color: var(--selain-status-bar-error-foreground);
+  font-family: monospace;
+}
+
+.selain-view {
+  border: 1px solid transparent;
+}
+
+.selain-view-active {
+  border-color: var(--selain-window-foreground);
+}

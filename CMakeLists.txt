@@ -13,6 +13,9 @@ ADD_EXECUTABLE(
   src/gemini-client.cpp
   src/gemini-scheme.cpp
   src/gemtext.cpp
+  src/gopher-client.cpp
+  src/gopher-menu.cpp
+  src/gopher-scheme.cpp
   src/hint-context.cpp
   src/keyboard.cpp
   src/main.cpp

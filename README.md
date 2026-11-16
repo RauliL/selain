@@ -8,6 +8,7 @@ uses [WebKit] as it's engine.
 - Vim style modes and keyboard bindings.
 - Vim style splitted views.
 - [Gemini](https://geminiprotocol.net/) protocol support (`gemini://`).
+- [Gopher](https://datatracker.ietf.org/doc/html/rfc1436) protocol support (`gopher://` and `gophers://`).
 
 ## How to compile
 

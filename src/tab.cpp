@@ -62,9 +62,11 @@ namespace selain
     }
 
     bool
-    is_in_direction(FocusDirection direction,
-                    const Rect& from,
-                    const Rect& to)
+    is_in_direction(
+      Gtk::DirectionType direction,
+      const Rect& from,
+      const Rect& to
+    )
     {
       const auto from_cx = from.x + from.width / 2.0;
       const auto from_cy = from.y + from.height / 2.0;
@@ -73,23 +75,32 @@ namespace selain
 
       switch (direction)
       {
-        case FocusDirection::LEFT:
+        case Gtk::DirectionType::LEFT:
           return to_cx < from_cx;
-        case FocusDirection::RIGHT:
+
+        case Gtk::DirectionType::RIGHT:
           return to_cx > from_cx;
-        case FocusDirection::UP:
+
+        case Gtk::DirectionType::UP:
           return to_cy < from_cy;
-        case FocusDirection::DOWN:
+
+        case Gtk::DirectionType::DOWN:
           return to_cy > from_cy;
+
+        case Gtk::DirectionType::TAB_FORWARD:
+        case Gtk::DirectionType::TAB_BACKWARD:
+          break;
       }
 
       return false;
     }
 
     double
-    direction_score(FocusDirection direction,
-                    const Rect& from,
-                    const Rect& to)
+    direction_score(
+      Gtk::DirectionType direction,
+      const Rect& from,
+      const Rect& to
+    )
     {
       const auto from_cx = from.x + from.width / 2.0;
       const auto from_cy = from.y + from.height / 2.0;
@@ -100,14 +111,21 @@ namespace selain
 
       switch (direction)
       {
-        case FocusDirection::LEFT:
+        case Gtk::DirectionType::LEFT:
           return (-dx) + (std::abs(dy) * 2.0);
-        case FocusDirection::RIGHT:
+
+        case Gtk::DirectionType::RIGHT:
           return dx + (std::abs(dy) * 2.0);
-        case FocusDirection::UP:
+
+        case Gtk::DirectionType::UP:
           return (-dy) + (std::abs(dx) * 2.0);
-        case FocusDirection::DOWN:
+
+        case Gtk::DirectionType::DOWN:
           return dy + (std::abs(dx) * 2.0);
+
+        case Gtk::DirectionType::TAB_FORWARD:
+        case Gtk::DirectionType::TAB_BACKWARD:
+          break;
       }
 
       return std::numeric_limits<double>::max();
@@ -347,10 +365,22 @@ namespace selain
   }
 
   void
-  Tab::focus_view(FocusDirection direction)
+  Tab::focus_view(Gtk::DirectionType direction)
   {
     if (!m_active_view)
     {
+      return;
+    }
+
+    if (direction == Gtk::DirectionType::TAB_FORWARD)
+    {
+      cycle_view(false);
+      return;
+    }
+
+    if (direction == Gtk::DirectionType::TAB_BACKWARD)
+    {
+      cycle_view(true);
       return;
     }
 

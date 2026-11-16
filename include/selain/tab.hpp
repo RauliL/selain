@@ -38,17 +38,6 @@ namespace selain
   class MainWindow;
 
   /**
-   * Direction used when focusing a neighbouring split view.
-   */
-  enum class FocusDirection
-  {
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN
-  };
-
-  /**
    * GTK widget for a browser tab page (Vim "tab"), which may contain one or
    * more split views (Vim "windows").
    */
@@ -141,7 +130,7 @@ namespace selain
     /**
      * Focuses the nearest split view in the given direction.
      */
-    void focus_view(FocusDirection direction);
+    void focus_view(Gtk::DirectionType direction);
 
     /**
      * Cycles focus to the next or previous split view.

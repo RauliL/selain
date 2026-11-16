@@ -670,7 +670,7 @@ namespace selain
   static bool
   cmd_split_focus(MainWindow& window, Tab& tab, const Glib::ustring& args)
   {
-    FocusDirection direction;
+    Gtk::DirectionType direction;
     const auto arg = utils::trim(args);
 
     if (arg.empty())
@@ -681,31 +681,27 @@ namespace selain
     }
     else if (arg == "left")
     {
-      direction = FocusDirection::LEFT;
+      direction = Gtk::DirectionType::LEFT;
     }
     else if (arg == "right")
     {
-      direction = FocusDirection::RIGHT;
+      direction = Gtk::DirectionType::RIGHT;
     }
     else if (arg == "up")
     {
-      direction = FocusDirection::UP;
+      direction = Gtk::DirectionType::UP;
     }
     else if (arg == "down")
     {
-      direction = FocusDirection::DOWN;
+      direction = Gtk::DirectionType::DOWN;
     }
     else if (arg == "next")
     {
-      tab.cycle_view(false);
-
-      return true;
+      direction = Gtk::DirectionType::TAB_FORWARD;
     }
     else if (arg == "prev")
     {
-      tab.cycle_view(true);
-
-      return true;
+      direction = Gtk::DirectionType::TAB_BACKWARD;
     } else {
       window.show_error("Unrecognized direction.");
 

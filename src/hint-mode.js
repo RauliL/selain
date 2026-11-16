@@ -1,4 +1,4 @@
-SELAIN_JS_STRINGIFY((() => {
+(() => {
   const original = window.SelainHintMode;
   const queryExpression = '//*[@onclick or @onmouseover or @onmousedown or ' +
     '@onmouseup or @oncommand or @href] | //input[not(@type="hidden")] | ' +
@@ -284,4 +284,4 @@ SELAIN_JS_STRINGIFY((() => {
     setOpenToNewTab,
     uninstall
   };
-})();)
+})();

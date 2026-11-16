@@ -6,6 +6,17 @@ FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GTKMM gtkmm-4.0 REQUIRED)
 PKG_CHECK_MODULES(WEBKITGTK webkitgtk-6.0 REQUIRED)
 
+INCLUDE(cmake/CMakeRC.cmake)
+
+CMRC_ADD_RESOURCE_LIBRARY(
+  selain-resources
+  ALIAS
+    selain::rc
+  NAMESPACE
+    selain::rc
+  src/hint-mode.js
+)
+
 ADD_EXECUTABLE(
   selain
   src/command.cpp
@@ -68,6 +79,7 @@ TARGET_LINK_LIBRARIES(
   PRIVATE
     ${GTKMM_LIBRARIES}
     ${WEBKITGTK_LIBRARIES}
+    selain::rc
 )
 
 INSTALL(

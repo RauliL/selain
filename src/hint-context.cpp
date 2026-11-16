@@ -23,19 +23,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/main-window.hpp>
-
-#include <cctype>
 #include <format>
 
-#define SELAIN_JS_STRINGIFY(source) #source
+#include <cmrc/cmrc.hpp>
+
+#include <selain/main-window.hpp>
+
+CMRC_DECLARE(selain::rc);
 
 namespace selain
 {
-  static Glib::ustring hint_mode_source_code =
-  #include "./hint-mode.js"
-  ;
-
   Glib::RefPtr<HintContext>
   HintContext::create(bool open_in_new_tab)
   {
@@ -53,7 +50,10 @@ namespace selain
   void
   HintContext::install(Tab& tab)
   {
-    tab.execute_script(hint_mode_source_code);
+    auto fs = cmrc::selain::rc::get_filesystem();
+    auto script = fs.open("src/hint-mode.js");
+
+    tab.execute_script(Glib::ustring(std::begin(script), std::end(script)));
     if (m_open_in_new_tab)
     {
       tab.execute_script("window.SelainHintMode.setOpenToNewTab();");

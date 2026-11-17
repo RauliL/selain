@@ -1,20 +1,47 @@
 (() => {
   const original = window.SelainHintMode;
-  const queryExpression =
-    "//*[@onclick or @onmouseover or @onmousedown or " +
-    '@onmouseup or @oncommand or @href] | //input[not(@type="hidden")] | ' +
-    "//a[href] | //area | //textarea | //button | //select";
+  // CSS selectors are typically much faster than XPath for this kind of scan.
+  const querySelector =
+    "[onclick],[onmouseover],[onmousedown],[onmouseup],[oncommand],[href]," +
+    'input:not([type="hidden"]),textarea,button,select,area';
   const maxAllowedHints = 500;
   const hintChars = Array.from("{{ hint-chars }}".toUpperCase());
   const hints = [];
-  let hintContainer = null;
+  const hintContainers = [];
   let currentSequence = "";
   let openToNewTab = false;
+  const hintStyle =
+    "z-index:100000;position:absolute;padding:0.2em;border:none;" +
+    "background-color:#ffd76e;color:#000000;font-family:monospace;" +
+    "font-size:1em;line-height:1;font-weight:bold;white-space:nowrap;" +
+    "text-shadow:none;pointer-events:none;";
 
-  const numberToSequence = (number) =>
-    Array.from(`${number}`)
-      .map((ch) => hintChars[parseInt(ch, 10)])
-      .join("");
+  const numberToSequence = (number) => {
+    let sequence = "";
+
+    for (let n = number; n > 0; n = (n / 10) | 0) {
+      sequence = hintChars[n % 10] + sequence;
+    }
+
+    return sequence || hintChars[0];
+  };
+
+  const isHintable = (element, rectangle, win) => {
+    if (!rectangle || rectangle.width <= 0 || rectangle.height <= 0) {
+      return false;
+    }
+
+    // Prefer the cheaper visibility API when available.
+    if (typeof element.checkVisibility === "function") {
+      return element.checkVisibility({
+        checkOpacity: false,
+        checkVisibilityCSS: true,
+      });
+    }
+
+    const style = win.getComputedStyle(element);
+    return style.display !== "none" && style.visibility === "visible";
+  };
 
   const install = () => {
     const topWindow = window;
@@ -24,8 +51,8 @@
 
     const drawHintsToWindow = (win, offsetX, offsetY) => {
       const doc = win.document;
-      const winHeight = win.height;
-      const winWidth = win.width;
+      const winHeight = win.innerHeight;
+      const winWidth = win.innerWidth;
 
       // Bounds
       const minX = offsetX < 0 ? -offsetX : 0;
@@ -33,49 +60,63 @@
       const maxX =
         offsetX + winWidth > topWindowWidth
           ? topWindowWidth - offsetX
-          : topWindowWidth;
+          : winWidth;
       const maxY =
         offsetY + winHeight > topWindowHeight
           ? topWindowHeight - offsetY
-          : topWindowHeight;
+          : winHeight;
 
       const { scrollX, scrollY } = win;
-
-      hintContainer = doc.createElement("div");
-
-      const result = doc.evaluate(
-        queryExpression,
-        doc,
-        () => "http://www.w3.org/1999/xhtml",
-        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-        null,
-      );
-
+      const elements = doc.querySelectorAll(querySelector);
+      const fragment = doc.createDocumentFragment();
       const hintSpan = doc.createElement("span");
-      hintSpan.style.zIndex = "100000";
-      hintSpan.style.position = "absolute";
-      hintSpan.style.padding = "0.2em";
-      hintSpan.style.borderColor = "rgba(0, 0, 0, 0.4)";
-      hintSpan.style.borderWidth = "0.15em";
-      hintSpan.style.border = "";
-      hintSpan.style.backgroundColor = "#ffd76e";
-      hintSpan.style.color = "#000000";
-      hintSpan.style.fontFamily = "monospace";
-      hintSpan.style.fontSize = "1em";
-      hintSpan.style.lineHeight = "1";
-      hintSpan.style.fontWeight = "bold";
-      hintSpan.style.whiteSpace = "nowrap";
-      hintSpan.style.textShadow = "none";
 
-      for (let i = 0; i < result.snapshotLength; ++i) {
+      hintSpan.style.cssText = hintStyle;
+
+      for (let i = 0; i < elements.length; ++i) {
         if (hintCount >= maxAllowedHints) {
           break;
         }
 
-        const element = result.snapshotItem(i);
+        const element = elements[i];
         const rectangle = element.getBoundingClientRect();
 
         if (
+          rectangle.left > maxX ||
+          rectangle.right < minX ||
+          rectangle.top > maxY ||
+          rectangle.bottom < minY ||
+          !isHintable(element, rectangle, win)
+        ) {
+          continue;
+        }
+
+        const leftPos = Math.max(rectangle.left + scrollX, scrollX);
+        const topPos = Math.max(rectangle.top + scrollY, scrollY);
+        const sequence = numberToSequence(++hintCount);
+        const hint = hintSpan.cloneNode(false);
+
+        hint.style.left = `${leftPos}px`;
+        hint.style.top = `${topPos}px`;
+        hint.textContent = sequence;
+        fragment.appendChild(hint);
+        hints.push({ element, sequence, span: hint });
+      }
+
+      const hintContainer = doc.createElement("div");
+      hintContainer.appendChild(fragment);
+      doc.documentElement.appendChild(hintContainer);
+      hintContainers.push(hintContainer);
+
+      // Also go through the frames contained in the document.
+      const frames = doc.querySelectorAll("frame,iframe");
+
+      for (let i = 0; i < frames.length; ++i) {
+        const element = frames[i];
+        const rectangle = element.getBoundingClientRect();
+
+        if (
+          !element.contentWindow ||
           !rectangle ||
           rectangle.left > maxX ||
           rectangle.right < minX ||
@@ -85,68 +126,31 @@
           continue;
         }
 
-        const style = topWindow.getComputedStyle(element, "");
-        if (style.display === "none" || style.visibility !== "visible") {
-          continue;
-        }
-
-        const leftPos = Math.max(rectangle.left + scrollX, scrollX);
-        const topPos = Math.max(rectangle.top + scrollY, scrollY);
-
-        const sequence = numberToSequence(++hintCount);
-
-        const hint = hintSpan.cloneNode(false);
-        hint.style.left = `${leftPos}px`;
-        hint.style.top = `${topPos}px`;
-        hint.innerText = sequence;
-        hintContainer.appendChild(hint);
-
-        hints.push({ element, sequence, span: hint });
-      }
-
-      doc.documentElement.appendChild(hintContainer);
-
-      // Also go through the frames contained in the document.
-      ["frame", "iframe"].forEach((tagName) => {
-        const frames = doc.getElementsByTagName(tagName);
-
-        for (let i = 0; i < frames.length; ++i) {
-          const element = frames[i];
-          const rectangle = element.getBoundingClientRect();
-
-          if (
-            !element.contentWindow ||
-            !rectangle ||
-            rectangle.left > maxX ||
-            rectangle.right < minX ||
-            rectangle.top > maxY ||
-            rectangle.bottom < minY
-          ) {
-            continue;
-          }
+        try {
           drawHintsToWindow(
             element.contentWindow,
             offsetX + rectangle.left,
             offsetY + rectangle.top,
           );
+        } catch (_) {
+          // Cross-origin frames cannot be inspected.
         }
-      });
+      }
     };
 
     drawHintsToWindow(topWindow, 0, 0);
   };
 
   const uninstall = () => {
-    hints
-      .filter((hint) => typeof hint.element !== "undefined")
-      .forEach((hint) => {
-        hint.span.parentNode.removeChild(hint.span);
-      });
-    hints.length = 0;
-    if (hintContainer) {
-      hintContainer.parentNode.removeChild(hintContainer);
-      hintContainer = null;
+    for (let i = 0; i < hintContainers.length; ++i) {
+      const container = hintContainers[i];
+
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
     }
+    hintContainers.length = 0;
+    hints.length = 0;
     window.SelainHintMode = original;
   };
 
@@ -161,20 +165,27 @@
     uninstall();
 
     if (
-      ["input", "select", "textarea"].indexOf(tagName) >= 0 &&
-      ["button", "submit"].indexOf(element.type) < 0
+      (tagName === "input" ||
+        tagName === "select" ||
+        tagName === "textarea") &&
+      element.type !== "button" &&
+      element.type !== "submit"
     ) {
       element.focus();
 
       return "mode::insert";
-    } else if (["frame", "iframe"].indexOf(tagName) >= 0) {
+    } else if (tagName === "frame" || tagName === "iframe") {
       element.focus();
     } else if (openToNewTab) {
       const oldTarget = element.getAttribute("target");
 
       element.setAttribute("target", "_blank");
       element.click();
-      element.setAttribute("target", oldTarget);
+      if (oldTarget === null) {
+        element.removeAttribute("target");
+      } else {
+        element.setAttribute("target", oldTarget);
+      }
     } else {
       element.click();
     }
@@ -187,13 +198,15 @@
     const nonMatches = [];
 
     if (currentSequence.length > 0) {
-      hints.forEach((hint) => {
+      for (let i = 0; i < hints.length; ++i) {
+        const hint = hints[i];
+
         if (hint.sequence.startsWith(currentSequence)) {
           matches.push(hint);
         } else {
           nonMatches.push(hint);
         }
-      });
+      }
     } else {
       nonMatches.push(...hints);
     }
@@ -203,40 +216,41 @@
 
   const updateMatches = (matches, nonMatches) => {
     if (currentSequence.length > 0) {
-      matches.forEach((hint) => {
-        const { sequence, span } = hint;
-        const matchingPart = span.ownerDocument.createElement("span");
-        const nonMatchingPart = span.ownerDocument.createElement("span");
+      for (let i = 0; i < matches.length; ++i) {
+        const { sequence, span } = matches[i];
 
         if (span.style.visibility !== "visible") {
           span.style.visibility = "visible";
         }
 
-        matchingPart.innerText = currentSequence;
-        nonMatchingPart.innerText = sequence.substr(currentSequence.length);
+        span.textContent = "";
 
+        const matchingPart = span.ownerDocument.createElement("span");
+        const nonMatchingPart = span.ownerDocument.createElement("span");
+
+        matchingPart.textContent = currentSequence;
+        nonMatchingPart.textContent = sequence.slice(currentSequence.length);
         matchingPart.style.color = "#a07555";
 
-        span.innerHTML = "";
         span.appendChild(matchingPart);
         span.appendChild(nonMatchingPart);
-      });
-      nonMatches.forEach((hint) => {
-        const { span } = hint;
+      }
+      for (let i = 0; i < nonMatches.length; ++i) {
+        const { span } = nonMatches[i];
 
         if (span.style.visibility !== "hidden") {
           span.style.visibility = "hidden";
         }
-      });
+      }
     } else {
-      [...matches, ...nonMatches].forEach((hint) => {
-        const { sequence, span } = hint;
+      for (let i = 0; i < hints.length; ++i) {
+        const { sequence, span } = hints[i];
 
         if (span.style.visibility !== "visible") {
           span.style.visibility = "visible";
         }
-        span.innerText = sequence;
-      });
+        span.textContent = sequence;
+      }
     }
   };
 
@@ -264,7 +278,7 @@
 
   const removeChar = () => {
     if (currentSequence.length > 0) {
-      currentSequence = currentSequence.substr(0, currentSequence.length - 1);
+      currentSequence = currentSequence.slice(0, -1);
       updateMatches(...splitHints());
     }
   };

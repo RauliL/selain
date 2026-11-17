@@ -76,6 +76,7 @@ namespace selain
 
     m_notebook.set_hexpand(true);
     m_notebook.set_vexpand(true);
+    m_notebook.set_scrollable(true);
     m_box.append(m_notebook);
     m_box.append(m_status_bar);
     m_box.append(m_command_entry);
@@ -298,6 +299,7 @@ namespace selain
     const auto scroll_controller = Gtk::EventControllerScroll::create();
 
     m_notebook.append_page(*tab.get(), tab->get_tab_label());
+    m_notebook.get_page(*tab.get())->property_tab_expand() = true;
     scroll_controller->set_flags(
       Gtk::EventControllerScroll::Flags::VERTICAL |
       Gtk::EventControllerScroll::Flags::DISCRETE

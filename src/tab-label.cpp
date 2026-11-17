@@ -51,9 +51,12 @@ namespace selain
     ));
     add_controller(m_middle_click_gesture);
 
+    m_text.set_ellipsize(Pango::EllipsizeMode::END);
+    m_text.set_max_width_chars(20);
+    m_text.set_hexpand(true);
+
     append(m_icon);
     append(m_text);
-    m_text.set_hexpand(true);
     append(m_close_button);
   }
 
@@ -68,9 +71,8 @@ namespace selain
   void
   TabLabel::set_text(const Glib::ustring& text)
   {
-    const auto length = text.length();
-
-    m_text.set_text(length > 20 ? text.substr(0, 19) + U'\u2026' : text);
+    m_text.set_text(text);
+    set_tooltip_text(text);
   }
 
   void

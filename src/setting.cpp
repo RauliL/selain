@@ -192,6 +192,7 @@ namespace selain::setting
 
   static std::unordered_map<Glib::ustring, std::shared_ptr<Setting>> mapping =
   {
+    { "hint-chars", std::make_shared<StringSetting>("sadfjklewc") },
     { "homepage", std::make_shared<StringSetting>("https://duckduckgo.com") },
 
     // WebKit boolean settings.

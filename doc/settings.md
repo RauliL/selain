@@ -18,9 +18,10 @@ accept one of the values listed for that setting.
 
 ## Application
 
-| Setting    | Description                                       |
-|------------|---------------------------------------------------|
-| `homepage` | URL that is opened when the browser starts.       |
+| Setting      | Description                                        |
+|--------------|----------------------------------------------------|
+| `homepage`   | URL that is opened when the browser starts.        |
+| `hint-chars` | Characters to for typing hints in hit-a-hint mode. |
 
 ## WebKit (boolean)
 

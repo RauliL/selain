@@ -5,7 +5,7 @@
     '@onmouseup or @oncommand or @href] | //input[not(@type="hidden")] | ' +
     "//a[href] | //area | //textarea | //button | //select";
   const maxAllowedHints = 500;
-  const hintChars = Array.from("sadfjklewc".toUpperCase());
+  const hintChars = Array.from("{{ hint-chars }}".toUpperCase());
   const hints = [];
   let hintContainer = null;
   let currentSequence = "";

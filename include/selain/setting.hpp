@@ -25,8 +25,6 @@
  */
 #pragma once
 
-#include <vector>
-
 #include "selain/main-window.hpp"
 
 namespace selain::setting

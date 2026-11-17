@@ -26,8 +26,11 @@
 #include <format>
 
 #include <cmrc/cmrc.hpp>
+#include <inja/inja.hpp>
 
 #include <selain/main-window.hpp>
+#include <selain/setting.hpp>
+#include <selain/utils.hpp>
 
 CMRC_DECLARE(selain::rc);
 
@@ -52,8 +55,18 @@ namespace selain
   {
     auto fs = cmrc::selain::rc::get_filesystem();
     auto script = fs.open("src/hint-mode.js");
+    inja::json data;
 
-    tab.execute_script(Glib::ustring(std::begin(script), std::end(script)));
+    if (const auto window = tab.get_main_window())
+    {
+      data["hint-chars"] = utils::js_string_escape(
+        setting::get(*window, "hint-chars").value_or("").raw()
+      );
+    }
+    tab.execute_script(inja::render(
+      std::string(std::begin(script), std::end(script)),
+      data
+    ));
     if (m_open_in_new_tab)
     {
       tab.execute_script("window.SelainHintMode.setOpenToNewTab();");

@@ -34,16 +34,16 @@ ADD_EXECUTABLE(
   src/command-entry.cpp
   src/command.cpp
   src/format/gemtext.cpp
-  src/gemini-client.cpp
-  src/gemini-scheme.cpp
-  src/gopher-client.cpp
-  src/gopher-menu.cpp
-  src/gopher-scheme.cpp
   src/hint-context.cpp
   src/keyboard.cpp
   src/main-window.cpp
   src/main.cpp
   src/mode.cpp
+  src/protocol/gemini/client.cpp
+  src/protocol/gemini/scheme.cpp
+  src/protocol/gopher/client.cpp
+  src/protocol/gopher/menu.cpp
+  src/protocol/gopher/scheme.cpp
   src/setting.cpp
   src/status-bar.cpp
   src/tab-completion.cpp

@@ -30,12 +30,12 @@
 #include <string>
 #include <vector>
 
-namespace selain
+namespace selain::protocol::gopher
 {
   /**
    * Parsed components of a gopher:// or gophers:// URI (RFC 4266).
    */
-  struct GopherRequest
+  struct Request
   {
     /** Absolute request URI. */
     std::string uri;
@@ -53,7 +53,7 @@ namespace selain
     bool use_tls = false;
   };
 
-  struct GopherResponse
+  struct Response
   {
     /** Echo of the request URI. */
     std::string uri;
@@ -65,19 +65,19 @@ namespace selain
     std::string error;
   };
 
-  using GopherFetchCallback = std::function<void(GopherResponse)>;
+  using FetchCallback = std::function<void(Response)>;
 
   /**
    * Parses @p uri into Gopher request components.
    *
    * Returns false when the URI is not a usable gopher(s) URL with a host.
    */
-  bool gopher_parse_uri(const std::string& uri, GopherRequest& out);
+  bool parse_uri(const std::string& uri, Request& out);
 
   /**
    * Builds a gopher(s) URI from the given components.
    */
-  std::string gopher_build_uri(
+  std::string build_uri(
     const std::string& scheme,
     const std::string& host,
     int port,
@@ -92,5 +92,5 @@ namespace selain
    * For gophers://, TLS is used and self-signed certificates are accepted for
    * now (same policy as Gemini).
    */
-  void gopher_fetch(const std::string& uri, GopherFetchCallback callback);
+  void fetch(const std::string& uri, FetchCallback callback);
 }

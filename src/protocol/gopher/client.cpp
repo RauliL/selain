@@ -23,25 +23,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/gopher-client.hpp>
-
-#include <gio/gio.h>
-
 #include <cstring>
 #include <memory>
 #include <utility>
 
-namespace selain
+#include <gio/gio.h>
+
+#include <selain/protocol/gopher/client.hpp>
+
+namespace selain::protocol::gopher
 {
+  static constexpr int default_port = 70;
+  static constexpr gsize read_chunk_size = 16 * 1024;
+
   namespace
   {
-    constexpr int default_port = 70;
-    constexpr gsize read_chunk_size = 16 * 1024;
-
     struct FetchState
     {
-      GopherRequest request;
-      GopherFetchCallback callback;
+      Request request;
+      FetchCallback callback;
       ::GSocketClient* client = nullptr;
       ::GSocketConnection* connection = nullptr;
       ::GInputStream* input = nullptr;
@@ -58,7 +58,7 @@ namespace selain
     void write_more(FetchStatePtr state);
 
     void
-    complete(FetchStatePtr state, GopherResponse response)
+    complete(FetchStatePtr state, Response response)
     {
       if (state->connection)
       {
@@ -84,7 +84,7 @@ namespace selain
     void
     fail(FetchStatePtr state, const std::string& message)
     {
-      GopherResponse response;
+      Response response;
 
       response.uri = state->request.uri;
       response.type = state->request.type;
@@ -95,7 +95,7 @@ namespace selain
     void
     finish_success(FetchStatePtr state)
     {
-      GopherResponse response;
+      Response response;
 
       response.uri = state->request.uri;
       response.type = state->request.type;
@@ -292,7 +292,7 @@ namespace selain
     }
 
     std::string
-    build_wire_request(const GopherRequest& request)
+    build_wire_request(const Request& request)
     {
       std::string wire = request.selector;
 
@@ -348,7 +348,7 @@ namespace selain
   }
 
   bool
-  gopher_parse_uri(const std::string& uri_string, GopherRequest& out)
+  parse_uri(const std::string& uri_string, Request& out)
   {
     ::GError* error = nullptr;
     ::GUri* uri = ::g_uri_parse(uri_string.c_str(), G_URI_FLAGS_NONE, &error);
@@ -378,7 +378,7 @@ namespace selain
       return false;
     }
 
-    out = GopherRequest{};
+    out = Request{};
     out.uri = uri_string;
     out.scheme = scheme;
     out.host = host;
@@ -418,7 +418,7 @@ namespace selain
   }
 
   std::string
-  gopher_build_uri(
+  build_uri(
     const std::string& scheme,
     const std::string& host,
     int port,
@@ -473,13 +473,13 @@ namespace selain
   }
 
   void
-  gopher_fetch(const std::string& uri, GopherFetchCallback callback)
+  fetch(const std::string& uri, FetchCallback callback)
   {
     auto state = std::make_unique<FetchState>();
 
-    if (!gopher_parse_uri(uri, state->request))
+    if (!parse_uri(uri, state->request))
     {
-      GopherResponse response;
+      Response response;
 
       response.uri = uri;
       response.error = "URI must be a gopher:// or gophers:// URL with a host";
@@ -492,7 +492,7 @@ namespace selain
     }
 
     // Prefer a normalized URI in responses / address-bar updates.
-    state->request.uri = gopher_build_uri(
+    state->request.uri = build_uri(
       state->request.scheme,
       state->request.host,
       state->request.port,

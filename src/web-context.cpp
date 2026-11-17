@@ -25,8 +25,8 @@
  */
 #include <selain/web-context.hpp>
 
-#include <selain/gemini-scheme.hpp>
-#include <selain/gopher-scheme.hpp>
+#include <selain/protocol/gemini/scheme.hpp>
+#include <selain/protocol/gopher/scheme.hpp>
 
 namespace selain
 {
@@ -43,8 +43,8 @@ namespace selain
     , m_context(::webkit_web_context_new())
     , m_session(create_network_session())
   {
-    register_gemini_scheme(m_context);
-    register_gopher_schemes(m_context);
+    protocol::gemini::register_schemes(m_context);
+    protocol::gopher::register_schemes(m_context);
   }
 
   WebContext::~WebContext()

@@ -26,146 +26,143 @@
 #include <cctype>
 #include <sstream>
 
-#include <selain/gopher-menu.hpp>
-#include <selain/gopher-client.hpp>
+#include <selain/protocol/gopher/menu.hpp>
+#include <selain/protocol/gopher/client.hpp>
 #include <selain/theme.hpp>
 #include <selain/utils.hpp>
 
-namespace selain
+namespace selain::protocol::gopher
 {
-  namespace
+  static std::string
+  document_scheme(std::string_view base_uri)
   {
-    std::string
-    document_scheme(std::string_view base_uri)
+    if (base_uri.starts_with("gophers://"))
     {
-      if (base_uri.starts_with("gophers://"))
-      {
-        return "gophers";
-      }
-
-      return "gopher";
+      return "gophers";
     }
 
-    bool
-    starts_with_ci(std::string_view text, std::string_view prefix)
+    return "gopher";
+  }
+
+  static bool
+  starts_with_ci(std::string_view text, std::string_view prefix)
+  {
+    if (text.size() < prefix.size())
     {
-      if (text.size() < prefix.size())
+      return false;
+    }
+
+    for (std::size_t i = 0; i < prefix.size(); ++i)
+    {
+      const auto a = static_cast<unsigned char>(text[i]);
+      const auto b = static_cast<unsigned char>(prefix[i]);
+
+      if (std::tolower(a) != std::tolower(b))
       {
         return false;
       }
-
-      for (std::size_t i = 0; i < prefix.size(); ++i)
-      {
-        const auto a = static_cast<unsigned char>(text[i]);
-        const auto b = static_cast<unsigned char>(prefix[i]);
-
-        if (std::tolower(a) != std::tolower(b))
-        {
-          return false;
-        }
-      }
-
-      return true;
     }
 
-    std::string
-    external_url_from_selector(std::string_view selector)
-    {
-      if (starts_with_ci(selector, "URL:"))
-      {
-        return std::string(selector.substr(4));
-      }
+    return true;
+  }
 
-      return {};
+  static std::string
+  external_url_from_selector(std::string_view selector)
+  {
+    if (starts_with_ci(selector, "URL:"))
+    {
+      return std::string(selector.substr(4));
     }
 
-    const char*
-    type_label(char type)
+    return {};
+  }
+
+  static const char*
+  type_label(char type)
+  {
+    switch (type)
     {
-      switch (type)
-      {
-        case '0':
-          return "text";
-        case '1':
-          return "menu";
-        case '2':
-          return "cso";
-        case '3':
-          return "error";
-        case '4':
-          return "binhex";
-        case '5':
-          return "dos";
-        case '6':
-          return "uuencode";
-        case '7':
-          return "search";
-        case '8':
-          return "telnet";
-        case '9':
-          return "binary";
-        case 'g':
-          return "gif";
-        case 'h':
-          return "html";
-        case 'i':
-          return "info";
-        case 'I':
-          return "image";
-        case 'd':
-          return "document";
-        case 's':
-          return "sound";
-        case 'p':
-          return "png";
-        case 'T':
-          return "tn3270";
-        default:
-          return "item";
-      }
-    }
-
-    bool
-    is_linkable_type(char type)
-    {
-      switch (type)
-      {
-        case 'i':
-        case '3':
-        case '2':
-        case '8':
-        case 'T':
-          return false;
-        default:
-          return true;
-      }
-    }
-
-    std::vector<std::string_view>
-    split_tabs(std::string_view line)
-    {
-      std::vector<std::string_view> parts;
-      std::size_t start = 0;
-
-      while (start <= line.size())
-      {
-        const auto end = line.find('\t', start);
-
-        if (end == std::string_view::npos)
-        {
-          parts.push_back(line.substr(start));
-          break;
-        }
-        parts.push_back(line.substr(start, end - start));
-        start = end + 1;
-      }
-
-      return parts;
+      case '0':
+        return "text";
+      case '1':
+        return "menu";
+      case '2':
+        return "cso";
+      case '3':
+        return "error";
+      case '4':
+        return "binhex";
+      case '5':
+        return "dos";
+      case '6':
+        return "uuencode";
+      case '7':
+        return "search";
+      case '8':
+        return "telnet";
+      case '9':
+        return "binary";
+      case 'g':
+        return "gif";
+      case 'h':
+        return "html";
+      case 'i':
+        return "info";
+      case 'I':
+        return "image";
+      case 'd':
+        return "document";
+      case 's':
+        return "sound";
+      case 'p':
+        return "png";
+      case 'T':
+        return "tn3270";
+      default:
+        return "item";
     }
   }
 
+  static bool
+  is_linkable_type(char type)
+  {
+    switch (type)
+    {
+      case 'i':
+      case '3':
+      case '2':
+      case '8':
+      case 'T':
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  static std::vector<std::string_view>
+  split_tabs(std::string_view line)
+  {
+    std::vector<std::string_view> parts;
+    std::size_t start = 0;
+
+    while (start <= line.size())
+    {
+      const auto end = line.find('\t', start);
+
+      if (end == std::string_view::npos)
+      {
+        parts.push_back(line.substr(start));
+        break;
+      }
+      parts.push_back(line.substr(start, end - start));
+      start = end + 1;
+    }
+
+    return parts;
+  }
+
   std::string
-  gopher_menu_to_html(std::string_view menu, std::string_view base_uri)
+  menu_to_html(std::string_view menu, std::string_view base_uri)
   {
     const auto scheme = document_scheme(base_uri);
     std::ostringstream body;
@@ -244,7 +241,7 @@ namespace selain
         {
           href = url_selector;
         } else {
-          href = gopher_build_uri(
+          href = build_uri(
             scheme,
             std::string(host),
             port,
@@ -274,7 +271,7 @@ namespace selain
   }
 
   std::string
-  gopher_text_to_html(std::string_view text, std::string_view)
+  text_to_html(std::string_view text, std::string_view)
   {
     std::string cleaned;
     cleaned.reserve(text.size());

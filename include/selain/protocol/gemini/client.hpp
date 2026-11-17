@@ -30,9 +30,9 @@
 #include <string>
 #include <vector>
 
-namespace selain
+namespace selain::protocol::gemini
 {
-  struct GeminiResponse
+  struct Response
   {
     /** Requested URI for this response. */
     std::string uri;
@@ -46,12 +46,12 @@ namespace selain
     std::string error;
   };
 
-  using GeminiFetchCallback = std::function<void(GeminiResponse)>;
+  using FetchCallback = std::function<void(Response)>;
 
   /**
    * Resolves @p reference against @p base_uri (for Gemini redirects and links).
    */
-  std::string gemini_resolve_uri(
+  std::string resolve_uri(
     const std::string& base_uri,
     const std::string& reference
   );
@@ -63,5 +63,5 @@ namespace selain
    * Redirect responses (3x) are returned to the caller so the UI can update the
    * address bar by navigating to the target URI.
    */
-  void gemini_fetch(const std::string& uri, GeminiFetchCallback callback);
+  void fetch(const std::string& uri, FetchCallback callback);
 }

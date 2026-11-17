@@ -27,12 +27,12 @@
 
 #include <webkit/webkit.h>
 
-namespace selain
+namespace selain::protocol::gemini
 {
   /**
-   * Registers the gopher:// and gophers:// URI schemes on @p context.
+   * Registers the gemini:// URI scheme on @p context.
    *
    * Must be called before any WebKitWebView is created for that context.
    */
-  void register_gopher_schemes(::WebKitWebContext* context);
+  void register_schemes(::WebKitWebContext* context);
 }

@@ -23,27 +23,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/gemini-client.hpp>
-
-#include <gio/gio.h>
-
 #include <cctype>
 #include <cstring>
 #include <memory>
 #include <utility>
 
-namespace selain
+#include <gio/gio.h>
+
+#include <selain/protocol/gemini/client.hpp>
+
+namespace selain::protocol::gemini
 {
+  static constexpr int default_port = 1965;
+  static constexpr gsize max_header_bytes = 1024 + 2;
+  static constexpr gsize read_chunk_size = 16 * 1024;
+
   namespace
   {
-    constexpr int default_port = 1965;
-    constexpr gsize max_header_bytes = 1024 + 2;
-    constexpr gsize read_chunk_size = 16 * 1024;
-
     struct FetchState
     {
       std::string uri;
-      GeminiFetchCallback callback;
+      FetchCallback callback;
       ::GSocketClient* client = nullptr;
       ::GSocketConnection* connection = nullptr;
       ::GInputStream* input = nullptr;
@@ -63,7 +63,7 @@ namespace selain
     void write_more(FetchStatePtr state);
 
     void
-    complete(FetchStatePtr state, GeminiResponse response)
+    complete(FetchStatePtr state, Response response)
     {
       if (state->connection)
       {
@@ -89,7 +89,7 @@ namespace selain
     void
     fail(FetchStatePtr state, const std::string& message)
     {
-      GeminiResponse response;
+      Response response;
 
       response.uri = state->uri;
       response.error = message;
@@ -188,7 +188,7 @@ namespace selain
     void
     finish_success(FetchStatePtr state)
     {
-      GeminiResponse response;
+      Response response;
 
       response.uri = state->uri;
       response.status = state->status;
@@ -240,7 +240,7 @@ namespace selain
 
       if (state->status / 10 != 2)
       {
-        GeminiResponse response;
+        Response response;
 
         response.uri = state->uri;
         response.status = state->status;
@@ -540,7 +540,7 @@ namespace selain
   }
 
   std::string
-  gemini_resolve_uri(const std::string& base_uri, const std::string& reference)
+  resolve_uri(const std::string& base_uri, const std::string& reference)
   {
     ::GError* error = nullptr;
     char* resolved = ::g_uri_resolve_relative(
@@ -568,7 +568,7 @@ namespace selain
   }
 
   void
-  gemini_fetch(const std::string& uri, GeminiFetchCallback callback)
+  fetch(const std::string& uri, FetchCallback callback)
   {
     auto state = std::make_unique<FetchState>();
 

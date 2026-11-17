@@ -25,27 +25,14 @@
  */
 #pragma once
 
-#include <string>
-#include <string_view>
+#include <webkit/webkit.h>
 
-namespace selain
+namespace selain::protocol::gopher
 {
   /**
-   * Converts a Gopher menu (item type '1') into a self-contained HTML document.
+   * Registers the gopher:// and gophers:// URI schemes on @p context.
    *
-   * @param menu Raw menu body (directory listing).
-   * @param base_uri Absolute URI of the menu, used for link scheme defaults.
+   * Must be called before any WebKitWebView is created for that context.
    */
-  std::string gopher_menu_to_html(
-    std::string_view menu,
-    std::string_view base_uri
-  );
-
-  /**
-   * Wraps plain Gopher text (item type '0') in a self-contained HTML document.
-   */
-  std::string gopher_text_to_html(
-    std::string_view text,
-    std::string_view base_uri
-  );
+  void register_schemes(::WebKitWebContext* context);
 }

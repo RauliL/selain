@@ -23,59 +23,53 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <format>
+#include <type_traits>
+
+#include <glibmm/ustring_hash.h>
+
 #include <selain/keyboard.hpp>
 #include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/utils.hpp>
-
-#include <format>
-
-#include <glibmm/ustring_hash.h>
+#include <unordered_map>
 
 namespace selain
 {
-  using callback = std::function<bool(
-    MainWindow&,
-    const Glib::ustring&
-  )>;
-
-  using tab_callback = std::function<bool(
-    MainWindow&,
-    Tab&,
-    const Glib::ustring&
-  )>;
+  using callback = std::function<bool(MainWindow&, Glib::ustring)>;
+  using tab_callback = std::function<bool(MainWindow&, Tab&, Glib::ustring)>;
 
   static callback switch_mode(Mode);
   static callback require_tab(const tab_callback&);
 
-  static bool cmd_back(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_bind(MainWindow&, const Glib::ustring&);
-  static bool cmd_command(MainWindow&, const Glib::ustring&);
-  static bool cmd_force_reload(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_forward(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_inspector(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_js(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_only(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_open(MainWindow&, const Glib::ustring&);
-  static bool cmd_open_tab(MainWindow&, const Glib::ustring&);
-  static bool cmd_paste(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_paste_tab(MainWindow&, const Glib::ustring&);
-  static bool cmd_quit(MainWindow&, const Glib::ustring&);
-  static bool cmd_quit_all(MainWindow&, const Glib::ustring&);
-  static bool cmd_reload(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_scroll(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_search_next(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_search_prev(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_set(MainWindow&, const Glib::ustring&);
-  static bool cmd_split(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_split_focus(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_stop(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_tab(MainWindow&, const Glib::ustring&);
-  static bool cmd_tab_next(MainWindow&, const Glib::ustring&);
-  static bool cmd_tab_prev(MainWindow&, const Glib::ustring&);
-  static bool cmd_unbind(MainWindow&, const Glib::ustring&);
-  static bool cmd_vsplit(MainWindow&, Tab&, const Glib::ustring&);
-  static bool cmd_yank(MainWindow&, Tab&, const Glib::ustring&);
+  static bool cmd_back(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_bind(MainWindow&, Glib::ustring);
+  static bool cmd_command(MainWindow&, Glib::ustring);
+  static bool cmd_force_reload(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_forward(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_inspector(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_js(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_only(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_open(MainWindow&, Glib::ustring);
+  static bool cmd_open_tab(MainWindow&, Glib::ustring);
+  static bool cmd_paste(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_paste_tab(MainWindow&, Glib::ustring);
+  static bool cmd_quit(MainWindow&, Glib::ustring);
+  static bool cmd_quit_all(MainWindow&, Glib::ustring);
+  static bool cmd_reload(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_scroll(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_search_next(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_search_prev(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_set(MainWindow&, Glib::ustring);
+  static bool cmd_split(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_split_focus(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_stop(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_tab(MainWindow&, Glib::ustring);
+  static bool cmd_tab_next(MainWindow&, Glib::ustring);
+  static bool cmd_tab_prev(MainWindow&, Glib::ustring);
+  static bool cmd_unbind(MainWindow&, Glib::ustring);
+  static bool cmd_vsplit(MainWindow&, Tab&, Glib::ustring);
+  static bool cmd_yank(MainWindow&, Tab&, Glib::ustring);
 
   static std::unordered_map<Glib::ustring, callback> mapping =
   {
@@ -243,6 +237,99 @@ namespace selain
     return false;
   }
 
+  static bool
+  require_arg(
+    MainWindow& window,
+    const char* what,
+    Glib::ustring& args,
+    Glib::ustring& slot
+  )
+  {
+    args = utils::trim_start(args);
+
+    if (args.empty())
+    {
+      window.show_error(std::format("Missing {}.", what));
+
+      return false;
+    }
+
+    const auto length = args.length();
+    std::size_t i;
+
+    for (i = 0; i < length; ++i)
+    {
+      if (std::isspace(args[i]))
+      {
+        break;
+      }
+    }
+
+    slot = args.substr(0, i);
+    args = utils::trim_start(args.substr(i));
+
+    return true;
+  }
+
+  static bool
+  require_int_arg(
+    MainWindow& window,
+    const char* what,
+    Glib::ustring& args,
+    int& slot
+  )
+  {
+    Glib::ustring arg;
+
+    if (!require_arg(window, what, args, arg))
+    {
+      return false;
+    }
+    try
+    {
+      slot = std::atoi(arg.raw().c_str());
+
+      return true;
+    }
+    catch (const std::exception&)
+    {
+      window.show_error(std::format("Invalid {}: {}", what, arg.raw()));
+
+      return false;
+    }
+  }
+
+  template<
+    typename T,
+    typename = typename std::enable_if<std::is_enum<T>::value>::type
+  >
+  static bool
+  require_enum_arg(
+    MainWindow& window,
+    const char* what,
+    Glib::ustring& args,
+    T& slot,
+    const std::unordered_map<Glib::ustring, T>& mapping
+  )
+  {
+    Glib::ustring arg;
+
+    if (require_arg(window, what, args, arg))
+    {
+      const auto it = mapping.find(arg);
+
+      if (it != std::end(mapping))
+      {
+        slot = it->second;
+
+        return true;
+      }
+      window.show_error(std::format("Unrecognized {}: {}", what, arg.raw()));
+    }
+
+    return false;
+  }
+
   static callback
   switch_mode(Mode mode)
   {
@@ -270,7 +357,7 @@ namespace selain
   }
 
   static bool
-  cmd_inspector(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_inspector(MainWindow&, Tab& tab, Glib::ustring)
   {
     // TODO: Add support for argument such as on/off.
     tab.toggle_inspector();
@@ -324,7 +411,7 @@ namespace selain
   }
 
   static bool
-  cmd_js(MainWindow& window, Tab& tab, const Glib::ustring& args)
+  cmd_js(MainWindow& window, Tab& tab, Glib::ustring args)
   {
     if (utils::is_blank(args))
     {
@@ -343,7 +430,7 @@ namespace selain
   }
 
   static bool
-  cmd_back(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_back(MainWindow&, Tab& tab, Glib::ustring)
   {
     tab.go_back();
 
@@ -351,42 +438,27 @@ namespace selain
   }
 
   static bool
-  cmd_bind(MainWindow& window, const Glib::ustring& args)
+  cmd_bind(MainWindow& window, Glib::ustring args)
   {
-    const auto trimmed = utils::trim(args);
+    Glib::ustring sequence;
 
-    if (utils::is_blank(trimmed))
+    if (!require_arg(window, "sequence", args, sequence))
     {
-      window.show_error("Missing sequence.");
-
       return false;
     }
-
-    const auto pos = trimmed.find(' ');
-
-    if (pos == Glib::ustring::npos)
+    else if (utils::is_blank(args))
     {
       window.show_error("Missing command.");
 
       return false;
     }
-
-    const auto sequence = utils::trim(trimmed.substr(0, pos));
-    const auto command = utils::trim(trimmed.substr(pos + 1));
-
-    if (command.empty())
-    {
-      window.show_error("Missing command.");
-
-      return false;
-    }
-    keyboard::bind(sequence, command);
+    keyboard::bind(sequence, args);
 
     return true;
   }
 
   static bool
-  cmd_command(MainWindow& window, const Glib::ustring& args)
+  cmd_command(MainWindow& window, Glib::ustring args)
   {
     if (!args.empty())
     {
@@ -398,7 +470,7 @@ namespace selain
   }
 
   static bool
-  cmd_forward(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_forward(MainWindow&, Tab& tab, Glib::ustring)
   {
     tab.go_forward();
 
@@ -406,7 +478,7 @@ namespace selain
   }
 
   static bool
-  cmd_open(MainWindow& window, const Glib::ustring& args)
+  cmd_open(MainWindow& window, Glib::ustring args)
   {
     if (const auto tab = window.get_current_tab())
     {
@@ -419,7 +491,7 @@ namespace selain
   }
 
   static bool
-  cmd_open_tab(MainWindow& window, const Glib::ustring& args)
+  cmd_open_tab(MainWindow& window, Glib::ustring args)
   {
     window.open_tab(args);
 
@@ -427,7 +499,7 @@ namespace selain
   }
 
   static bool
-  cmd_only(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_only(MainWindow&, Tab& tab, Glib::ustring)
   {
     tab.close_other_views();
 
@@ -463,7 +535,7 @@ namespace selain
   }
 
   static bool
-  cmd_paste(MainWindow& window, Tab& tab, const Glib::ustring&)
+  cmd_paste(MainWindow& window, Tab& tab, Glib::ustring)
   {
     return do_paste(
       window,
@@ -475,7 +547,7 @@ namespace selain
   }
 
   static bool
-  cmd_paste_tab(MainWindow& window, const Glib::ustring&)
+  cmd_paste_tab(MainWindow& window, Glib::ustring)
   {
     return do_paste(
       window,
@@ -487,7 +559,7 @@ namespace selain
   }
 
   static bool
-  cmd_quit(MainWindow& window, const Glib::ustring&)
+  cmd_quit(MainWindow& window, Glib::ustring)
   {
     if (const auto tab = window.get_current_tab())
     {
@@ -500,7 +572,7 @@ namespace selain
   }
 
   static bool
-  cmd_quit_all(MainWindow& window, const Glib::ustring&)
+  cmd_quit_all(MainWindow& window, Glib::ustring)
   {
     window.schedule_close();
 
@@ -516,19 +588,19 @@ namespace selain
   }
 
   static bool
-  cmd_reload(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_reload(MainWindow&, Tab& tab, Glib::ustring)
   {
     return do_reload(tab, false);
   }
 
   static bool
-  cmd_force_reload(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_force_reload(MainWindow&, Tab& tab, Glib::ustring)
   {
     return do_reload(tab, true);
   }
 
   static bool
-  cmd_scroll(MainWindow& window, Tab& tab, const Glib::ustring& args)
+  cmd_scroll(MainWindow& window, Tab& tab, Glib::ustring args)
   {
     // TODO: Allow finer control by accepting direction _and_ amount as
     // arguments.
@@ -600,7 +672,7 @@ namespace selain
   }
 
   static bool
-  cmd_search_next(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_search_next(MainWindow&, Tab& tab, Glib::ustring)
   {
     tab.search_next();
 
@@ -608,7 +680,7 @@ namespace selain
   }
 
   static bool
-  cmd_search_prev(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_search_prev(MainWindow&, Tab& tab, Glib::ustring)
   {
     tab.search_prev();
 
@@ -616,7 +688,7 @@ namespace selain
   }
 
   static bool
-  cmd_set(MainWindow& window, const Glib::ustring& args)
+  cmd_set(MainWindow& window, Glib::ustring args)
   {
     const auto index = args.find('=');
 
@@ -654,7 +726,7 @@ namespace selain
   }
 
   static bool
-  do_split(Tab& tab, bool vertical, const Glib::ustring& uri)
+  do_split(Tab& tab, bool vertical, Glib::ustring uri)
   {
     tab.split(vertical, uri);
 
@@ -662,58 +734,38 @@ namespace selain
   }
 
   static bool
-  cmd_split(MainWindow&, Tab& tab, const Glib::ustring& args)
+  cmd_split(MainWindow&, Tab& tab, Glib::ustring args)
   {
     return do_split(tab, false, args);
   }
 
   static bool
-  cmd_split_focus(MainWindow& window, Tab& tab, const Glib::ustring& args)
+  cmd_split_focus(MainWindow& window, Tab& tab, Glib::ustring args)
   {
+    static const std::unordered_map<Glib::ustring, Gtk::DirectionType> mapping =
+    {
+      { "left", Gtk::DirectionType::LEFT },
+      { "right", Gtk::DirectionType::RIGHT },
+      { "up", Gtk::DirectionType::UP },
+      { "down", Gtk::DirectionType::DOWN },
+      { "next", Gtk::DirectionType::TAB_FORWARD },
+      { "prev", Gtk::DirectionType::TAB_BACKWARD },
+    };
+
     Gtk::DirectionType direction;
-    const auto arg = utils::trim(args);
 
-    if (arg.empty())
+    if (require_enum_arg(window, "direction", args, direction, mapping))
     {
-      window.show_error("Missing direction.");
+      tab.focus_view(direction);
 
-      return false;
+      return true;
     }
-    else if (arg == "left")
-    {
-      direction = Gtk::DirectionType::LEFT;
-    }
-    else if (arg == "right")
-    {
-      direction = Gtk::DirectionType::RIGHT;
-    }
-    else if (arg == "up")
-    {
-      direction = Gtk::DirectionType::UP;
-    }
-    else if (arg == "down")
-    {
-      direction = Gtk::DirectionType::DOWN;
-    }
-    else if (arg == "next")
-    {
-      direction = Gtk::DirectionType::TAB_FORWARD;
-    }
-    else if (arg == "prev")
-    {
-      direction = Gtk::DirectionType::TAB_BACKWARD;
-    } else {
-      window.show_error("Unrecognized direction.");
 
-      return false;
-    }
-    tab.focus_view(direction);
-
-    return true;
+    return false;
   }
 
   static bool
-  cmd_stop(MainWindow&, Tab& tab, const Glib::ustring&)
+  cmd_stop(MainWindow&, Tab& tab, Glib::ustring)
   {
     tab.stop_loading();
 
@@ -721,41 +773,27 @@ namespace selain
   }
 
   static bool
-  cmd_tab(MainWindow& window, const Glib::ustring& args)
+  cmd_tab(MainWindow& window, Glib::ustring args)
   {
-    const auto arg = utils::trim(args);
+    int number;
 
-    if (arg.empty())
+    if (!require_int_arg(window, "tab number", args, number))
     {
-      window.show_error("Missing tab number.");
-
       return false;
     }
-
-    try
-    {
-      const auto number = std::stoi(arg.raw());
-
-      if (number < 1)
-      {
-        window.show_error("Invalid tab number.");
-
-        return false;
-      }
-      window.set_current_tab(number - 1);
-
-      return true;
-    }
-    catch (const std::exception&)
+    else if (number < 1)
     {
       window.show_error("Invalid tab number.");
 
       return false;
     }
+    window.set_current_tab(number - 1);
+
+    return true;
   }
 
   static bool
-  cmd_tab_prev(MainWindow& window, const Glib::ustring&)
+  cmd_tab_prev(MainWindow& window, Glib::ustring)
   {
     window.prev_tab();
 
@@ -763,7 +801,7 @@ namespace selain
   }
 
   static bool
-  cmd_tab_next(MainWindow& window, const Glib::ustring&)
+  cmd_tab_next(MainWindow& window, Glib::ustring)
   {
     window.next_tab();
 
@@ -771,7 +809,7 @@ namespace selain
   }
 
   static bool
-  cmd_unbind(MainWindow& window, const Glib::ustring& args)
+  cmd_unbind(MainWindow& window, Glib::ustring args)
   {
     if (utils::is_blank(args))
     {
@@ -787,13 +825,13 @@ namespace selain
   }
 
   static bool
-  cmd_vsplit(MainWindow&, Tab& tab, const Glib::ustring& args)
+  cmd_vsplit(MainWindow&, Tab& tab, Glib::ustring args)
   {
     return do_split(tab, true, args);
   }
 
   static bool
-  cmd_yank(MainWindow& window, Tab& tab, const Glib::ustring&)
+  cmd_yank(MainWindow& window, Tab& tab, Glib::ustring)
   {
     const auto clipboard = window.get_clipboard();
     const auto uri = tab.get_uri();

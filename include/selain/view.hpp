@@ -25,8 +25,6 @@
  */
 #pragma once
 
-#include <vector>
-
 #include <gtkmm.h>
 
 #include <selain/hint-context.hpp>
@@ -92,7 +90,7 @@ namespace selain
 
     void execute_script(
       const Glib::ustring& script,
-      ::GCancellable* cancellable = nullptr,
+      const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
       ::GAsyncReadyCallback callback = nullptr,
       void* user_data = nullptr
     );

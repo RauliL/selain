@@ -23,11 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/main-window.hpp>
-#include <selain/theme.hpp>
-
 #include <cstring>
 #include <format>
+
+#include <selain/main-window.hpp>
+#include <selain/theme.hpp>
 
 namespace selain
 {
@@ -387,10 +387,12 @@ namespace selain
   }
 
   void
-  View::execute_script(const Glib::ustring& script,
-                       ::GCancellable* cancellable,
-                       ::GAsyncReadyCallback callback,
-                       void* user_data)
+  View::execute_script(
+    const Glib::ustring& script,
+    const Glib::RefPtr<Gio::Cancellable>& cancellable,
+    ::GAsyncReadyCallback callback,
+    void* user_data
+  )
   {
     ::webkit_web_view_evaluate_javascript(
       m_web_view,
@@ -398,7 +400,7 @@ namespace selain
       static_cast<::gssize>(script.bytes()),
       nullptr,
       nullptr,
-      cancellable,
+      cancellable ? cancellable->gobj() : nullptr,
       callback,
       static_cast<::gpointer>(user_data)
     );

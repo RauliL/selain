@@ -25,8 +25,6 @@
  */
 #pragma once
 
-#include <vector>
-
 #include <selain/hint-context.hpp>
 #include <selain/tab-label.hpp>
 #include <selain/view.hpp>
@@ -149,12 +147,24 @@ namespace selain
     void stop_loading();
 
     void execute_command(const Glib::ustring& command);
-    void execute_script(
+
+    inline void execute_script(
       const Glib::ustring& script,
-      ::GCancellable* cancellable = nullptr,
+      const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
       ::GAsyncReadyCallback callback = nullptr,
       void* user_data = nullptr
-    );
+    )
+    {
+      if (m_active_view)
+      {
+        m_active_view->execute_script(
+          script,
+          cancellable,
+          callback,
+          user_data
+        );
+      }
+    }
 
     void go_back();
     void go_forward();

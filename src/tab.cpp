@@ -23,9 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/main-window.hpp>
-
 #include <limits>
+
+#include <selain/main-window.hpp>
 
 namespace selain
 {
@@ -501,18 +501,6 @@ namespace selain
     if (m_active_view)
     {
       m_active_view->stop_loading();
-    }
-  }
-
-  void
-  Tab::execute_script(const Glib::ustring& script,
-                      ::GCancellable* cancellable,
-                      ::GAsyncReadyCallback callback,
-                      void* user_data)
-  {
-    if (m_active_view)
-    {
-      m_active_view->execute_script(script, cancellable, callback, user_data);
     }
   }
 

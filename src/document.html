@@ -7,6 +7,7 @@
     <style>
       html, body {
         margin: 0;
+        padding: 0;
         background: {{ window-background }};
         color: {{ window-foreground }};
         font: 16px/1.55 system-ui, sans-serif;
@@ -14,7 +15,7 @@
 
       main {
         max-width: 46rem;
-        margin:0 auto;
+        margin: 0 auto;
         padding: 1.5rem 1.25rem 3rem
       }
 
@@ -27,9 +28,20 @@
         text-decoration: underline;
       }
 
+      h1, h2, h3 {
+        line-height: 1.25;
+      }
+
       h1 {
+        font-size: 1.8rem;
+      }
+
+      h2 {
         font-size: 1.4rem;
-        font-weight: 600;
+      }
+
+      h3 {
+        font-size: 1.15rem;
       }
 
       input, button {
@@ -39,7 +51,7 @@
 
       input {
         width: min(100%, 24rem);
-        padding:.4rem .55rem;
+        padding: .4rem .55rem;
       }
 
       button {
@@ -67,6 +79,17 @@
         color: #ff875f;
       }
 
+      p.link {
+        margin: 0.35rem 0;
+      }
+
+      blockquote {
+        margin: 0.75rem 0;
+        padding-left: 0.9rem;
+        border-left: 3px solid {{ mode-bar-insert-background }};
+        color: #7aa6c2;
+      }
+
       pre {
         overflow-x: auto;
         white-space: pre-wrap;
@@ -74,6 +97,10 @@
         background: #1c1c1c;
         border-radius: 4px;
         font: 14px/1.45 ui-monospace, monospace;
+      }
+
+      ul {
+        padding-left: 1.25rem;
       }
     </style>
   </head>

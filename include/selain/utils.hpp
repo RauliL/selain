@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <concepts>
 
 #include <glibmm.h>
@@ -65,6 +66,17 @@ namespace selain::utils
     return (
       input.length() >= prefix.length() &&
       !input.compare(0, prefix.length(), prefix)
+    );
+  }
+
+  template<typename T>
+  inline bool starts_with(const T& input, typename T::const_pointer prefix)
+  {
+    const auto prefix_length = std::strlen(prefix);
+
+    return (
+      input.length() >= prefix_length &&
+      !input.compare(0, prefix_length, prefix)
     );
   }
 

@@ -23,16 +23,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <cctype>
-#include <cstring>
 #include <format>
 
 #include <selain/gemini-client.hpp>
 #include <selain/gemini-scheme.hpp>
-#include <selain/gemtext.hpp>
 #include <selain/theme.hpp>
 #include <selain/utils.hpp>
 #include <selain/view.hpp>
+
+namespace selain::format::gemtext
+{
+  std::string render(std::string_view, std::string_view);
+}
 
 namespace selain
 {
@@ -297,7 +299,10 @@ namespace selain
 
       if (mime == "text/gemini")
       {
-        const auto html = gemtext_to_html(body_as_text(response), response.uri);
+        const auto html = format::gemtext::render(
+          body_as_text(response),
+          response.uri
+        );
 
         finish_with_html(request, html);
 

@@ -31,24 +31,24 @@ CMRC_ADD_RESOURCE_LIBRARY(
 
 ADD_EXECUTABLE(
   selain
-  src/command.cpp
   src/command-entry.cpp
+  src/command.cpp
+  src/format/gemtext.cpp
   src/gemini-client.cpp
   src/gemini-scheme.cpp
-  src/gemtext.cpp
   src/gopher-client.cpp
   src/gopher-menu.cpp
   src/gopher-scheme.cpp
   src/hint-context.cpp
   src/keyboard.cpp
-  src/main.cpp
   src/main-window.cpp
+  src/main.cpp
   src/mode.cpp
   src/setting.cpp
   src/status-bar.cpp
-  src/tab.cpp
   src/tab-completion.cpp
   src/tab-label.cpp
+  src/tab.cpp
   src/theme.cpp
   src/utils.cpp
   src/view.cpp

@@ -365,68 +365,40 @@ namespace selain
     return true;
   }
 
-  static void
-  js_command_callback(
-    ::GObject* web_view_object,
-    ::GAsyncResult* result,
-    ::gpointer tab_data
-  )
-  {
-    const auto tab = static_cast<Tab*>(tab_data);
-    const auto window = tab ? tab->get_main_window() : nullptr;
-    ::GError* error = nullptr;
-    const auto value = ::webkit_web_view_evaluate_javascript_finish(
-      WEBKIT_WEB_VIEW(web_view_object),
-      result,
-      &error
-    );
-
-    if (!value)
-    {
-      if (window && error)
-      {
-        window->show_error(error->message);
-      }
-      if (error)
-      {
-        ::g_error_free(error);
-      }
-      return;
-    }
-
-    if (window)
-    {
-      const auto exception = ::jsc_context_get_exception(
-        ::jsc_value_get_context(value)
-      );
-
-      if (exception)
-      {
-        window->show_error(::jsc_exception_get_message(exception));
-      } else {
-        window->show_info(utils::js_value_to_text(value));
-      }
-    }
-    ::g_object_unref(value);
-  }
-
   static bool
   cmd_js(MainWindow& window, Tab& tab, Glib::ustring args)
   {
-    if (utils::is_blank(args))
+    if (!utils::is_blank(args))
     {
-      window.show_error("Usage: :js <script>");
+      tab.execute_script(
+        args,
+        [&window](::JSCValue* value, ::GError* error)
+        {
+          if (value)
+          {
+            const auto exception = ::jsc_context_get_exception(
+              ::jsc_value_get_context(value)
+            );
 
-      return false;
+            if (exception)
+            {
+              window.show_error(::jsc_exception_get_message(exception));
+            } else {
+              window.show_info(utils::js_value_to_text(value));
+            }
+          }
+          else if (error)
+          {
+            window.show_error(error->message);
+          }
+        }
+      );
+
+      return true; // TODO: See if we can determine script execution result.
     }
-    tab.execute_script(
-      args,
-      nullptr,
-      js_command_callback,
-      static_cast<void*>(&tab)
-    );
+    window.show_error("Usage: :js <script>");
 
-    return true; // TODO: Try to get JavaScript execution status.
+    return false;
   }
 
   static bool

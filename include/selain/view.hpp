@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#include <functional>
+
 #include <gtkmm.h>
 
 #include <selain/hint-context.hpp>
@@ -41,6 +43,8 @@ namespace selain
   class View : public Gtk::Box
   {
   public:
+    using script_callback_type = std::function<void(::JSCValue*, ::GError*)>;
+
     explicit View(
       const Glib::RefPtr<WebContext>& context,
       const Glib::RefPtr<WebSettings>& settings
@@ -90,9 +94,8 @@ namespace selain
 
     void execute_script(
       const Glib::ustring& script,
-      const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
-      ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr
+      script_callback_type callback = nullptr,
+      const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr
     );
 
     void go_back();

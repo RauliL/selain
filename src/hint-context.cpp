@@ -67,58 +67,50 @@ namespace selain
   }
 
   static void
-  hint_mode_callback(::GObject* web_view_object,
-                     ::GAsyncResult* result,
-                     ::gpointer tab_data)
+  hint_mode_callback(Tab& tab, ::JSCValue* value, ::GError* error)
   {
-    const auto web_view = WEBKIT_WEB_VIEW(web_view_object);
-    const auto tab = static_cast<Tab*>(tab_data);
-    ::GError* error = nullptr;
-    const auto value = ::webkit_web_view_evaluate_javascript_finish(
-      web_view,
-      result,
-      &error
-    );
-
-    if (!value)
+    if (value)
     {
-      ::g_warning("Error running JavaScript: %s", error->message);
-      ::g_error_free(error);
-      return;
-    }
-    if (::jsc_value_is_string(value))
-    {
-      auto str_value = ::jsc_value_to_string(value);
-      auto exception = ::jsc_context_get_exception(
-        ::jsc_value_get_context(value)
-      );
-
-      if (exception)
+      if (::jsc_value_is_string(value))
       {
-        g_warning(
-          "Error running JavaScript: %s",
-          ::jsc_exception_get_message(exception)
+        auto str_value = ::jsc_value_to_string(value);
+        auto exception = ::jsc_context_get_exception(
+          ::jsc_value_get_context(value)
         );
-      }
-      else if (!::g_strcmp0(str_value, "mode::normal"))
-      {
-        if (const auto window = tab->get_main_window())
+
+        if (exception)
         {
-          window->set_mode(Mode::NORMAL);
+          g_warning(
+            "Error running JavaScript: %s",
+            ::jsc_exception_get_message(exception)
+          );
         }
-      }
-      else if (!::g_strcmp0(str_value, "mode::insert"))
-      {
-        if (const auto window = tab->get_main_window())
+        else if (!::g_strcmp0(str_value, "mode::normal"))
         {
-          window->set_mode(Mode::INSERT);
+          if (const auto window = tab.get_main_window())
+          {
+            window->set_mode(Mode::NORMAL);
+          }
         }
+        else if (!::g_strcmp0(str_value, "mode::insert"))
+        {
+          if (const auto window = tab.get_main_window())
+          {
+            window->set_mode(Mode::INSERT);
+          }
+        }
+        g_free(str_value);
+      } else {
+        ::g_warning("Unexpected return value from hint mode.");
       }
-      g_free(str_value);
-    } else {
-      ::g_warning("Unexpected return value from hint mode.");
     }
-    ::g_object_unref(value);
+    else if (error)
+    {
+      if (const auto window = tab.get_main_window())
+      {
+        window->show_error(error->message);
+      }
+    }
   }
 
   void
@@ -133,9 +125,10 @@ namespace selain
         "window.SelainHintMode.addChar('\\u{:04x}');",
         static_cast<int>(ch)
       ),
-      nullptr,
-      hint_mode_callback,
-      static_cast<void*>(&tab)
+      [&tab](::JSCValue* value, ::GError* error)
+      {
+        hint_mode_callback(tab, value, error);
+      }
     );
   }
 
@@ -150,9 +143,10 @@ namespace selain
   {
     tab.execute_script(
       "window.SelainHintMode.activateCurrentMatch();",
-      nullptr,
-      hint_mode_callback,
-      static_cast<void*>(&tab)
+      [&tab](::JSCValue* value, ::GError* error)
+      {
+        hint_mode_callback(tab, value, error);
+      }
     );
   }
 }

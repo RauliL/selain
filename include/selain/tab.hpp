@@ -150,19 +150,13 @@ namespace selain
 
     inline void execute_script(
       const Glib::ustring& script,
-      const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
-      ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr
+      View::script_callback_type callback = nullptr,
+      const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr
     )
     {
       if (m_active_view)
       {
-        m_active_view->execute_script(
-          script,
-          cancellable,
-          callback,
-          user_data
-        );
+        m_active_view->execute_script(script, callback, cancellable);
       }
     }
 

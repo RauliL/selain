@@ -99,7 +99,7 @@ namespace selain::theme
       Gtk::StyleProvider::add_provider_for_display(
         Gdk::Display::get_default(),
         provider,
-        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+        GTK_STYLE_PROVIDER_PRIORITY_USER
       );
     }
   }

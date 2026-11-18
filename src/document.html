@@ -5,11 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ title }}</title>
     <style>
+      :root {
+        --selain-window-background: {{ window-background }};
+        --selain-window-foreground: {{ window-foreground }};
+        --selain-status-bar-background: {{ status-bar-background }};
+        --selain-status-bar-foreground: {{ status-bar-foreground }};
+        --selain-status-bar-error-background: {{ status-bar-error-background }};
+        --selain-status-bar-error-foreground: {{ status-bar-error-foreground }};
+        --selain-mode-bar-normal-background: {{ mode-bar-normal-background }};
+        --selain-mode-bar-normal-foreground: {{ mode-bar-normal-foreground }};
+        --selain-mode-bar-insert-background: {{ mode-bar-insert-background }};
+        --selain-mode-bar-insert-foreground: {{ mode-bar-insert-foreground }};
+      }
+
       html, body {
         margin: 0;
         padding: 0;
-        background: {{ window-background }};
-        color: {{ window-foreground }};
+        background: var(--selain-window-background);
+        color: var(--selain-window-foreground);
         font: 16px/1.55 system-ui, sans-serif;
       }
 
@@ -20,12 +33,7 @@
       }
 
       a {
-        color: {{ status-bar-foreground }};
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
+        color: var(--selain-status-bar-foreground);
       }
 
       h1, h2, h3 {
@@ -46,7 +54,7 @@
 
       input, button {
         font: inherit;
-        margin-top:.75rem;
+        margin-top: .75rem;
       }
 
       input {
@@ -66,17 +74,17 @@
       }
 
       .type {
-        color: {{ mode-bar-insert-background }};
+        color: var(--selain-mode-bar-insert-background);
         font: 13px/1.55 ui-monospace, monospace;
         text-align: right;
       }
 
       .info .label {
-        color: #7aa6c2;
+        color: var(--selain-mode-bar-insert-background);
       }
 
       .error .label {
-        color: #ff875f;
+        color: var(--selain-status-bar-error-background);
       }
 
       p.link {
@@ -86,15 +94,14 @@
       blockquote {
         margin: 0.75rem 0;
         padding-left: 0.9rem;
-        border-left: 3px solid {{ mode-bar-insert-background }};
-        color: #7aa6c2;
+        border-left: 3px solid var(--selain-mode-bar-insert-background);
       }
 
       pre {
         overflow-x: auto;
         white-space: pre-wrap;
         padding: 0.85rem 1rem;
-        background: #1c1c1c;
+        background: color-mix(in srgb, var(--selain-window-background), black 20%);
         border-radius: 4px;
         font: 14px/1.45 ui-monospace, monospace;
       }

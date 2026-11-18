@@ -167,7 +167,7 @@ namespace selain::protocol::gopher
     const auto scheme = document_scheme(base_uri);
     std::ostringstream body;
 
-    body << "<h1>Gopher menu</h1>\n";
+    body << "<h1>Gopher menu</h1>\n<menu>\n";
 
     std::size_t start = 0;
 
@@ -218,21 +218,11 @@ namespace selain::protocol::gopher
         }
       }
 
-      const auto css_class = type == '3'
-        ? "item error"
-        : type == 'i'
-          ? "item info"
-          : "item";
-
-      body << "<div class=\"" << css_class << "\">";
-      body << "<span class=\"type\">" << utils::html_escape(type_label(type)) << "</span>";
+      body << "<li data-type=\"" << utils::html_escape(type_label(type)) << "\">";
 
       if (type == 'i' || type == '3' || !is_linkable_type(type) || host.empty())
       {
-        body
-          << "<span class=\"label\">"
-          << utils::html_escape(label)
-          << "</span>";
+        body << utils::html_escape(label);
       } else {
         std::string href;
         const auto url_selector = external_url_from_selector(selector);
@@ -251,14 +241,14 @@ namespace selain::protocol::gopher
         }
 
         body
-          << "<a class=\"label\" href=\""
+          << "<a href=\""
           << utils::html_escape(href)
           << "\">"
           << utils::html_escape(label)
           << "</a>";
       }
 
-      body << "</div>\n";
+      body << "</li>\n";
 
       if (end == std::string_view::npos)
       {
@@ -266,6 +256,8 @@ namespace selain::protocol::gopher
       }
       start = end + 1;
     }
+
+    body << "</menu>\n";
 
     return theme::render_document("Gopher menu", body.str());
   }

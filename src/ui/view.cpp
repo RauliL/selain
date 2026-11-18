@@ -368,7 +368,7 @@ namespace selain::ui
     } else {
       ::webkit_web_view_load_uri(
         m_web_view,
-        std::format("http://{}", uri.raw()).c_str()
+        std::format("https://{}", uri.raw()).c_str()
       );
     }
   }

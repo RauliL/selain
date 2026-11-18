@@ -152,7 +152,8 @@ namespace selain::ui
       const Glib::ustring& script,
       const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
       ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr
+      void* user_data = nullptr,
+      const char* world_name = nullptr
     )
     {
       if (m_active_view)
@@ -161,7 +162,8 @@ namespace selain::ui
           script,
           cancellable,
           callback,
-          user_data
+          user_data,
+          world_name
         );
       }
     }

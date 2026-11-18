@@ -1,20 +1,23 @@
-(() => {
-  const original = window.SelainHintMode;
+(async () => {
   // CSS selectors are typically much faster than XPath for this kind of scan.
   const querySelector =
     "[onclick],[onmouseover],[onmousedown],[onmouseup],[oncommand],[href]," +
     'input:not([type="hidden"]),textarea,button,select,area';
   const maxAllowedHints = 500;
   const hintChars = Array.from("{{ hint-chars }}".toUpperCase());
+  const sessionId = "{{ id }}";
   const hints = [];
   const hintContainers = [];
   let currentSequence = "";
-  let openToNewTab = false;
+  let openToNewTab = {{ open-to-new-tab }};
   const hintStyle =
     "z-index:100000;position:absolute;padding:0.2em;border:none;" +
     "background-color:#ffd76e;color:#000000;font-family:monospace;" +
     "font-size:1em;line-height:1;font-weight:bold;white-space:nowrap;" +
     "text-shadow:none;pointer-events:none;";
+
+  const post = (message) =>
+    webkit.messageHandlers.hintMode.postMessage(message);
 
   const numberToSequence = (number) => {
     let sequence = "";
@@ -151,7 +154,7 @@
     }
     hintContainers.length = 0;
     hints.length = 0;
-    window.SelainHintMode = original;
+    currentSequence = "";
   };
 
   const activateHint = (hint) => {
@@ -173,7 +176,7 @@
     ) {
       element.focus();
 
-      return "mode::insert";
+      return "insert";
     } else if (tagName === "frame" || tagName === "iframe") {
       element.focus();
     } else if (openToNewTab) {
@@ -190,7 +193,7 @@
       element.click();
     }
 
-    return "mode::normal";
+    return "normal";
   };
 
   const splitHints = () => {
@@ -281,6 +284,8 @@
       currentSequence = currentSequence.slice(0, -1);
       updateMatches(...splitHints());
     }
+
+    return "ignore";
   };
 
   const activateCurrentMatch = () => {
@@ -293,17 +298,42 @@
     return match ? activateHint(match) : "ignore";
   };
 
-  const setOpenToNewTab = () => {
-    openToNewTab = true;
+  const runCommand = (command) => {
+    if (!command || typeof command !== "object") {
+      return "ignore";
+    }
+
+    switch (command.action) {
+      case "addChar":
+        return addChar(command.char);
+      case "removeChar":
+        return removeChar();
+      case "activate":
+        return activateCurrentMatch();
+      default:
+        return "ignore";
+    }
   };
 
   install();
 
-  window.SelainHintMode = {
-    activateCurrentMatch,
-    addChar,
-    removeChar,
-    setOpenToNewTab,
-    uninstall,
-  };
+  try {
+    let result = { id: sessionId, status: "ready" };
+
+    for (;;) {
+      const command = await post(result);
+
+      if (!command || command.action === "uninstall") {
+        break;
+      }
+
+      result = {
+        id: sessionId,
+        status: "result",
+        mode: runCommand(command),
+      };
+    }
+  } finally {
+    uninstall();
+  }
 })();

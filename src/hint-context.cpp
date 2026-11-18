@@ -23,13 +23,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <format>
+#include <atomic>
+#include <cctype>
+#include <mutex>
+#include <unordered_map>
 
 #include <cmrc/cmrc.hpp>
 #include <inja/inja.hpp>
 
+#include <selain/hint-context.hpp>
 #include <selain/setting.hpp>
 #include <selain/ui/main-window.hpp>
+#include <selain/ui/view.hpp>
 #include <selain/utils.hpp>
 
 CMRC_DECLARE(selain::rc);
@@ -37,6 +42,27 @@ CMRC_DECLARE(selain::rc);
 namespace selain
 {
   using selain::ui::Tab;
+
+  using context_map_type = std::unordered_map<std::string, HintContext*>;
+
+  static constexpr const char* hint_handler_name = "hintMode";
+  static constexpr const char* hint_script_world = "selain-hint";
+
+  static context_map_type&
+  active_contexts()
+  {
+    static context_map_type contexts;
+
+    return contexts;
+  }
+
+  static std::string
+  next_session_id()
+  {
+    static std::atomic<std::uint64_t> next_id{1};
+
+    return std::to_string(next_id.fetch_add(1));
+  }
 
   Glib::RefPtr<HintContext>
   HintContext::create(bool open_in_new_tab)
@@ -49,125 +75,338 @@ namespace selain
   HintContext::HintContext(bool open_in_new_tab)
     : Glib::ObjectBase(typeid(HintContext))
     , m_open_in_new_tab(open_in_new_tab)
+    , m_id(next_session_id())
   {
+  }
+
+  HintContext::~HintContext()
+  {
+    active_contexts().erase(m_id);
+    if (m_reply)
+    {
+      reply_with_json(m_reply, R"({"action":"uninstall"})");
+      ::webkit_script_message_reply_unref(m_reply);
+      m_reply = nullptr;
+    }
+    clear_js_context();
+  }
+
+  void
+  HintContext::ensure_message_handler(::WebKitUserContentManager* manager)
+  {
+    static std::once_flag once_flag;
+
+    std::call_once(once_flag, [manager]()
+    {
+      ::g_signal_connect(
+        manager,
+        "script-message-with-reply-received::hintMode",
+        G_CALLBACK(on_script_message_with_reply),
+        nullptr
+      );
+      if (!::webkit_user_content_manager_register_script_message_handler_with_reply(
+            manager,
+            hint_handler_name,
+            hint_script_world
+          ))
+      {
+        ::g_warning("Failed to register hint mode script message handler.");
+      }
+    });
+  }
+
+  ::gboolean
+  HintContext::on_script_message_with_reply(
+    ::WebKitUserContentManager*,
+    ::JSCValue* value,
+    ::WebKitScriptMessageReply* reply,
+    ::gpointer
+  )
+  {
+    g_autofree gchar* json = ::jsc_value_to_json(value, 0);
+
+    if (!json)
+    {
+      ::webkit_script_message_reply_return_error_message(
+        reply,
+        "Invalid hint mode message."
+      );
+      return TRUE;
+    }
+
+    const auto message = inja::json::parse(json, nullptr, false);
+
+    if (message.is_discarded() || !message.contains("id") || !message["id"].is_string())
+    {
+      ::webkit_script_message_reply_return_error_message(
+        reply,
+        "Invalid hint mode message."
+      );
+      return TRUE;
+    }
+
+    const auto id = message["id"].get<std::string>();
+    const auto it = active_contexts().find(id);
+
+    if (it == std::end(active_contexts()))
+    {
+      ::webkit_script_message_reply_return_error_message(
+        reply,
+        "Unknown hint mode session."
+      );
+      return TRUE;
+    }
+
+    it->second->handle_script_message(value, reply);
+
+    return TRUE;
+  }
+
+  void
+  HintContext::reply_with_json(
+    ::WebKitScriptMessageReply* reply,
+    const std::string& json
+  )
+  {
+    if (!m_js_context)
+    {
+      ::webkit_script_message_reply_return_error_message(
+        reply,
+        "Missing JavaScript context for hint mode reply."
+      );
+      return;
+    }
+
+    auto* value = ::jsc_value_new_from_json(m_js_context, json.c_str());
+
+    if (!value)
+    {
+      ::webkit_script_message_reply_return_error_message(
+        reply,
+        "Failed to encode hint mode command."
+      );
+      return;
+    }
+    ::webkit_script_message_reply_return_value(reply, value);
+    ::g_object_unref(value);
+  }
+
+  void
+  HintContext::handle_script_message(
+    ::JSCValue* value,
+    ::WebKitScriptMessageReply* reply
+  )
+  {
+    g_autofree gchar* json = ::jsc_value_to_json(value, 0);
+    const auto message = json
+      ? inja::json::parse(json, nullptr, false)
+      : inja::json();
+    std::string mode;
+
+    if (
+      !message.is_discarded() &&
+      message.contains("mode") &&
+      message["mode"].is_string()
+    )
+    {
+      mode = message["mode"].get<std::string>();
+    }
+
+    // Replies must be created in the same JSCContext as the incoming message;
+    // values from a fresh jsc_context_new() serialize as empty objects.
+    if (auto* context = ::jsc_value_get_context(value))
+    {
+      if (m_js_context != context)
+      {
+        clear_js_context();
+        m_js_context = static_cast<::JSCContext*>(g_object_ref(context));
+      }
+    }
+
+    clear_reply();
+    m_reply = ::webkit_script_message_reply_ref(reply);
+
+    if (mode == "normal" || mode == "insert")
+    {
+      // Tell the script to leave its command loop, then switch mode. set_mode()
+      // may destroy this HintContext, so do not touch members afterward.
+      m_commands = {};
+      reply_with_json(m_reply, R"({"action":"uninstall"})");
+      ::webkit_script_message_reply_unref(m_reply);
+      m_reply = nullptr;
+      m_active = false;
+      active_contexts().erase(m_id);
+      clear_js_context();
+
+      const auto tab = m_tab;
+
+      m_tab = nullptr;
+      if (tab)
+      {
+        if (const auto window = tab->get_main_window())
+        {
+          window->set_mode(mode == "insert" ? Mode::INSERT : Mode::NORMAL);
+        }
+      }
+      return;
+    }
+
+    flush_commands();
+    if (!m_active)
+    {
+      active_contexts().erase(m_id);
+      clear_reply();
+      clear_js_context();
+    }
+  }
+
+  void
+  HintContext::clear_reply()
+  {
+    if (m_reply)
+    {
+      ::webkit_script_message_reply_unref(m_reply);
+      m_reply = nullptr;
+    }
+  }
+
+  void
+  HintContext::clear_js_context()
+  {
+    if (m_js_context)
+    {
+      ::g_object_unref(m_js_context);
+      m_js_context = nullptr;
+    }
+  }
+
+  void
+  HintContext::enqueue_command(std::string command_json)
+  {
+    if (!m_active)
+    {
+      return;
+    }
+    m_commands.push(std::move(command_json));
+    flush_commands();
+  }
+
+  void
+  HintContext::flush_commands()
+  {
+    if (!m_reply || m_commands.empty())
+    {
+      return;
+    }
+
+    const auto command = std::move(m_commands.front());
+
+    m_commands.pop();
+    reply_with_json(m_reply, command);
+    ::webkit_script_message_reply_unref(m_reply);
+    m_reply = nullptr;
   }
 
   void
   HintContext::install(Tab& tab)
   {
+    auto* view = tab.get_active_view();
+
+    if (!view)
+    {
+      return;
+    }
+
+    auto* manager = view->get_user_content_manager();
+
+    if (!manager)
+    {
+      return;
+    }
+
+    ensure_message_handler(manager);
+
     auto fs = cmrc::selain::rc::get_filesystem();
     auto script = fs.open("src/hint-mode.js");
     inja::json data;
 
+    data["id"] = m_id;
+    data["open-to-new-tab"] = m_open_in_new_tab;
     if (const auto window = tab.get_main_window())
     {
       data["hint-chars"] = utils::js_string_escape(
         setting::get(*window, "hint-chars").value_or("").raw()
       );
-    }
-    tab.execute_script(inja::render(
-      std::string(std::begin(script), std::end(script)),
-      data
-    ));
-    if (m_open_in_new_tab)
-    {
-      tab.execute_script("window.SelainHintMode.setOpenToNewTab();");
-    }
-  }
-
-  void
-  HintContext::uninstall(Tab& tab)
-  {
-    tab.execute_script("window.SelainHintMode.uninstall();");
-  }
-
-  static void
-  hint_mode_callback(::GObject* web_view_object,
-                     ::GAsyncResult* result,
-                     ::gpointer tab_data)
-  {
-    const auto web_view = WEBKIT_WEB_VIEW(web_view_object);
-    const auto tab = static_cast<Tab*>(tab_data);
-    ::GError* error = nullptr;
-    const auto value = ::webkit_web_view_evaluate_javascript_finish(
-      web_view,
-      result,
-      &error
-    );
-
-    if (!value)
-    {
-      ::g_warning("Error running JavaScript: %s", error->message);
-      ::g_error_free(error);
-      return;
-    }
-    if (::jsc_value_is_string(value))
-    {
-      auto str_value = ::jsc_value_to_string(value);
-      auto exception = ::jsc_context_get_exception(
-        ::jsc_value_get_context(value)
-      );
-
-      if (exception)
-      {
-        g_warning(
-          "Error running JavaScript: %s",
-          ::jsc_exception_get_message(exception)
-        );
-      }
-      else if (!::g_strcmp0(str_value, "mode::normal"))
-      {
-        if (const auto window = tab->get_main_window())
-        {
-          window->set_mode(Mode::NORMAL);
-        }
-      }
-      else if (!::g_strcmp0(str_value, "mode::insert"))
-      {
-        if (const auto window = tab->get_main_window())
-        {
-          window->set_mode(Mode::INSERT);
-        }
-      }
-      g_free(str_value);
     } else {
-      ::g_warning("Unexpected return value from hint mode.");
+      data["hint-chars"] = "";
     }
-    ::g_object_unref(value);
-  }
 
-  void
-  HintContext::add_char(Tab& tab, Glib::ustring::value_type ch)
-  {
-    if (!std::isalnum(ch))
-    {
-      return;
-    }
+    m_tab = &tab;
+    m_active = true;
+    active_contexts()[m_id] = this;
+
     tab.execute_script(
-      std::format(
-        "window.SelainHintMode.addChar('\\u{:04x}');",
-        static_cast<int>(ch)
+      inja::render(
+        std::string(std::begin(script), std::end(script)),
+        data
       ),
       nullptr,
-      hint_mode_callback,
-      static_cast<void*>(&tab)
-    );
-  }
-
-  void
-  HintContext::remove_char(Tab& tab)
-  {
-    tab.execute_script("window.SelainHintMode.removeChar();");
-  }
-
-  void
-  HintContext::activate_current_match(Tab& tab)
-  {
-    tab.execute_script(
-      "window.SelainHintMode.activateCurrentMatch();",
       nullptr,
-      hint_mode_callback,
-      static_cast<void*>(&tab)
+      nullptr,
+      hint_script_world
     );
+  }
+
+  void
+  HintContext::uninstall(Tab&)
+  {
+    if (!m_active)
+    {
+      return;
+    }
+
+    m_active = false;
+    m_tab = nullptr;
+    // Drop any pending key commands; only uninstall matters now.
+    m_commands = {};
+    if (m_reply)
+    {
+      reply_with_json(m_reply, R"({"action":"uninstall"})");
+      ::webkit_script_message_reply_unref(m_reply);
+      m_reply = nullptr;
+      active_contexts().erase(m_id);
+      clear_js_context();
+    } else {
+      // Script has not posted ready yet; deliver uninstall when it does.
+      m_commands.push(R"({"action":"uninstall"})");
+    }
+  }
+
+  void
+  HintContext::add_char(Tab&, Glib::ustring::value_type ch)
+  {
+    if (!std::isalnum(static_cast<unsigned char>(ch)))
+    {
+      return;
+    }
+
+    inja::json command = {
+      {"action", "addChar"},
+      {"char", Glib::ustring(1, ch).uppercase().raw()},
+    };
+
+    enqueue_command(command.dump());
+  }
+
+  void
+  HintContext::remove_char(Tab&)
+  {
+    enqueue_command(R"({"action":"removeChar"})");
+  }
+
+  void
+  HintContext::activate_current_match(Tab&)
+  {
+    enqueue_command(R"({"action":"activate"})");
   }
 }

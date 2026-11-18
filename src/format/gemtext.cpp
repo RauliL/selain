@@ -193,7 +193,6 @@ namespace selain::format::gemtext
       {
         const auto heading = utils::trim_start(line.substr(1));
 
-        // TODO: Extract title här.
         close_list();
         body << "<h1>" << utils::html_escape(heading) << "</h1>\n";
         if (!title)

@@ -395,19 +395,28 @@ namespace selain::ui
     const Glib::ustring& script,
     const Glib::RefPtr<Gio::Cancellable>& cancellable,
     ::GAsyncReadyCallback callback,
-    void* user_data
+    void* user_data,
+    const char* world_name
   )
   {
     ::webkit_web_view_evaluate_javascript(
       m_web_view,
       script.c_str(),
       static_cast<::gssize>(script.bytes()),
-      nullptr,
+      world_name,
       nullptr,
       cancellable ? cancellable->gobj() : nullptr,
       callback,
       static_cast<::gpointer>(user_data)
     );
+  }
+
+  ::WebKitUserContentManager*
+  View::get_user_content_manager() const
+  {
+    return m_web_view
+      ? ::webkit_web_view_get_user_content_manager(m_web_view)
+      : nullptr;
   }
 
   void

@@ -92,8 +92,11 @@ namespace selain::ui
       const Glib::ustring& script,
       const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
       ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr
+      void* user_data = nullptr,
+      const char* world_name = nullptr
     );
+
+    ::WebKitUserContentManager* get_user_content_manager() const;
 
     void go_back();
     void go_forward();

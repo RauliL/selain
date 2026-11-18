@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#include <queue>
+
 #include <glibmm.h>
 #include <webkit/webkit.h>
 
@@ -49,8 +51,36 @@ namespace selain
 
   private:
     explicit HintContext(bool open_in_new_tab);
+    ~HintContext() override;
+
+    void enqueue_command(std::string command_json);
+    void flush_commands();
+    void handle_script_message(
+      ::JSCValue* value,
+      ::WebKitScriptMessageReply* reply
+    );
+    void reply_with_json(
+      ::WebKitScriptMessageReply* reply,
+      const std::string& json
+    );
+    void clear_reply();
+    void clear_js_context();
+
+    static void ensure_message_handler(::WebKitUserContentManager* manager);
+    static ::gboolean on_script_message_with_reply(
+      ::WebKitUserContentManager* manager,
+      ::JSCValue* value,
+      ::WebKitScriptMessageReply* reply,
+      ::gpointer user_data
+    );
 
   private:
     const bool m_open_in_new_tab;
+    const std::string m_id;
+    ui::Tab* m_tab{nullptr};
+    ::WebKitScriptMessageReply* m_reply{nullptr};
+    ::JSCContext* m_js_context{nullptr};
+    std::queue<std::string> m_commands;
+    bool m_active{false};
   };
 }

@@ -53,5 +53,6 @@ namespace selain
   private:
     ::WebKitWebContext* m_context;
     ::WebKitNetworkSession* m_session;
+    ::WebKitUserContentManager* m_user_content_manager;
   };
 }

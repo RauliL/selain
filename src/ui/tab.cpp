@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,9 @@
  */
 #include <limits>
 
-#include <selain/main-window.hpp>
+#include <selain/ui/main-window.hpp>
 
-namespace selain
+namespace selain::ui
 {
   namespace
   {
@@ -132,8 +132,10 @@ namespace selain
     }
   }
 
-  Tab::Tab(const Glib::RefPtr<WebContext>& context,
-           const Glib::RefPtr<WebSettings>& settings)
+  Tab::Tab(
+    const Glib::RefPtr<WebContext>& context,
+    const Glib::RefPtr<WebSettings>& settings
+  )
     : Gtk::Box(Gtk::Orientation::VERTICAL)
     , m_web_context(context)
     , m_web_settings(settings)
@@ -628,9 +630,11 @@ namespace selain
   }
 
   void
-  Tab::replace_view_with_paned(View& current,
-                               View& next,
-                               Gtk::Orientation orientation)
+  Tab::replace_view_with_paned(
+    View& current,
+    View& next,
+    Gtk::Orientation orientation
+  )
   {
     auto* paned = Gtk::make_managed<Gtk::Paned>(orientation);
     auto* parent = current.get_parent();

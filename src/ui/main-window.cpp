@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,13 +25,13 @@
  */
 #include <algorithm>
 
-#include <selain/main-window.hpp>
-#include <selain/view.hpp>
+#include <selain/ui/main-window.hpp>
+#include <selain/ui/view.hpp>
 
-namespace selain
+namespace selain::ui
 {
-  static const int DEFAULT_WIDTH = 640;
-  static const int DEFAULT_HEIGHT = 480;
+  static constexpr int DEFAULT_WIDTH = 640;
+  static constexpr int DEFAULT_HEIGHT = 480;
 
   static Glib::ustring
   uri_without_query(const Glib::ustring& uri)

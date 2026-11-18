@@ -25,17 +25,20 @@
  */
 #include <format>
 #include <type_traits>
+#include <unordered_map>
 
 #include <glibmm/ustring_hash.h>
 
 #include <selain/keyboard.hpp>
-#include <selain/main-window.hpp>
 #include <selain/setting.hpp>
+#include <selain/ui/main-window.hpp>
 #include <selain/utils.hpp>
-#include <unordered_map>
 
 namespace selain
 {
+  using selain::ui::Tab;
+  using selain::ui::MainWindow;
+
   using callback = std::function<bool(MainWindow&, Glib::ustring)>;
   using tab_callback = std::function<bool(MainWindow&, Tab&, Glib::ustring)>;
 

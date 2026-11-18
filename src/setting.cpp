@@ -32,6 +32,8 @@
 
 namespace selain::setting
 {
+  using selain::ui::MainWindow;
+
   struct Setting
   {
     virtual Glib::ustring get(MainWindow& window) const = 0;

@@ -27,10 +27,13 @@
 #include <vector>
 
 #include <selain/keyboard.hpp>
-#include <selain/main-window.hpp>
+#include <selain/ui/main-window.hpp>
 
 namespace selain::keyboard
 {
+  using selain::ui::MainWindow;
+  using selain::ui::Tab;
+
   struct Mapping
   {
     using mapping_type = std::unordered_map<

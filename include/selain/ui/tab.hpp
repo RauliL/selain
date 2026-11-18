@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,12 @@
 #pragma once
 
 #include <selain/hint-context.hpp>
-#include <selain/tab-label.hpp>
-#include <selain/view.hpp>
+#include <selain/ui/tab-label.hpp>
+#include <selain/ui/view.hpp>
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
 
-namespace selain
+namespace selain::ui
 {
   class MainWindow;
 

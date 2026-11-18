@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,11 +25,11 @@
  */
 #pragma once
 
-#include <selain/mode.hpp>
-
 #include <gtkmm.h>
 
-namespace selain
+#include <selain/mode.hpp>
+
+namespace selain::ui
 {
   /**
    * GTK widget for browser status bar.
@@ -47,4 +47,3 @@ namespace selain
     Gtk::Label m_status_label;
   };
 }
-

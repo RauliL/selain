@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,17 +25,14 @@
  */
 #pragma once
 
-#include <optional>
-#include <vector>
-
 #include <gtkmm.h>
 
-#include <selain/command-entry.hpp>
-#include <selain/status-bar.hpp>
-#include <selain/tab.hpp>
 #include <selain/tab-completion.hpp>
+#include <selain/ui/command-entry.hpp>
+#include <selain/ui/status-bar.hpp>
+#include <selain/ui/tab.hpp>
 
-namespace selain
+namespace selain::ui
 {
   class View;
 
@@ -245,4 +242,3 @@ namespace selain
     std::optional<GeminiInputRequest> m_gemini_input;
   };
 }
-

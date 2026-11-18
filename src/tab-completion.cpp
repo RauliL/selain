@@ -26,9 +26,9 @@
 #include <algorithm>
 
 #include <selain/command.hpp>
-#include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/tab-completion.hpp>
+#include <selain/ui/main-window.hpp>
 #include <selain/utils.hpp>
 
 namespace selain
@@ -185,7 +185,7 @@ namespace selain
   }
 
   void
-  TabCompletion::complete(MainWindow& window, bool reverse)
+  TabCompletion::complete(ui::MainWindow& window, bool reverse)
   {
     auto& entry = window.get_command_entry();
     const auto text = entry.get_text();

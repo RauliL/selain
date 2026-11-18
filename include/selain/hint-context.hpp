@@ -28,21 +28,24 @@
 #include <glibmm.h>
 #include <webkit/webkit.h>
 
-namespace selain
+namespace selain::ui
 {
   class Tab;
+}
 
+namespace selain
+{
   class HintContext : public Glib::Object
   {
   public:
     static Glib::RefPtr<HintContext> create(bool open_in_new_tab = false);
 
-    void install(Tab& tab);
-    void uninstall(Tab& tab);
+    void install(ui::Tab& tab);
+    void uninstall(ui::Tab& tab);
 
-    void add_char(Tab& tab, Glib::ustring::value_type ch);
-    void remove_char(Tab& tab);
-    void activate_current_match(Tab& tab);
+    void add_char(ui::Tab& tab, Glib::ustring::value_type ch);
+    void remove_char(ui::Tab& tab);
+    void activate_current_match(ui::Tab& tab);
 
   private:
     explicit HintContext(bool open_in_new_tab);
@@ -51,4 +54,3 @@ namespace selain
     const bool m_open_in_new_tab;
   };
 }
-

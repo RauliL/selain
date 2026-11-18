@@ -28,8 +28,8 @@
 #include <selain/protocol/gemini/client.hpp>
 #include <selain/protocol/gemini/scheme.hpp>
 #include <selain/theme.hpp>
+#include <selain/ui/view.hpp>
 #include <selain/utils.hpp>
-#include <selain/view.hpp>
 
 namespace selain::format::gemtext
 {
@@ -38,6 +38,8 @@ namespace selain::format::gemtext
 
 namespace selain::protocol::gemini
 {
+  using selain::ui::View;
+
   namespace
   {
     struct InputPrompt

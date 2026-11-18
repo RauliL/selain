@@ -25,17 +25,17 @@
  */
 #pragma once
 
-#include "selain/main-window.hpp"
+#include "selain/ui/main-window.hpp"
 
 namespace selain::setting
 {
   std::optional<Glib::ustring> get(
-    MainWindow& window,
+    ui::MainWindow& window,
     const Glib::ustring& key
   );
 
   bool set(
-    MainWindow& window,
+    ui::MainWindow& window,
     const Glib::ustring& key,
     const Glib::ustring& value
   );

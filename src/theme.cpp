@@ -48,7 +48,7 @@ namespace selain::theme
   const Gdk::RGBA mode_bar_insert_foreground("#262626");
 
   static void
-  add_theme_colors(nlohmann::json& data)
+  add_theme_colors(inja::json& data)
   {
     data["window-background"] = window_background.to_string().raw();
     data["window-foreground"] = window_foreground.to_string().raw();
@@ -68,7 +68,7 @@ namespace selain::theme
     auto provider = Gtk::CssProvider::create();
     auto fs = cmrc::selain::rc::get_filesystem();
     auto stylesheet = fs.open("src/theme.css");
-    nlohmann::json data;
+    inja::json data;
 
     add_theme_colors(data);
     provider->load_from_string(inja::render(
@@ -116,7 +116,7 @@ namespace selain::theme
   {
     auto fs = cmrc::selain::rc::get_filesystem();
     auto tmpl = fs.open("src/document.html");
-    nlohmann::json data;
+    inja::json data;
 
     add_theme_colors(data);
     data["title"] = utils::html_escape(title);

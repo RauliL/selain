@@ -42,6 +42,7 @@ namespace selain
     : Glib::ObjectBase(typeid(WebContext))
     , m_context(::webkit_web_context_new())
     , m_session(create_network_session())
+    , m_user_content_manager(::webkit_user_content_manager_new())
   {
     protocol::gemini::register_schemes(m_context);
     protocol::gopher::register_schemes(m_context);
@@ -51,6 +52,7 @@ namespace selain
   {
     g_clear_object(&m_session);
     g_clear_object(&m_context);
+    g_clear_object(&m_user_content_manager);
   }
 
   ::WebKitWebView*
@@ -62,6 +64,8 @@ namespace selain
       m_context,
       "network-session",
       m_session,
+      "user-content-manager",
+      m_user_content_manager,
       nullptr
     ));
   }

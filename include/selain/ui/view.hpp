@@ -31,7 +31,7 @@
 #include <selain/web-context.hpp>
 #include <selain/web-settings.hpp>
 
-namespace selain
+namespace selain::ui
 {
   class Tab;
 

@@ -25,8 +25,6 @@
  */
 #pragma once
 
-#include <vector>
-
 #include <glibmm.h>
 
 namespace selain::command

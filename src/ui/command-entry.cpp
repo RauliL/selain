@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/command-entry.hpp>
+#include <selain/ui/command-entry.hpp>
 
-namespace selain
+namespace selain::ui
 {
   CommandEntry::CommandEntry()
   {
@@ -50,9 +50,11 @@ namespace selain
   }
 
   void
-  CommandEntry::show_notification(const Glib::ustring& text,
-                                  Notification::Type type,
-                                  unsigned int timeout)
+  CommandEntry::show_notification(
+    const Glib::ustring& text,
+    Notification::Type type,
+    unsigned int timeout
+  )
   {
     const Notification notification{
       .text = text,

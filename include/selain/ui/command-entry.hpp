@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 
 #include <selain/notification.hpp>
 
-namespace selain
+namespace selain::ui
 {
   /**
    * GTK widget for the command line. It's also used for displaying various
@@ -101,4 +101,3 @@ namespace selain
     signal_command_received_type m_signal_command_received;
   };
 }
-

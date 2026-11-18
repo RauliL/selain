@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,38 +23,44 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
+#include <selain/ui/status-bar.hpp>
 
-#include <gtkmm.h>
-
-namespace selain
+namespace selain::ui
 {
-  class TabLabel : public Gtk::Box
+  StatusBar::StatusBar()
+    : Gtk::Box(Gtk::Orientation::HORIZONTAL)
+    , m_mode_label(get_mode_text(Mode::NORMAL))
   {
-  public:
-    using close_signal_type = sigc::signal<void()>;
+    add_css_class("selain-status-bar");
 
-    explicit TabLabel();
-    ~TabLabel() override;
+    m_mode_label.add_css_class("mode-label");
+    m_mode_label.set_halign(Gtk::Align::CENTER);
+    m_mode_label.set_justify(Gtk::Justification::CENTER);
 
-    void set_text(const Glib::ustring& text);
+    m_status_label.add_css_class("status-label");
+    m_status_label.set_halign(Gtk::Align::START);
+    m_status_label.set_justify(Gtk::Justification::LEFT);
+    m_status_label.set_hexpand(true);
 
-    void set_icon(const Glib::RefPtr<Gdk::Paintable>& icon);
+    append(m_mode_label);
+    append(m_status_label);
+  }
 
-    inline close_signal_type& signal_close_requested()
+  void
+  StatusBar::set_mode(Mode mode)
+  {
+    m_mode_label.set_text(get_mode_text(mode));
+    if (mode == Mode::INSERT)
     {
-      return m_signal_close_requested;
+      m_mode_label.add_css_class("mode-insert");
+    } else {
+      m_mode_label.remove_css_class("mode-insert");
     }
+  }
 
-  private:
-    void on_close_button_clicked();
-    void on_middle_button_pressed(int n_press, double x, double y);
-
-  private:
-    Gtk::Image m_icon;
-    Gtk::Label m_text;
-    Gtk::Button m_close_button;
-    Glib::RefPtr<Gtk::GestureClick> m_middle_click_gesture;
-    close_signal_type m_signal_close_requested;
-  };
+  void
+  StatusBar::set_status(const Glib::ustring& status)
+  {
+    m_status_label.set_text(status);
+  }
 }

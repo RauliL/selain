@@ -29,9 +29,9 @@
 #include <fstream>
 
 #include <selain/keyboard.hpp>
-#include <selain/main-window.hpp>
 #include <selain/setting.hpp>
 #include <selain/theme.hpp>
+#include <selain/ui/main-window.hpp>
 
 /**
  * WebKitGTK on NVIDIA proprietary drivers SIGSEGVs in
@@ -60,17 +60,17 @@ maybe_workaround_nvidia_webkit()
   ::setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", 0);
 }
 
-static selain::MainWindow*
+static selain::ui::MainWindow*
 get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
 {
   const auto& windows = app->get_windows();
 
   if (!windows.empty())
   {
-    return static_cast<selain::MainWindow*>(windows.front());
+    return static_cast<selain::ui::MainWindow*>(windows.front());
   }
 
-  const auto window = Gtk::make_managed<selain::MainWindow>(app);
+  const auto window = Gtk::make_managed<selain::ui::MainWindow>(app);
 
   app->add_window(*window);
 
@@ -78,7 +78,7 @@ get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
 }
 
 static void
-run_init(selain::MainWindow* window)
+run_init(selain::ui::MainWindow* window)
 {
   const auto path = Glib::build_filename(
     Glib::get_user_config_dir(),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,14 +28,16 @@
 #include <cmrc/cmrc.hpp>
 #include <inja/inja.hpp>
 
-#include <selain/main-window.hpp>
 #include <selain/setting.hpp>
+#include <selain/ui/main-window.hpp>
 #include <selain/utils.hpp>
 
 CMRC_DECLARE(selain::rc);
 
 namespace selain
 {
+  using selain::ui::Tab;
+
   Glib::RefPtr<HintContext>
   HintContext::create(bool open_in_new_tab)
   {

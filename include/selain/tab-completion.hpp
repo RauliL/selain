@@ -31,7 +31,10 @@
 
 namespace selain
 {
-  class MainWindow;
+  namespace ui
+  {
+    class MainWindow;
+  }
 
   /**
    * Tab completion for the command line (command names and `:set` settings).
@@ -44,7 +47,7 @@ namespace selain
      *
      * \param reverse When true, cycles backwards through matches (Shift+Tab).
      */
-    void complete(MainWindow& window, bool reverse);
+    void complete(ui::MainWindow& window, bool reverse);
 
     /**
      * Clears cycling state so the next Tab starts a fresh completion.

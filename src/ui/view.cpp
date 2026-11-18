@@ -26,10 +26,41 @@
 #include <cstring>
 #include <format>
 
-#include <selain/main-window.hpp>
 #include <selain/theme.hpp>
+#include <selain/ui/main-window.hpp>
 
-namespace selain
+namespace selain::keyboard
+{
+  ::gboolean on_tab_key_pressed(
+    ::GtkEventControllerKey*,
+    ::guint keyval,
+    ::guint keycode,
+    ::GdkModifierType state,
+    ui::Tab*
+  );
+
+  static ::gboolean
+  on_view_key_pressed(
+    ::GtkEventControllerKey* controller,
+    ::guint keyval,
+    ::guint keycode,
+    ::GdkModifierType state,
+    ui::View* view
+  )
+  {
+    const auto tab = view->get_tab();
+
+    if (!tab)
+    {
+      return FALSE;
+    }
+    tab->set_active_view(*view);
+
+    return on_tab_key_pressed(controller, keyval, keycode, state, tab);
+  }
+}
+
+namespace selain::ui
 {
   static void on_load_changed(
     ::WebKitWebView*,
@@ -64,39 +95,12 @@ namespace selain
     View*
   );
 
-  namespace keyboard
-  {
-    ::gboolean on_tab_key_pressed(
-      ::GtkEventControllerKey*,
-      ::guint keyval,
-      ::guint keycode,
-      ::GdkModifierType state,
-      Tab*
-    );
-
-    static ::gboolean
-    on_view_key_pressed(::GtkEventControllerKey* controller,
-                        ::guint keyval,
-                        ::guint keycode,
-                        ::GdkModifierType state,
-                        View* view)
-    {
-      const auto tab = view->get_tab();
-
-      if (!tab)
-      {
-        return FALSE;
-      }
-      tab->set_active_view(*view);
-
-      return on_tab_key_pressed(controller, keyval, keycode, state, tab);
-    }
-  }
-
   static constexpr const char* view_quark = "selain-view";
 
-  View::View(const Glib::RefPtr<WebContext>& context,
-             const Glib::RefPtr<WebSettings>& settings)
+  View::View(
+    const Glib::RefPtr<WebContext>& context,
+    const Glib::RefPtr<WebSettings>& settings
+  )
     : Gtk::Box(Gtk::Orientation::VERTICAL)
     , m_web_view(context->create_web_view())
   {
@@ -538,9 +542,11 @@ namespace selain
   }
 
   static void
-  on_load_changed(::WebKitWebView* web_view,
-                  ::WebKitLoadEvent load_event,
-                  View* view)
+  on_load_changed(
+    ::WebKitWebView* web_view,
+    ::WebKitLoadEvent load_event,
+    View* view
+  )
   {
     const auto tab = view->get_tab();
 
@@ -611,10 +617,12 @@ namespace selain
   }
 
   static ::gboolean
-  on_decide_policy(::WebKitWebView*,
-                   ::WebKitPolicyDecision* decision,
-                   ::WebKitPolicyDecisionType decision_type,
-                   View* view)
+  on_decide_policy(
+    ::WebKitWebView*,
+    ::WebKitPolicyDecision* decision,
+    ::WebKitPolicyDecisionType decision_type,
+    View* view
+  )
   {
     const auto tab = view->get_tab();
     const auto window = tab ? tab->get_main_window() : nullptr;
@@ -666,10 +674,12 @@ namespace selain
   }
 
   static void
-  on_mouse_target_changed(::WebKitWebView*,
-                          ::WebKitHitTestResult* hit_test_result,
-                          ::guint,
-                          View* view)
+  on_mouse_target_changed(
+    ::WebKitWebView*,
+    ::WebKitHitTestResult* hit_test_result,
+    ::guint,
+    View* view
+  )
   {
     const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
 
@@ -695,9 +705,11 @@ namespace selain
   }
 
   static ::gboolean
-  on_web_process_terminated(::WebKitWebView*,
-                            ::WebKitWebProcessTerminationReason,
-                            View* view)
+  on_web_process_terminated(
+    ::WebKitWebView*,
+    ::WebKitWebProcessTerminationReason,
+    View* view
+  )
   {
     view->set_status("Web process crashed", true);
     if (const auto tab = view->get_tab())

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/tab-label.hpp>
+#include <selain/ui/tab-label.hpp>
 
-namespace selain
+namespace selain::ui
 {
   TabLabel::TabLabel()
     : Gtk::Box(Gtk::Orientation::HORIZONTAL)

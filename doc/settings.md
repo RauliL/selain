@@ -4,6 +4,7 @@ View or change a setting with `:set` (shortcut `:se`):
 
 ```
 :set homepage=https://example.com
+:set search-engine=https://duckduckgo.com/?q=%s
 :set enable-javascript=false
 :set default-font-size=16
 :set user-agent=Mozilla/5.0
@@ -18,11 +19,12 @@ accept one of the values listed for that setting.
 
 ## Application
 
-| Setting      | Description                                            |
-|--------------|--------------------------------------------------------|
-| `adblock`    | Enable content filters from `~/.config/selain/blocklists` (default `true`). See [adblock.md](adblock.md). |
-| `homepage`   | URL that is opened when the browser starts.            |
-| `hint-chars` | Characters to use for typing hints in hit-a-hint mode. |
+| Setting         | Description                                            |
+|-----------------|--------------------------------------------------------|
+| `adblock`       | Enable content filters from `~/.config/selain/blocklists` (default `true`). See [adblock.md](adblock.md). |
+| `homepage`      | URL that is opened when the browser starts.            |
+| `hint-chars`    | Characters to use for typing hints in hit-a-hint mode. |
+| `search-engine` | Search URL used when `:open` text is not a URI or domain. `%s` is replaced with the URL-encoded query (default DuckDuckGo). |
 
 ## WebKit (boolean)
 

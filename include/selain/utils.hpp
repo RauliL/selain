@@ -168,4 +168,18 @@ namespace selain::utils
    * Escapes JavaScript string literal escape sequences from given string.
    */
   std::string js_string_escape(std::string_view text);
+
+  /**
+   * Resolves user-entered navigation text to a loadable URI.
+   *
+   * - Absolute URIs (with a scheme) are returned unchanged.
+   * - Domain-like hosts (e.g. `example.com`, `localhost`) get an `https://`
+   *   prefix.
+   * - Anything else becomes a search URL: `%s` in
+   *   @p search_engine_template is replaced with the URL-encoded query.
+   */
+  Glib::ustring resolve_navigation_uri(
+    const Glib::ustring& input,
+    const Glib::ustring& search_engine_template
+  );
 }

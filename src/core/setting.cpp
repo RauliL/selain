@@ -231,9 +231,22 @@ namespace selain::setting
 
   static std::unordered_map<Glib::ustring, std::shared_ptr<Setting>> mapping =
   {
-    { "adblock", std::make_shared<BoolSetting>(adblock::is_enabled, adblock::set_enabled) },
-    { "hint-chars", std::make_shared<StringSetting>("sadfjklewc") },
-    { "homepage", std::make_shared<StringSetting>("https://besthomepageever.com") },
+    {
+      "adblock",
+      std::make_shared<BoolSetting>(adblock::is_enabled, adblock::set_enabled)
+    },
+    {
+      "hint-chars",
+      std::make_shared<StringSetting>("sadfjklewc")
+    },
+    {
+      "homepage",
+      std::make_shared<StringSetting>("https://besthomepageever.com")
+    },
+    {
+      "search-engine",
+      std::make_shared<StringSetting>("https://search.brave.com/search?q=%s")
+    },
 
     // WebKit boolean settings.
     WK_BOOL_SETTING("allow-file-access-from-file-urls"),

@@ -14,10 +14,10 @@ Selain currently supports following commands:
 |`:inspector`  |`:insp` |Toggles developer tools.               |
 |`:js`         |`:j`    |Runs JavaScript in the current tab.    |
 |`:only`       |`:on`   |Closes all splits except the current.  |
-|`:open`       |`:o`    |Opens URI given as argument.           |
-|`:open-tab`   |`:ot`   |Opens URI given as argument in new tab.|
-|`:paste`      |`:p`    |Opens URI from clipboard.              |
-|`:paste-tab`  |`:pt`   |Opens URI from clipboard in new tab.   |
+|`:open`       |`:o`    |Opens URI, domain, or search query.    |
+|`:open-tab`   |`:ot`   |Same as `:open`, in a new tab.         |
+|`:paste`      |`:p`    |Opens clipboard text as URI/search.    |
+|`:paste-tab`  |`:pt`   |Same as `:paste`, in a new tab.        |
 |`:quit`       |`:q`    |Closes current split, or tab if alone. |
 |`:qall`       |`:qa`   |Closes all tabs.                       |
 |`:reload`     |`:r`    |Reloads page.                          |

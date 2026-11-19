@@ -26,7 +26,9 @@
 #include <cstring>
 #include <format>
 
+#include <selain/core/setting.hpp>
 #include <selain/ui/main-window.hpp>
+#include <selain/utils.hpp>
 
 namespace selain::keyboard
 {
@@ -365,16 +367,27 @@ namespace selain::ui
     {
       return;
     }
-    if (auto scheme = ::g_uri_parse_scheme(uri.c_str()))
+
+    constexpr const char* default_search_engine = "https://duckduckgo.com/?q=%s";
+    Glib::ustring search_engine = default_search_engine;
+
+    if (auto* tab = get_tab())
     {
-      ::webkit_web_view_load_uri(m_web_view, uri.c_str());
-      g_free(scheme);
-    } else {
-      ::webkit_web_view_load_uri(
-        m_web_view,
-        std::format("https://{}", uri.raw()).c_str()
-      );
+      if (auto* window = tab->get_main_window())
+      {
+        search_engine = setting::get(*window, "search-engine").value_or(
+          default_search_engine
+        );
+      }
     }
+
+    const auto resolved = utils::resolve_navigation_uri(uri, search_engine);
+
+    if (resolved.empty())
+    {
+      return;
+    }
+    ::webkit_web_view_load_uri(m_web_view, resolved.c_str());
   }
 
   void

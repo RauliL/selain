@@ -7,6 +7,7 @@ uses [WebKit] as it's engine.
 
 - Vim style modes and keyboard bindings.
 - Vim style splitted views.
+- [Finger](https://datatracker.ietf.org/doc/html/rfc1288) protocol support (`finger://`).
 - [Gemini](https://geminiprotocol.net/) protocol support (`gemini://`).
 - [Gopher](https://datatracker.ietf.org/doc/html/rfc1436) protocol support (`gopher://` and `gophers://`).
 

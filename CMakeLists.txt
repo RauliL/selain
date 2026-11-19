@@ -38,6 +38,8 @@ ADD_EXECUTABLE(
   src/keyboard.cpp
   src/main.cpp
   src/mode.cpp
+  src/protocol/finger/client.cpp
+  src/protocol/finger/scheme.cpp
   src/protocol/gemini/client.cpp
   src/protocol/gemini/scheme.cpp
   src/protocol/gopher/client.cpp

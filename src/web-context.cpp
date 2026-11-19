@@ -25,6 +25,7 @@
  */
 #include <selain/web-context.hpp>
 
+#include <selain/protocol/finger/scheme.hpp>
 #include <selain/protocol/gemini/scheme.hpp>
 #include <selain/protocol/gopher/scheme.hpp>
 
@@ -44,6 +45,7 @@ namespace selain
     , m_session(create_network_session())
     , m_user_content_manager(::webkit_user_content_manager_new())
   {
+    protocol::finger::register_schemes(m_context);
     protocol::gemini::register_schemes(m_context);
     protocol::gopher::register_schemes(m_context);
   }

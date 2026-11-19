@@ -9,8 +9,9 @@
 @define-color selain-mode-bar-insert-background #fabd2f;
 @define-color selain-mode-bar-insert-foreground #282828;
 
-.selain-window {
+window {
   background-color: @selain-window-background;
+  color: @selain-window-foreground;
 }
 
 .selain-status-bar {
@@ -19,7 +20,7 @@
 
 .selain-status-bar label {
   font-family: monospace;
-  padding: 0.1em 0.4em;
+  padding: 0.2em 0.4em;
 }
 
 .selain-status-bar .mode-label {
@@ -37,12 +38,7 @@
   color: @selain-status-bar-foreground;
 }
 
-.selain-command-entry {
-  background-color: @selain-window-background;
-}
-
 .selain-command-entry entry {
-  background: @selain-window-background;
   border: none;
   color: @selain-status-bar-error-foreground;
   font-family: monospace;
@@ -52,7 +48,6 @@
 }
 
 .selain-command-entry .notification-info {
-  background-color: @selain-window-background;
   color: @selain-window-foreground;
   font-family: monospace;
 }
@@ -69,4 +64,8 @@
 
 .selain-view-active {
   border-color: @selain-window-foreground;
+}
+
+.selain-view-active:only-child {
+  border-color: transparent;
 }

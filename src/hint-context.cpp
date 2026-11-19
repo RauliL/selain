@@ -31,8 +31,8 @@
 #include <cmrc/cmrc.hpp>
 #include <inja/inja.hpp>
 
+#include <selain/core/setting.hpp>
 #include <selain/hint-context.hpp>
-#include <selain/setting.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view.hpp>
 #include <selain/utils.hpp>

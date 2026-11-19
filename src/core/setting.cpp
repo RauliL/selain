@@ -23,24 +23,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <algorithm>
-#include <unordered_map>
-
 #include <glibmm/ustring_hash.h>
 
-#include "selain/setting.hpp"
+#include <selain/core/setting.hpp>
 
 namespace selain::setting
 {
-  using selain::ui::MainWindow;
-
-  struct Setting
-  {
-    virtual Glib::ustring get(MainWindow& window) const = 0;
-
-    virtual bool set(MainWindow& window, const Glib::ustring& new_value) = 0;
-  };
-
   struct StringSetting : Setting
   {
     Glib::ustring value;
@@ -48,12 +36,12 @@ namespace selain::setting
     explicit StringSetting(const Glib::ustring& initial)
       : value(initial) {}
 
-    Glib::ustring get(MainWindow&) const override
+    Glib::ustring get(ui::MainWindow&) const override
     {
       return value;
     }
 
-    bool set(MainWindow&, const Glib::ustring& new_value) override
+    bool set(ui::MainWindow&, const Glib::ustring& new_value) override
     {
       value = new_value;
 
@@ -74,12 +62,12 @@ namespace selain::setting
     explicit WebKitBoolSetting(const Glib::ustring& name)
       : WebKitSetting(name) {}
 
-    Glib::ustring get(MainWindow& window) const override
+    Glib::ustring get(ui::MainWindow& window) const override
     {
       return window.web_settings()->get_bool(name) ? "true" : "false";
     }
 
-    bool set(MainWindow& window, const Glib::ustring& new_value) override
+    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
     {
       bool value;
 
@@ -104,12 +92,12 @@ namespace selain::setting
     explicit WebKitIntSetting(const Glib::ustring& name)
       : WebKitSetting(name) {}
 
-    Glib::ustring get(MainWindow& window) const override
+    Glib::ustring get(ui::MainWindow& window) const override
     {
       return std::to_string(window.web_settings()->get_int(name));
     }
 
-    bool set(MainWindow& window, const Glib::ustring& new_value) override
+    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
     {
       ::guint numeric_value;
 
@@ -136,12 +124,12 @@ namespace selain::setting
     explicit WebKitStringSetting(const Glib::ustring& name)
       : WebKitSetting(name) {}
 
-    Glib::ustring get(MainWindow& window) const override
+    Glib::ustring get(ui::MainWindow& window) const override
     {
       return window.web_settings()->get_string(name);
     }
 
-    bool set(MainWindow& window, const Glib::ustring& new_value) override
+    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
     {
       window.web_settings()->set(name, new_value);
 
@@ -151,31 +139,31 @@ namespace selain::setting
 
   struct WebKitHardwareAccelerationPolicySetting : Setting
   {
-    Glib::ustring get(MainWindow& window) const override
+    Glib::ustring get(ui::MainWindow& window) const override
     {
       switch (window.web_settings()->get_hardware_acceleration_policy())
       {
-        case ::WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS:
+        case WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS:
           return "always";
 
-        case ::WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER:
+        case WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER:
           return "never";
       }
 
       return "always";
     }
 
-    bool set(MainWindow& window, const Glib::ustring& new_value) override
+    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
     {
-      ::WebKitHardwareAccelerationPolicy policy;
+      WebKitHardwareAccelerationPolicy policy;
 
       if (new_value == "always")
       {
-        policy = ::WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS;
+        policy = WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS;
       }
       else if (new_value == "never")
       {
-        policy = ::WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER;
+        policy = WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER;
       } else {
         return false; // TODO: Return error message.
       }
@@ -268,7 +256,7 @@ namespace selain::setting
   #undef WK_STRING_SETTING
 
   std::optional<Glib::ustring>
-  get(MainWindow& window, const Glib::ustring& key)
+  get(ui::MainWindow& window, const Glib::ustring& key)
   {
     const auto entry = mapping.find(key);
 
@@ -281,7 +269,7 @@ namespace selain::setting
   }
 
   bool
-  set(MainWindow& window, const Glib::ustring& key, const Glib::ustring& value)
+  set(ui::MainWindow& window, const Glib::ustring& key, const Glib::ustring& value)
   {
     auto entry = mapping.find(key);
 
@@ -299,9 +287,9 @@ namespace selain::setting
     std::vector<Glib::ustring> result;
 
     result.reserve(mapping.size());
-    for (const auto& [key, _] : mapping)
+    for (const auto& entry : mapping)
     {
-      result.push_back(key);
+      result.push_back(entry.first);
     }
     std::sort(std::begin(result), std::end(result));
 

@@ -31,7 +31,8 @@ CMRC_ADD_RESOURCE_LIBRARY(
 
 ADD_EXECUTABLE(
   selain
-  src/command.cpp
+  src/core/command.cpp
+  src/core/setting.cpp
   src/format/gemtext.cpp
   src/hint-context.cpp
   src/keyboard.cpp
@@ -42,7 +43,6 @@ ADD_EXECUTABLE(
   src/protocol/gopher/client.cpp
   src/protocol/gopher/menu.cpp
   src/protocol/gopher/scheme.cpp
-  src/setting.cpp
   src/tab-completion.cpp
   src/theme.cpp
   src/ui/command-entry.cpp

@@ -25,8 +25,8 @@
  */
 #include <algorithm>
 
-#include <selain/command.hpp>
-#include <selain/setting.hpp>
+#include <selain/core/command.hpp>
+#include <selain/core/setting.hpp>
 #include <selain/tab-completion.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/utils.hpp>

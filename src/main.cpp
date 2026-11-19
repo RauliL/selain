@@ -28,8 +28,9 @@
 #include <filesystem>
 #include <fstream>
 
+#include <selain/core/command.hpp>
+#include <selain/core/setting.hpp>
 #include <selain/keyboard.hpp>
-#include <selain/setting.hpp>
 #include <selain/theme.hpp>
 #include <selain/ui/main-window.hpp>
 
@@ -105,6 +106,7 @@ on_command_line(
   const Glib::RefPtr<Gtk::Application>& app
 )
 {
+  static bool command_initialized = false;
   static bool keyboard_initialized = false;
   static bool theme_initialized = false;
   static bool init_run = false;
@@ -116,6 +118,12 @@ on_command_line(
   const auto window = get_or_create_window(app);
 
   window->present();
+
+  if (!command_initialized)
+  {
+    selain::command::initialize();
+    command_initialized = true;
+  }
 
   if (!keyboard_initialized)
   {

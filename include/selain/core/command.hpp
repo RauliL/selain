@@ -25,23 +25,33 @@
  */
 #pragma once
 
-#include "selain/ui/main-window.hpp"
+#include <glibmm.h>
 
-namespace selain::setting
+namespace selain::ui
 {
-  std::optional<Glib::ustring> get(
-    ui::MainWindow& window,
-    const Glib::ustring& key
-  );
+  class MainWindow;
+}
 
-  bool set(
-    ui::MainWindow& window,
-    const Glib::ustring& key,
-    const Glib::ustring& value
-  );
+namespace selain::command
+{
+  using callback_type = std::function<bool(ui::MainWindow&, Glib::ustring)>;
+
+  struct Info
+  {
+    Glib::ustring name;
+    std::vector<Glib::ustring> aliases;
+    Glib::ustring description;
+    callback_type callback;
+  };
 
   /**
-   * Returns all known setting names in alphabetical order.
+   * Returns names of all commands, alphabetically sorted.
    */
   std::vector<Glib::ustring> names();
+
+  /**
+   * Initializes the builtin command mapping. This must be called during
+   * program startup.
+   */
+  void initialize();
 }

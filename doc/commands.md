@@ -12,7 +12,7 @@ Selain currently supports following commands:
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |
 |`:insert`     |`:i`    |Switches to insert mode.               |
 |`:inspector`  |`:insp` |Toggles developer tools.               |
-|`:js`         |        |Runs JavaScript in the current tab.    |
+|`:js`         |`:j`    |Runs JavaScript in the current tab.    |
 |`:only`       |`:on`   |Closes all splits except the current.  |
 |`:open`       |`:o`    |Opens URI given as argument.           |
 |`:open-tab`   |`:ot`   |Opens URI given as argument in new tab.|
@@ -29,7 +29,7 @@ Selain currently supports following commands:
 |`:split`      |`:sp`   |Splits the current view horizontally.  |
 |`:split-focus`|`:spf`  |Changes focus of splitted view.        |
 |`:stop`       |`:s`    |Stops page from loading content.       |
-|`:tab`        |        |Switches to tab given as 1-based index.|
+|`:tab`        |`:t`    |Switches to tab given as 1-based index.|
 |`:tab-next`   |`:tn`   |Switches to next tab.                  |
 |`:tab-prev`   |`:tp`   |Switches to previous tab.              |
 |`:unbind`     |        |Remove keyboard binding.               |

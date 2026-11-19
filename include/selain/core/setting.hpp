@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,12 +25,42 @@
  */
 #pragma once
 
-#include <glibmm.h>
+#include <selain/ui/main-window.hpp>
 
-namespace selain::command
+namespace selain::setting
 {
+  struct Setting
+  {
+    /**
+     * Returns value of the setting.
+     */
+    virtual Glib::ustring get(ui::MainWindow& window) const = 0;
+
+    /**
+     * Attempts to set new value for the setting. Returns `true` if it was
+     * successful and `false` if the new value for setting was somehow invalid.
+     *
+     * TODO: Make this return error message instead.
+     */
+    virtual bool set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) = 0;
+  };
+
+  std::optional<Glib::ustring> get(
+    ui::MainWindow& window,
+    const Glib::ustring& key
+  );
+
+  bool set(
+    ui::MainWindow& window,
+    const Glib::ustring& key,
+    const Glib::ustring& value
+  );
+
   /**
-   * Returns all known command names in alphabetical order.
+   * Returns all setting names, alphabetically sorted.
    */
   std::vector<Glib::ustring> names();
 }

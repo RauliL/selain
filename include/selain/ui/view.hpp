@@ -104,6 +104,16 @@ namespace selain::ui
     void go_forward();
 
     /**
+     * Returns the current page zoom factor (1.0 = 100%).
+     */
+    double get_zoom_level() const;
+
+    /**
+     * Sets the page zoom factor (1.0 = 100%).
+     */
+    void set_zoom_level(double level);
+
+    /**
      * Toggles WebKit developer tools for this view.
      */
     void toggle_inspector();

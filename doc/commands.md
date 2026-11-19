@@ -35,9 +35,15 @@ Selain currently supports following commands:
 |`:unbind`     |        |Remove keyboard binding.               |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |
+|`:zoom`       |`:z`    |Changes zoom level of the current view.|
 
 `:js` takes a JavaScript expression or statement as argument and shows the
 result (or an error) as a notification. Example: `:js document.title`.
 
 `:split` and `:vsplit` accept an optional URI argument. Without one, the new
 split loads the same URI as the current view.
+
+`:zoom` sets the page zoom of the current view. Without an argument it shows
+the current level. Absolute values use a percentage (`:zoom 120%`); relative
+adjustments use a signed number of percentage points (`:zoom +20`,
+`:zoom -5`).

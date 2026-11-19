@@ -458,7 +458,6 @@ namespace selain::adblock
 
     if (!std::filesystem::exists(directory, ec))
     {
-      std::filesystem::create_directories(directory, ec);
       return;
     }
 

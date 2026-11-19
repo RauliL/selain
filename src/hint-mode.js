@@ -160,7 +160,7 @@
 
   const activateHint = (hint) => {
     if (!hint || typeof hint.element === "undefined") {
-      return "ignore";
+      return { mode: "ignore" };
     }
 
     const { element } = hint;
@@ -177,24 +177,29 @@
     ) {
       element.focus();
 
-      return "insert";
-    } else if (tagName === "frame" || tagName === "iframe") {
-      element.focus();
-    } else if (openToNewTab) {
-      const oldTarget = element.getAttribute("target");
-
-      element.setAttribute("target", "_blank");
-      element.click();
-      if (oldTarget === null) {
-        element.removeAttribute("target");
-      } else {
-        element.setAttribute("target", oldTarget);
-      }
-    } else {
-      element.click();
+      return { mode: "insert" };
     }
 
-    return "normal";
+    if (tagName === "frame" || tagName === "iframe") {
+      element.focus();
+
+      return { mode: "normal" };
+    }
+
+    // Open the tab from the UI process. A synthetic target=_blank click is not
+    // a user gesture, so WebKit blocks the new-window navigation when this
+    // runs in response to an async script-message reply.
+    if (openToNewTab) {
+      const uri = typeof element.href === "string" ? element.href : "";
+
+      if (uri) {
+        return { mode: "normal", uri };
+      }
+    }
+
+    element.click();
+
+    return { mode: "normal" };
   };
 
   const splitHints = () => {
@@ -264,7 +269,7 @@
       ch.length !== 1 ||
       hintChars.indexOf(ch.toUpperCase()) < 0
     ) {
-      return "ignore";
+      return { mode: "ignore" };
     }
 
     currentSequence += ch.toUpperCase();
@@ -277,7 +282,7 @@
 
     updateMatches(matches, nonMatches);
 
-    return "ignore";
+    return { mode: "ignore" };
   };
 
   const removeChar = () => {
@@ -286,22 +291,22 @@
       updateMatches(...splitHints());
     }
 
-    return "ignore";
+    return { mode: "ignore" };
   };
 
   const activateCurrentMatch = () => {
     if (currentSequence.length <= 0) {
-      return "ignore";
+      return { mode: "ignore" };
     }
 
     const match = hints.find((hint) => hint.sequence === currentSequence);
 
-    return match ? activateHint(match) : "ignore";
+    return match ? activateHint(match) : { mode: "ignore" };
   };
 
   const runCommand = (command) => {
     if (!command || typeof command !== "object") {
-      return "ignore";
+      return { mode: "ignore" };
     }
 
     switch (command.action) {
@@ -312,7 +317,7 @@
       case "activate":
         return activateCurrentMatch();
       default:
-        return "ignore";
+        return { mode: "ignore" };
     }
   };
 
@@ -331,7 +336,7 @@
       result = {
         id: sessionId,
         status: "result",
-        mode: runCommand(command),
+        ...runCommand(command),
       };
     }
   } finally {

@@ -202,14 +202,18 @@ namespace selain
       ? inja::json::parse(json, nullptr, false)
       : inja::json();
     std::string mode;
+    std::string uri;
 
-    if (
-      !message.is_discarded() &&
-      message.contains("mode") &&
-      message["mode"].is_string()
-    )
+    if (!message.is_discarded())
     {
-      mode = message["mode"].get<std::string>();
+      if (message.contains("mode") && message["mode"].is_string())
+      {
+        mode = message["mode"].get<std::string>();
+      }
+      if (message.contains("uri") && message["uri"].is_string())
+      {
+        uri = message["uri"].get<std::string>();
+      }
     }
 
     // Replies must be created in the same JSCContext as the incoming message;
@@ -239,12 +243,21 @@ namespace selain
       clear_js_context();
 
       const auto tab = m_tab;
+      const Glib::ustring open_uri = uri;
 
       m_tab = nullptr;
       if (tab)
       {
         if (const auto window = tab->get_main_window())
         {
+          if (!open_uri.empty())
+          {
+            // Same deferred open as decide-policy: avoid loading from inside
+            // the script-message handler.
+            Glib::signal_idle().connect_once([window, open_uri]() {
+              window->open_tab(open_uri, false);
+            });
+          }
           window->set_mode(mode == "insert" ? Mode::INSERT : Mode::NORMAL);
         }
       }

@@ -24,7 +24,7 @@ accept one of the values listed for that setting.
 | `adblock`       | Enable content filters from `~/.config/selain/blocklists` (default `true`). See [adblock.md](adblock.md). |
 | `homepage`      | URL that is opened when the browser starts.            |
 | `hint-chars`    | Characters to use for typing hints in hit-a-hint mode. |
-| `search-engine` | Search URL used when `:open` text is not a URI or domain. `%s` is replaced with the URL-encoded query (default DuckDuckGo). |
+| `search-engine` | Search URL used when `:open` text is not a URI or domain. `%s` is replaced with the URL-encoded query (default Brave search). |
 
 ## WebKit (boolean)
 

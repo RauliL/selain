@@ -73,6 +73,13 @@ These bindings follow Vim's `Ctrl-W` window commands.
 |`H`|Go back in history.   |
 |`L`|Go forward in history.|
 
+## Navigating the URL hierarchy
+
+|Key |                                                 |
+|----|-------------------------------------------------|
+|`gu`|Go up one level in the URL hierarchy.            |
+|`gU`|Go up to the root of the URL hierarchy.          |
+
 ## Searching
 
 |Key|                                          |

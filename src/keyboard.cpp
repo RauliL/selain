@@ -157,6 +157,8 @@ namespace selain::keyboard
     bind("l", "scroll right");
     bind("gg", "scroll top");
     bind("<Home>", "scroll top");
+    bind("gu", "go-up");
+    bind("gU", "go-root");
     bind("G", "scroll bottom");
     bind("<End>", "scroll bottom");
     bind("H", "back");

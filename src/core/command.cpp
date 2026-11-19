@@ -65,6 +65,8 @@ static bool cmd_tab(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_unbind(selain::ui::MainWindow&, Glib::ustring);
 
 // Commands that require tab.
+static bool cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
+static bool cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_js(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_paste(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
@@ -95,6 +97,16 @@ namespace selain::command
       "forward", { "f" },
       "Goes forward in browsing history.",
       tab_method(&ui::Tab::go_forward)
+    },
+    {
+      "go-root", { "gr" },
+      "Goes up to the root of the URL hierarchy.",
+      require_tab(cmd_go_root)
+    },
+    {
+      "go-up", { "gu" },
+      "Goes up one level in the URL hierarchy.",
+      require_tab(cmd_go_up)
     },
     {
       "hint", { "h" },
@@ -750,6 +762,34 @@ cmd_js(
   );
 
   return true; // TODO: Try to get JavaScript execution status.
+}
+
+static bool
+cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
+{
+  const auto next = selain::utils::url_hierarchy_root(tab.get_uri());
+
+  if (next.empty())
+  {
+    return true;
+  }
+  tab.load_uri(next);
+
+  return true;
+}
+
+static bool
+cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
+{
+  const auto next = selain::utils::url_hierarchy_up(tab.get_uri());
+
+  if (next.empty())
+  {
+    return true;
+  }
+  tab.load_uri(next);
+
+  return true;
 }
 
 static bool

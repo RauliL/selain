@@ -8,6 +8,8 @@ Selain currently supports following commands:
 |`:bind`       |        |Add keyboard binding.                  |
 |`:command`    |`:c`    |Switches to command mode.              |
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
+|`:go-root`    |`:gr`   |Goes up to the root of the URL hierarchy.|
+|`:go-up`      |`:gu`   |Goes up one level in the URL hierarchy.|
 |`:hint`       |`:h`    |Switches to hint mode.                 |
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |
 |`:insert`     |`:i`    |Switches to insert mode.               |

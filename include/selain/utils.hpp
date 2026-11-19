@@ -182,4 +182,18 @@ namespace selain::utils
     const Glib::ustring& input,
     const Glib::ustring& search_engine_template
   );
+
+  /**
+   * Returns the URI one path level above @p uri, with query and fragment
+   * removed. Returns an empty string when the URI is empty, invalid, or
+   * already at the hierarchy root.
+   */
+  Glib::ustring url_hierarchy_up(const Glib::ustring& uri);
+
+  /**
+   * Returns the root of the URL hierarchy for @p uri (scheme, authority, and
+   * `/`), with query and fragment removed. Returns an empty string when the
+   * URI is empty, invalid, or already at the root.
+   */
+  Glib::ustring url_hierarchy_root(const Glib::ustring& uri);
 }

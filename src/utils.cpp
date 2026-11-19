@@ -23,7 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <cstring>
 #include <format>
+#include <string>
 #include <string_view>
 
 #include <selain/utils.hpp>
@@ -259,5 +261,160 @@ namespace selain::utils
     }
 
     return build_search_uri(search_engine_template, trimmed);
+  }
+
+  namespace
+  {
+    ::GUri*
+    parse_uri(const Glib::ustring& uri)
+    {
+      ::GError* error = nullptr;
+      ::GUri* parsed = ::g_uri_parse(uri.c_str(), G_URI_FLAGS_NONE, &error);
+
+      if (error)
+      {
+        g_error_free(error);
+      }
+
+      return parsed;
+    }
+
+    Glib::ustring
+    uri_to_string(::GUri* uri)
+    {
+      char* text = ::g_uri_to_string(uri);
+      Glib::ustring result = text ? text : Glib::ustring();
+
+      g_free(text);
+
+      return result;
+    }
+
+    Glib::ustring
+    rebuild_uri_with_path(::GUri* uri, const char* path)
+    {
+      ::GUri* rebuilt = ::g_uri_build(
+        G_URI_FLAGS_NONE,
+        ::g_uri_get_scheme(uri),
+        ::g_uri_get_userinfo(uri),
+        ::g_uri_get_host(uri),
+        ::g_uri_get_port(uri),
+        path,
+        nullptr,
+        nullptr
+      );
+
+      if (!rebuilt)
+      {
+        return Glib::ustring();
+      }
+
+      const auto result = uri_to_string(rebuilt);
+
+      g_uri_unref(rebuilt);
+
+      return result;
+    }
+
+    std::string
+    parent_path(std::string path)
+    {
+      if (path.empty() || path == "/")
+      {
+        return {};
+      }
+      if (path.size() > 1 && path.back() == '/')
+      {
+        path.pop_back();
+      }
+
+      const auto slash = path.rfind('/');
+
+      if (slash == std::string::npos)
+      {
+        return {};
+      }
+      if (slash == 0)
+      {
+        return "/";
+      }
+
+      return path.substr(0, slash);
+    }
+
+    bool
+    is_hierarchy_root(const char* path, const char* query, const char* fragment)
+    {
+      return (
+        (!path || !*path || std::strcmp(path, "/") == 0) &&
+        !query &&
+        !fragment
+      );
+    }
+  }
+
+  Glib::ustring
+  url_hierarchy_up(const Glib::ustring& uri)
+  {
+    if (uri.empty())
+    {
+      return Glib::ustring();
+    }
+
+    ::GUri* parsed = parse_uri(uri);
+
+    if (!parsed)
+    {
+      return Glib::ustring();
+    }
+
+    const char* path = ::g_uri_get_path(parsed);
+    const auto parent = parent_path(path ? path : "");
+
+    if (parent.empty())
+    {
+      g_uri_unref(parsed);
+
+      return Glib::ustring();
+    }
+
+    const auto result = rebuild_uri_with_path(parsed, parent.c_str());
+
+    g_uri_unref(parsed);
+
+    return result;
+  }
+
+  Glib::ustring
+  url_hierarchy_root(const Glib::ustring& uri)
+  {
+    if (uri.empty())
+    {
+      return Glib::ustring();
+    }
+
+    ::GUri* parsed = parse_uri(uri);
+
+    if (!parsed)
+    {
+      return Glib::ustring();
+    }
+
+    if (is_hierarchy_root(
+      ::g_uri_get_path(parsed),
+      ::g_uri_get_query(parsed),
+      ::g_uri_get_fragment(parsed)
+    ))
+    {
+      g_uri_unref(parsed);
+
+      return Glib::ustring();
+    }
+
+    const auto result = rebuild_uri_with_path(parsed, "/");
+
+    g_uri_unref(parsed);
+
+    return result;
   }
 }

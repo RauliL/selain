@@ -23,6 +23,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <algorithm>
+#include <cmath>
 #include <format>
 #include <type_traits>
 
@@ -68,6 +70,7 @@ static bool cmd_paste(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_split_focus(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_yank(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
+static bool cmd_zoom(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 
 namespace selain::command
 {
@@ -228,6 +231,11 @@ namespace selain::command
       "yank", { "y" },
       "Copies current URI to clipboard.",
       require_tab(cmd_yank)
+    },
+    {
+      "zoom", { "z" },
+      "Changes zoom level of the current view.",
+      require_tab(cmd_zoom)
     },
   };
 
@@ -873,6 +881,66 @@ cmd_yank(selain::ui::MainWindow& window, selain::ui::Tab& tab, Glib::ustring)
   }
   clipboard->set_text(uri);
   window.show_info("Yanked " + uri.raw());
+
+  return true;
+}
+
+static bool
+cmd_zoom(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring args
+)
+{
+  static constexpr double min_zoom = 0.1;
+  static constexpr double max_zoom = 5.0;
+
+  const auto arg = selain::utils::trim(args);
+  const auto current = tab.get_zoom_level();
+
+  if (arg.empty())
+  {
+    window.show_info(std::format(
+      "Zoom: {}%",
+      static_cast<int>(std::lround(current * 100.0))
+    ));
+
+    return true;
+  }
+
+  const auto& raw = arg.raw();
+  double level = current;
+  bool ok = false;
+
+  try
+  {
+    if (!raw.empty() && raw.back() == '%')
+    {
+      level = std::stod(raw.substr(0, raw.size() - 1)) / 100.0;
+      ok = true;
+    }
+    else if (!raw.empty() && (raw.front() == '+' || raw.front() == '-'))
+    {
+      level = current + std::stod(raw) / 100.0;
+      ok = true;
+    }
+  }
+  catch (const std::exception&)
+  {
+    ok = false;
+  }
+
+  if (!ok)
+  {
+    window.show_error(
+      "Invalid zoom. Use percentage (e.g. 120%) or relative (+20, -5)."
+    );
+
+    return false;
+  }
+
+  level = std::clamp(level, min_zoom, max_zoom);
+  tab.set_zoom_level(level);
 
   return true;
 }

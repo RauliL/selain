@@ -482,6 +482,21 @@ namespace selain::ui
     ::webkit_web_view_go_forward(m_web_view);
   }
 
+  double
+  View::get_zoom_level() const
+  {
+    return m_web_view ? ::webkit_web_view_get_zoom_level(m_web_view) : 1.0;
+  }
+
+  void
+  View::set_zoom_level(double level)
+  {
+    if (m_web_view)
+    {
+      ::webkit_web_view_set_zoom_level(m_web_view, level);
+    }
+  }
+
   void
   View::toggle_inspector()
   {

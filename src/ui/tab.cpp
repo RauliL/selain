@@ -524,6 +524,21 @@ namespace selain::ui
     }
   }
 
+  double
+  Tab::get_zoom_level() const
+  {
+    return m_active_view ? m_active_view->get_zoom_level() : 1.0;
+  }
+
+  void
+  Tab::set_zoom_level(double level)
+  {
+    if (m_active_view)
+    {
+      m_active_view->set_zoom_level(level);
+    }
+  }
+
   void
   Tab::toggle_inspector()
   {

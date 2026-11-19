@@ -62,6 +62,9 @@ These bindings follow Vim's `Ctrl-W` window commands.
 |`p`        |Open URI from clipboard.             |
 |`P`        |Open URI from clipboard in a new tab.|
 |`yy`       |Copy current URI to clipboard.       |
+|`+`        |Zoom in by 10%.                      |
+|`-`        |Zoom out by 10%.                     |
+|`Ctrl+0`   |Reset zoom.                          |
 
 ## Navigating history
 

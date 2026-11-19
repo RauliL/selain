@@ -1,0 +1,23 @@
+name: build
+
+on: [push]
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtkmm-4.0-dev \
+            libwebkitgtk-6.0-dev
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'cmake/**') }}
+      - name: Build
+        uses: threeal/cmake-action@v2.1.0

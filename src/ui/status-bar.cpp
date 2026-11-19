@@ -38,9 +38,12 @@ namespace selain::ui
     m_mode_label.set_justify(Gtk::Justification::CENTER);
 
     m_status_label.add_css_class("status-label");
-    m_status_label.set_halign(Gtk::Align::START);
-    m_status_label.set_justify(Gtk::Justification::LEFT);
+    m_status_label.set_halign(Gtk::Align::FILL);
     m_status_label.set_hexpand(true);
+    m_status_label.set_xalign(0.0f);
+    m_status_label.set_ellipsize(Pango::EllipsizeMode::END);
+    // Small natural width so long URIs cannot force the layout to grow.
+    m_status_label.set_width_chars(1);
 
     append(m_mode_label);
     append(m_status_label);

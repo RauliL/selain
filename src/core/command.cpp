@@ -40,10 +40,16 @@ using tab_callback_type = std::function<bool(
   selain::ui::Tab&,
   Glib::ustring
 )>;
+using tab_method_type = std::function<void(selain::ui::Tab*)>;
+using window_method_type = std::function<void(selain::ui::MainWindow*)>;
 using paste_callback_type = std::function<void(const Glib::ustring&)>;
 
 static selain::command::callback_type switch_mode(selain::Mode);
 static selain::command::callback_type require_tab(const tab_callback_type&);
+static selain::command::callback_type tab_method(const tab_method_type&);
+static selain::command::callback_type tab_reload(bool);
+static selain::command::callback_type tab_split(bool);
+static selain::command::callback_type window_method(const window_method_type&);
 
 // Commands that do not require tab.
 static bool cmd_bind(selain::ui::MainWindow&, Glib::ustring);
@@ -52,29 +58,15 @@ static bool cmd_open(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_open_tab(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_paste_tab(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_quit(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_quit_all(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_set(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_tab(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_tab_next(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_tab_prev(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_unbind(selain::ui::MainWindow&, Glib::ustring);
 
 // Commands that require tab.
-static bool cmd_back(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_force_reload(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_forward(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_inspector(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_js(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_only(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_paste(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_reload(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_search_next(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_search_prev(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_split(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_split_focus(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_stop(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_vsplit(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_yank(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 
 namespace selain::command
@@ -84,7 +76,7 @@ namespace selain::command
     {
       "back", { "b" },
       "Goes back in browsing history.",
-      require_tab(cmd_back)
+      tab_method(&ui::Tab::go_back)
     },
     {
       "bind", {},
@@ -99,7 +91,7 @@ namespace selain::command
     {
       "forward", { "f" },
       "Goes forward in browsing history.",
-      require_tab(cmd_forward)
+      tab_method(&ui::Tab::go_forward)
     },
     {
       "hint", { "h" },
@@ -119,7 +111,8 @@ namespace selain::command
     {
       "inspector", { "insp" },
       "Toggles developer tools.",
-      require_tab(cmd_inspector)
+      // TODO: Add support for argument such as on/off.
+      tab_method(&ui::Tab::toggle_inspector)
     },
     {
       "js", { "j" },
@@ -129,7 +122,7 @@ namespace selain::command
     {
       "only", { "on" },
       "Closes all splits except the current.",
-      require_tab(cmd_only),
+      tab_method(&ui::Tab::close_other_views)
     },
     {
       "open", { "o" },
@@ -154,7 +147,7 @@ namespace selain::command
     {
       "qall", { "qa" },
       "Closes all tabs.",
-      cmd_quit_all
+      window_method(&ui::MainWindow::schedule_close)
     },
     {
       "quit", { "q" },
@@ -164,12 +157,12 @@ namespace selain::command
     {
       "reload", { "r" },
       "Reloads page.",
-      require_tab(cmd_reload)
+      tab_reload(false)
     },
     {
       "reload!", { "r!" },
       "Reloads page bypassing the cache.",
-      require_tab(cmd_force_reload)
+      tab_reload(true)
     },
     {
       "scroll", { "sc" },
@@ -179,12 +172,12 @@ namespace selain::command
     {
       "search-next", { "sen" },
       "Goes to next search result.",
-      require_tab(cmd_search_next)
+      tab_method(&ui::Tab::search_next)
     },
     {
       "search-prev", { "sep" },
       "Goes to previous search result.",
-      require_tab(cmd_search_prev)
+      tab_method(&ui::Tab::search_prev)
     },
     {
       "set", { "se" },
@@ -194,7 +187,7 @@ namespace selain::command
     {
       "split", { "sp" },
       "Splits the current view horizontally.",
-      require_tab(cmd_split)
+      tab_split(false)
     },
     {
       "split-focus", { "spf" },
@@ -204,7 +197,7 @@ namespace selain::command
     {
       "stop", { "s" },
       "Stops page from loading content.",
-      require_tab(cmd_stop)
+      tab_method(&ui::Tab::stop_loading)
     },
     {
       "tab", { "t" },
@@ -214,12 +207,12 @@ namespace selain::command
     {
       "tab-next", { "tn" },
       "Switches to next tab.",
-      cmd_tab_next
+      window_method(&ui::MainWindow::next_tab)
     },
     {
       "tab-prev", { "tp" },
       "Switches to previous tab.",
-      cmd_tab_prev
+      window_method(&ui::MainWindow::prev_tab)
     },
     {
       "unbind", {},
@@ -229,7 +222,7 @@ namespace selain::command
     {
       "vsplit", { "vs", "vsp" },
       "Splits the current view vertically.",
-      require_tab(cmd_vsplit)
+      tab_split(true)
     },
     {
       "yank", { "y" },
@@ -385,6 +378,60 @@ require_tab(const tab_callback_type& callback)
   };
 }
 
+static selain::command::callback_type
+tab_method(const tab_method_type& callback)
+{
+  return [callback](selain::ui::MainWindow& window, Glib::ustring)
+  {
+    if (const auto tab = window.get_current_tab())
+    {
+      callback(tab);
+
+      return true;
+    }
+    window.show_error("No tab open.");
+
+    return false;
+  };
+}
+
+static selain::command::callback_type
+tab_reload(bool force)
+{
+  return require_tab(
+    [force](selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
+    {
+      tab.reload(force);
+
+      return true;
+    }
+  );
+}
+
+static selain::command::callback_type
+tab_split(bool vertical)
+{
+  return require_tab(
+    [vertical](selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring uri)
+    {
+      tab.split(vertical, uri);
+
+      return true;
+    }
+  );
+}
+
+static selain::command::callback_type
+window_method(const window_method_type& callback)
+{
+  return [callback](selain::ui::MainWindow& window, Glib::ustring)
+  {
+    callback(&window);
+
+    return true;
+  };
+}
+
 static bool
 do_paste(selain::ui::MainWindow& window, const paste_callback_type& callback)
 {
@@ -406,22 +453,6 @@ do_paste(selain::ui::MainWindow& window, const paste_callback_type& callback)
       catch (const Glib::Error&) {}
     }
   );
-
-  return true;
-}
-
-static bool
-do_reload(selain::ui::Tab& tab, bool force)
-{
-  tab.reload(force);
-
-  return true;
-}
-
-static bool
-do_split(selain::ui::Tab& tab, bool vertical, Glib::ustring uri)
-{
-  tab.split(vertical, uri);
 
   return true;
 }
@@ -600,14 +631,6 @@ cmd_quit(selain::ui::MainWindow& window, Glib::ustring)
 }
 
 static bool
-cmd_quit_all(selain::ui::MainWindow& window, Glib::ustring)
-{
-  window.schedule_close();
-
-  return true;
-}
-
-static bool
 cmd_set(selain::ui::MainWindow& window, Glib::ustring args)
 {
   const auto index = args.find('=');
@@ -666,22 +689,6 @@ cmd_tab(selain::ui::MainWindow& window, Glib::ustring args)
 }
 
 static bool
-cmd_tab_prev(selain::ui::MainWindow& window, Glib::ustring)
-{
-  window.prev_tab();
-
-  return true;
-}
-
-static bool
-cmd_tab_next(selain::ui::MainWindow& window, Glib::ustring)
-{
-  window.next_tab();
-
-  return true;
-}
-
-static bool
 cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 {
   if (selain::utils::is_blank(args))
@@ -698,31 +705,6 @@ cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 }
 
 // Commands that require tab.
-
-static bool
-cmd_back(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  tab.go_back();
-
-  return true;
-}
-
-static bool
-cmd_forward(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  tab.go_forward();
-
-  return true;
-}
-
-static bool
-cmd_inspector(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  // TODO: Add support for argument such as on/off.
-  tab.toggle_inspector();
-
-  return true;
-}
 
 static void
 js_command_callback(
@@ -793,14 +775,6 @@ cmd_js(
 }
 
 static bool
-cmd_only(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  tab.close_other_views();
-
-  return true;
-}
-
-static bool
 cmd_paste(selain::ui::MainWindow& window, selain::ui::Tab& tab, Glib::ustring)
 {
   return do_paste(
@@ -810,18 +784,6 @@ cmd_paste(selain::ui::MainWindow& window, selain::ui::Tab& tab, Glib::ustring)
       tab.load_uri(uri);
     }
   );
-}
-
-static bool
-cmd_reload(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  return do_reload(tab, false);
-}
-
-static bool
-cmd_force_reload(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  return do_reload(tab, true);
 }
 
 static bool
@@ -901,28 +863,6 @@ cmd_scroll(
 }
 
 static bool
-cmd_search_next(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  tab.search_next();
-
-  return true;
-}
-
-static bool
-cmd_search_prev(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  tab.search_prev();
-
-  return true;
-}
-
-static bool
-cmd_split(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring args)
-{
-  return do_split(tab, false, args);
-}
-
-static bool
 cmd_split_focus(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
@@ -949,20 +889,6 @@ cmd_split_focus(
   }
 
   return false;
-}
-
-static bool
-cmd_stop(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
-{
-  tab.stop_loading();
-
-  return true;
-}
-
-static bool
-cmd_vsplit(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring args)
-{
-  return do_split(tab, true, args);
 }
 
 static bool

@@ -26,7 +26,6 @@
 #include <cstring>
 #include <format>
 
-#include <selain/theme.hpp>
 #include <selain/ui/main-window.hpp>
 
 namespace selain::keyboard
@@ -162,10 +161,15 @@ namespace selain::ui
     set_hexpand(true);
     set_vexpand(true);
     add_css_class("selain-view");
-    ::webkit_web_view_set_background_color(
-      m_web_view,
-      theme::window_background.gobj()
-    );
+
+    Gdk::RGBA background;
+
+    // Resolve the theme color from GTK CSS (@define-color) so the WebKit
+    // blank/loading background stays in sync with user style.css overrides.
+    if (get_style_context()->lookup_color("selain-window-background", background))
+    {
+      ::webkit_web_view_set_background_color(m_web_view, background.gobj());
+    }
 
     settings->install(m_web_view);
   }

@@ -1,22 +1,20 @@
-* {
-  --selain-window-background: {{ window-background }};
-  --selain-window-foreground: {{ window-foreground }};
-  --selain-status-bar-background: {{ status-bar-background }};
-  --selain-status-bar-foreground: {{ status-bar-foreground }};
-  --selain-status-bar-error-background: {{ status-bar-error-background }};
-  --selain-status-bar-error-foreground: {{ status-bar-error-foreground }};
-  --selain-mode-bar-normal-background: {{ mode-bar-normal-background }};
-  --selain-mode-bar-normal-foreground: {{ mode-bar-normal-foreground }};
-  --selain-mode-bar-insert-background: {{ mode-bar-insert-background }};
-  --selain-mode-bar-insert-foreground: {{ mode-bar-insert-foreground }};
-}
+@define-color selain-window-background #282828;
+@define-color selain-window-foreground #ebdbb2;
+@define-color selain-status-bar-background #3c3836;
+@define-color selain-status-bar-foreground #83a598;
+@define-color selain-status-bar-error-background #fb4934;
+@define-color selain-status-bar-error-foreground #fbf1c7;
+@define-color selain-mode-bar-normal-background #83a598;
+@define-color selain-mode-bar-normal-foreground #282828;
+@define-color selain-mode-bar-insert-background #fabd2f;
+@define-color selain-mode-bar-insert-foreground #282828;
 
 .selain-window {
-  background-color: var(--selain-window-background);
+  background-color: @selain-window-background;
 }
 
 .selain-status-bar {
-  background-color: var(--selain-status-bar-background);
+  background-color: @selain-status-bar-background;
 }
 
 .selain-status-bar label {
@@ -25,28 +23,28 @@
 }
 
 .selain-status-bar .mode-label {
-  background-color: var(--selain-mode-bar-normal-background);
-  color: var(--selain-mode-bar-normal-foreground);
+  background-color: @selain-mode-bar-normal-background;
+  color: @selain-mode-bar-normal-foreground;
 }
 
 .selain-status-bar .mode-label.mode-insert {
-  background-color: var(--selain-mode-bar-insert-background);
-  color: var(--selain-mode-bar-insert-foreground);
+  background-color: @selain-mode-bar-insert-background;
+  color: @selain-mode-bar-insert-foreground;
 }
 
 .selain-status-bar .status-label {
-  background-color: var(--selain-status-bar-background);
-  color: var(--selain-status-bar-foreground);
+  background-color: @selain-status-bar-background;
+  color: @selain-status-bar-foreground;
 }
 
 .selain-command-entry {
-  background-color: var(--selain-window-background);
+  background-color: @selain-window-background;
 }
 
 .selain-command-entry entry {
-  background: var(--selain-window-background);
+  background: @selain-window-background;
   border: none;
-  color: var(--selain-status-bar-error-foreground);
+  color: @selain-status-bar-error-foreground;
   font-family: monospace;
   margin: 0;
   outline: none;
@@ -54,14 +52,14 @@
 }
 
 .selain-command-entry .notification-info {
-  background-color: var(--selain-window-background);
-  color: var(--selain-window-foreground);
+  background-color: @selain-window-background;
+  color: @selain-window-foreground;
   font-family: monospace;
 }
 
 .selain-command-entry .notification-error {
-  background-color: var(--selain-status-bar-error-background);
-  color: var(--selain-status-bar-error-foreground);
+  background-color: @selain-status-bar-error-background;
+  color: @selain-status-bar-error-foreground;
   font-family: monospace;
 }
 
@@ -70,5 +68,5 @@
 }
 
 .selain-view-active {
-  border-color: var(--selain-window-foreground);
+  border-color: @selain-window-foreground;
 }

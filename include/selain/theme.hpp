@@ -25,21 +25,10 @@
  */
 #pragma once
 
-#include <gtkmm.h>
+#include <string>
 
 namespace selain::theme
 {
-  extern const Gdk::RGBA window_background;
-  extern const Gdk::RGBA window_foreground;
-  extern const Gdk::RGBA status_bar_background;
-  extern const Gdk::RGBA status_bar_foreground;
-  extern const Gdk::RGBA status_bar_error_background;
-  extern const Gdk::RGBA status_bar_error_foreground;
-  extern const Gdk::RGBA mode_bar_normal_background;
-  extern const Gdk::RGBA mode_bar_normal_foreground;
-  extern const Gdk::RGBA mode_bar_insert_background;
-  extern const Gdk::RGBA mode_bar_insert_foreground;
-
   /**
    * Initializes CSS used for the application. Must be called during the
    * application startup before the UI is being shown.

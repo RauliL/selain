@@ -27,6 +27,7 @@
 #include <format>
 
 #include <cmrc/cmrc.hpp>
+#include <gtkmm.h>
 #include <inja/inja.hpp>
 
 #include <selain/theme.hpp>
@@ -36,30 +37,37 @@ CMRC_DECLARE(selain::rc);
 
 namespace selain::theme
 {
-  const Gdk::RGBA window_background("#282828");
-  const Gdk::RGBA window_foreground("#ebdbb2");
-  const Gdk::RGBA status_bar_background("#3c3836");
-  const Gdk::RGBA status_bar_foreground("#83a598");
-  const Gdk::RGBA status_bar_error_background("#fb4934");
-  const Gdk::RGBA status_bar_error_foreground("#fbf1c7");
-  const Gdk::RGBA mode_bar_normal_background("#83a598");
-  const Gdk::RGBA mode_bar_normal_foreground("#282828");
-  const Gdk::RGBA mode_bar_insert_background("#fabd2f");
-  const Gdk::RGBA mode_bar_insert_foreground("#282828");
-
   static void
   add_theme_colors(inja::json& data)
   {
-    data["window-background"] = window_background.to_string().raw();
-    data["window-foreground"] = window_foreground.to_string().raw();
-    data["status-bar-background"] = status_bar_background.to_string().raw();
-    data["status-bar-foreground"] = status_bar_foreground.to_string().raw();
-    data["status-bar-error-background"] = status_bar_error_background.to_string().raw();
-    data["status-bar-error-foreground"] = status_bar_error_foreground.to_string().raw();
-    data["mode-bar-normal-background"] = mode_bar_normal_background.to_string().raw();
-    data["mode-bar-normal-foreground"] = mode_bar_normal_foreground.to_string().raw();
-    data["mode-bar-insert-background"] = mode_bar_insert_background.to_string().raw();
-    data["mode-bar-insert-foreground"] = mode_bar_insert_foreground.to_string().raw();
+    static const std::array color_names =
+    {
+      "window-background",
+      "window-foreground",
+      "status-bar-background",
+      "status-bar-foreground",
+      "status-bar-error-background",
+      "status-bar-error-foreground",
+      "mode-bar-normal-background",
+      "mode-bar-normal-foreground",
+      "mode-bar-insert-background",
+      "mode-bar-insert-foreground",
+    };
+    static Gtk::Label probe;
+
+    const auto context = probe.get_style_context();
+
+    for (const auto& name : color_names)
+    {
+      Gdk::RGBA color;
+
+      if (context->lookup_color(std::format("selain-{}", name), color))
+      {
+        data[name] = color.to_string();
+      } else {
+        data[name] = "";
+      }
+    }
   }
 
   static void
@@ -68,12 +76,10 @@ namespace selain::theme
     auto provider = Gtk::CssProvider::create();
     auto fs = cmrc::selain::rc::get_filesystem();
     auto stylesheet = fs.open("src/theme.css");
-    inja::json data;
 
-    add_theme_colors(data);
-    provider->load_from_string(inja::render(
-      std::string(std::begin(stylesheet), std::end(stylesheet)),
-      data
+    provider->load_from_string(std::string(
+      std::begin(stylesheet),
+      std::end(stylesheet)
     ));
     Gtk::StyleProvider::add_provider_for_display(
       Gdk::Display::get_default(),

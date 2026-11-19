@@ -1,7 +1,7 @@
 # Keyboard shortcuts
 
-Following keyboard shortcuts work when the browser is in normal mode. Currently
-all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
+Following keyboard shortcuts work when the browser is in normal mode. Keyboard
+shortcuts can be customized with `:bind` and `:unbind` commands.
 
 ## Switching between modes
 
@@ -12,23 +12,23 @@ all keyboard shortcuts are hardcoded and cannot be customized. (Yet.)
 
 ## Tab management
 
-|Key|                                    |
-|---|------------------------------------|
-|`r`|Reload current tab.                 |
-|`R`|Reload current tab, bypassing cache.|
-|`t`|Open new tab.                       |
-|`x`|Close current tab.                  |
-|`J`|Switch to previous tab.             |
-|`K`|Switch to next tab.                 |
-|`Alt-1` … `Alt-9`|Switch to tab 1–9.       |
-|`Alt-0`|Switch to tab 10.                   |
+|Key|                                                  |
+|---|--------------------------------------------------|
+|`r`              |Reload current tab.                 |
+|`R`              |Reload current tab, bypassing cache.|
+|`t`              |Open new tab.                       |
+|`x`              |Close current tab.                  |
+|`J`              |Switch to previous tab.             |
+|`K`              |Switch to next tab.                 |
+|`Alt-1` … `Alt-9`|Switch to tab 1–9.                  |
+|`Alt-0`          |Switch to tab 10.                   |
 
 ## Split management
 
 These bindings follow Vim's `Ctrl-W` window commands.
 
-|Key|                                         |
-|---|-----------------------------------------|
+|Key|                                           |
+|---|-------------------------------------------|
 |`Ctrl-W s`|Split the current view horizontally.|
 |`Ctrl-W v`|Split the current view vertically.  |
 |`Ctrl-W h`|Focus the split to the left.        |

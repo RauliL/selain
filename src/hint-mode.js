@@ -12,7 +12,8 @@
   let openToNewTab = {{ open-to-new-tab }};
   const hintStyle =
     "z-index:100000;position:absolute;padding:0.2em;border:none;" +
-    "background-color:#ffd76e;color:#000000;font-family:monospace;" +
+    "background-color:#fabd2f;color:#282828;font-family:monospace;" +
+
     "font-size:1em;line-height:1;font-weight:bold;white-space:nowrap;" +
     "text-shadow:none;pointer-events:none;";
 
@@ -233,7 +234,7 @@
 
         matchingPart.textContent = currentSequence;
         nonMatchingPart.textContent = sequence.slice(currentSequence.length);
-        matchingPart.style.color = "#a07555";
+        matchingPart.style.color = "#d65d0e";
 
         span.appendChild(matchingPart);
         span.appendChild(nonMatchingPart);

@@ -27,10 +27,10 @@
 #include <cstdint>
 #include <format>
 
+#include <selain/core/theme.hpp>
 #include <selain/protocol/gopher/client.hpp>
 #include <selain/protocol/gopher/menu.hpp>
 #include <selain/protocol/gopher/scheme.hpp>
-#include <selain/theme.hpp>
 #include <selain/utils.hpp>
 
 namespace selain::protocol::gopher

@@ -23,7 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/theme.hpp>
+#include <selain/core/theme.hpp>
 #include <selain/utils.hpp>
 
 namespace selain::format::gemtext

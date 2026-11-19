@@ -25,9 +25,9 @@
  */
 #include <format>
 
+#include <selain/core/theme.hpp>
 #include <selain/protocol/gemini/client.hpp>
 #include <selain/protocol/gemini/scheme.hpp>
-#include <selain/theme.hpp>
 #include <selain/ui/view.hpp>
 #include <selain/utils.hpp>
 

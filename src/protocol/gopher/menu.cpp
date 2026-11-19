@@ -26,9 +26,9 @@
 #include <cctype>
 #include <sstream>
 
-#include <selain/protocol/gopher/menu.hpp>
+#include <selain/core/theme.hpp>
 #include <selain/protocol/gopher/client.hpp>
-#include <selain/theme.hpp>
+#include <selain/protocol/gopher/menu.hpp>
 #include <selain/utils.hpp>
 
 namespace selain::protocol::gopher

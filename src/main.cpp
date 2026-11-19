@@ -30,8 +30,8 @@
 
 #include <selain/core/command.hpp>
 #include <selain/core/setting.hpp>
+#include <selain/core/theme.hpp>
 #include <selain/keyboard.hpp>
-#include <selain/theme.hpp>
 #include <selain/ui/main-window.hpp>
 
 /**

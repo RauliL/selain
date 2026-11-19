@@ -30,7 +30,7 @@
 #include <gtkmm.h>
 #include <inja/inja.hpp>
 
-#include <selain/theme.hpp>
+#include <selain/core/theme.hpp>
 #include <selain/utils.hpp>
 
 CMRC_DECLARE(selain::rc);

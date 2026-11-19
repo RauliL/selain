@@ -27,9 +27,9 @@
 #include <format>
 #include <string_view>
 
+#include <selain/core/theme.hpp>
 #include <selain/protocol/finger/client.hpp>
 #include <selain/protocol/finger/scheme.hpp>
-#include <selain/theme.hpp>
 #include <selain/utils.hpp>
 
 namespace selain::protocol::finger

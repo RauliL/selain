@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -44,7 +45,6 @@ namespace selain::adblock
   {
     struct LoadJob
     {
-      ::WebKitUserContentManager* manager{nullptr};
       ::WebKitUserContentFilterStore* store{nullptr};
       ::GBytes* bytes{nullptr};
       std::string identifier;
@@ -52,6 +52,11 @@ namespace selain::adblock
       std::filesystem::path meta_path;
       std::string fingerprint;
     };
+
+    ::WebKitUserContentManager* g_manager{nullptr};
+    ::WebKitUserContentFilterStore* g_store{nullptr};
+    std::vector<::WebKitUserContentFilter*> g_filters;
+    bool g_enabled{true};
 
     [[nodiscard]] std::filesystem::path
     meta_directory()
@@ -106,13 +111,33 @@ namespace selain::adblock
     }
 
     void
-    add_filter(
-      ::WebKitUserContentManager* manager,
-      ::WebKitUserContentFilter* filter
-    )
+    remember_filter(::WebKitUserContentFilter* filter)
     {
-      ::webkit_user_content_manager_add_filter(manager, filter);
-      ::webkit_user_content_filter_unref(filter);
+      const auto* id = ::webkit_user_content_filter_get_identifier(filter);
+
+      for (auto& slot : g_filters)
+      {
+        if (std::strcmp(::webkit_user_content_filter_get_identifier(slot), id) == 0)
+        {
+          if (g_manager)
+          {
+            ::webkit_user_content_manager_remove_filter_by_id(g_manager, id);
+          }
+          ::webkit_user_content_filter_unref(slot);
+          slot = filter;
+          if (g_enabled && g_manager)
+          {
+            ::webkit_user_content_manager_add_filter(g_manager, filter);
+          }
+          return;
+        }
+      }
+
+      g_filters.push_back(filter);
+      if (g_enabled && g_manager)
+      {
+        ::webkit_user_content_manager_add_filter(g_manager, filter);
+      }
     }
 
     void destroy_job(LoadJob* job);
@@ -200,7 +225,7 @@ namespace selain::adblock
 
           if (filter)
           {
-            add_filter(job->manager, filter);
+            remember_filter(filter);
             write_meta(job->meta_path, job->fingerprint);
           }
           else
@@ -247,7 +272,7 @@ namespace selain::adblock
 
       if (filter)
       {
-        add_filter(job->manager, filter);
+        remember_filter(filter);
         destroy_job(job);
         return;
       }
@@ -257,7 +282,6 @@ namespace selain::adblock
         g_error_free(error);
       }
 
-      // Source fingerprint matched but compiled filter is missing: rebuild.
       compile_and_save(job);
     }
 
@@ -269,7 +293,6 @@ namespace selain::adblock
 
     void
     load_file_with_store(
-      ::WebKitUserContentManager* manager,
       ::WebKitUserContentFilterStore* store,
       const std::filesystem::path& path,
       std::string_view identifier
@@ -292,7 +315,6 @@ namespace selain::adblock
       }
 
       auto* job = new LoadJob{};
-      job->manager = manager;
       job->store = WEBKIT_USER_CONTENT_FILTER_STORE(g_object_ref(store));
       job->identifier = std::string(identifier);
       job->source_path = path;
@@ -312,6 +334,16 @@ namespace selain::adblock
       }
 
       compile_and_save(job);
+    }
+
+    void
+    clear_filters()
+    {
+      for (auto* filter : g_filters)
+      {
+        ::webkit_user_content_filter_unref(filter);
+      }
+      g_filters.clear();
     }
   }
 
@@ -335,6 +367,39 @@ namespace selain::adblock
     ));
   }
 
+  bool
+  is_enabled()
+  {
+    return g_enabled;
+  }
+
+  void
+  set_enabled(bool enabled)
+  {
+    if (g_enabled == enabled)
+    {
+      return;
+    }
+
+    g_enabled = enabled;
+
+    if (!g_manager)
+    {
+      return;
+    }
+
+    if (!enabled)
+    {
+      ::webkit_user_content_manager_remove_all_filters(g_manager);
+      return;
+    }
+
+    for (auto* filter : g_filters)
+    {
+      ::webkit_user_content_manager_add_filter(g_manager, filter);
+    }
+  }
+
   void
   load_file(
     ::WebKitUserContentManager* manager,
@@ -347,14 +412,35 @@ namespace selain::adblock
       return;
     }
 
+    if (!g_manager)
+    {
+      g_manager = manager;
+    }
+
     std::error_code ec;
     std::filesystem::create_directories(filter_store_directory(), ec);
 
-    auto* store = webkit_user_content_filter_store_new(
-      filter_store_directory().c_str()
-    );
-    load_file_with_store(manager, store, path, identifier);
-    g_object_unref(store);
+    if (!g_store)
+    {
+      g_store = webkit_user_content_filter_store_new(
+        filter_store_directory().c_str()
+      );
+    }
+
+    load_file_with_store(g_store, path, identifier);
+  }
+
+  void
+  shutdown()
+  {
+    if (g_manager && g_enabled)
+    {
+      ::webkit_user_content_manager_remove_all_filters(g_manager);
+    }
+    clear_filters();
+    g_clear_object(&g_store);
+    g_manager = nullptr;
+    g_enabled = true;
   }
 
   void
@@ -364,6 +450,8 @@ namespace selain::adblock
     {
       return;
     }
+
+    g_manager = manager;
 
     const auto directory = blocklists_directory();
     std::error_code ec;
@@ -410,18 +498,16 @@ namespace selain::adblock
     std::sort(files.begin(), files.end());
     std::filesystem::create_directories(filter_store_directory(), ec);
 
-    auto* store = webkit_user_content_filter_store_new(
-      filter_store_directory().c_str()
-    );
-    for (const auto& path : files)
+    if (!g_store)
     {
-      load_file_with_store(
-        manager,
-        store,
-        path,
-        identifier_for_path(path)
+      g_store = webkit_user_content_filter_store_new(
+        filter_store_directory().c_str()
       );
     }
-    g_object_unref(store);
+
+    for (const auto& path : files)
+    {
+      load_file_with_store(g_store, path, identifier_for_path(path));
+    }
   }
 }

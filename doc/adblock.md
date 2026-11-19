@@ -3,6 +3,9 @@
 Selain blocks ads and trackers with WebKit’s content filter API
 (`WebKitUserContentFilterStore`), which applies rules at resource-load time.
 
+Toggle with `:set adblock=true` / `:set adblock=false` (default is on). Put
+`set adblock=false` in `~/.config/selain/init.selain` to disable at startup.
+
 ## Blocklist directory
 
 Place one or more blocklist files in:

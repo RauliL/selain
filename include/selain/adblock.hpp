@@ -46,7 +46,8 @@ namespace selain::adblock
 
   /**
    * Loads every regular file from the blocklists directory, compiles each
-   * into a WebKit content filter, and adds it to @p manager.
+   * into a WebKit content filter, and adds it to @p manager when ad blocking
+   * is enabled (the default).
    *
    * Files may be Safari/WebKit content-blocker JSON, or Adblock Plus /
    * EasyList text (converted automatically). Loading is asynchronous; filters
@@ -58,7 +59,14 @@ namespace selain::adblock
   void initialize(::WebKitUserContentManager* manager);
 
   /**
-   * Loads a single blocklist file and adds the compiled filter to @p manager.
+   * Releases filters and store state. Safe to call if initialize was never
+   * called.
+   */
+  void shutdown();
+
+  /**
+   * Loads a single blocklist file and adds the compiled filter to @p manager
+   * when ad blocking is enabled.
    * @p identifier is the WebKit filter id (typically the file basename).
    */
   void load_file(
@@ -66,4 +74,15 @@ namespace selain::adblock
     const std::filesystem::path& path,
     std::string_view identifier
   );
+
+  /**
+   * Whether content filters are applied. Defaults to true.
+   */
+  bool is_enabled();
+
+  /**
+   * Enables or disables content filters on the manager passed to initialize.
+   * Compiled filters are kept so toggling back on does not recompile.
+   */
+  void set_enabled(bool enabled);
 }

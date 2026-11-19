@@ -54,6 +54,7 @@ namespace selain
 
   WebContext::~WebContext()
   {
+    adblock::shutdown();
     g_clear_object(&m_session);
     g_clear_object(&m_context);
     g_clear_object(&m_user_content_manager);

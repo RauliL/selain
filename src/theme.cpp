@@ -36,16 +36,16 @@ CMRC_DECLARE(selain::rc);
 
 namespace selain::theme
 {
-  const Gdk::RGBA window_background("#262626");
-  const Gdk::RGBA window_foreground("#b3deef");
-  const Gdk::RGBA status_bar_background("#444444");
-  const Gdk::RGBA status_bar_foreground("#a7d6f8");
-  const Gdk::RGBA status_bar_error_background("#f43753");
-  const Gdk::RGBA status_bar_error_foreground("#eeeeee");
-  const Gdk::RGBA mode_bar_normal_background("#b3deef");
+  const Gdk::RGBA window_background("#282828");
+  const Gdk::RGBA window_foreground("#ebdbb2");
+  const Gdk::RGBA status_bar_background("#3c3836");
+  const Gdk::RGBA status_bar_foreground("#83a598");
+  const Gdk::RGBA status_bar_error_background("#fb4934");
+  const Gdk::RGBA status_bar_error_foreground("#fbf1c7");
+  const Gdk::RGBA mode_bar_normal_background("#83a598");
   const Gdk::RGBA mode_bar_normal_foreground("#282828");
-  const Gdk::RGBA mode_bar_insert_background("#d7d75f");
-  const Gdk::RGBA mode_bar_insert_foreground("#262626");
+  const Gdk::RGBA mode_bar_insert_background("#fabd2f");
+  const Gdk::RGBA mode_bar_insert_foreground("#282828");
 
   static void
   add_theme_colors(inja::json& data)

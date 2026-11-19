@@ -233,7 +233,7 @@ namespace selain::setting
   {
     { "adblock", std::make_shared<BoolSetting>(adblock::is_enabled, adblock::set_enabled) },
     { "hint-chars", std::make_shared<StringSetting>("sadfjklewc") },
-    { "homepage", std::make_shared<StringSetting>("https://duckduckgo.com") },
+    { "homepage", std::make_shared<StringSetting>("https://besthomepageever.com") },
 
     // WebKit boolean settings.
     WK_BOOL_SETTING("allow-file-access-from-file-urls"),

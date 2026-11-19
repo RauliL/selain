@@ -150,9 +150,8 @@ namespace selain::ui
 
     inline void execute_script(
       const Glib::ustring& script,
+      const View::script_callback_type& callback = nullptr,
       const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
-      ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr,
       const char* world_name = nullptr
     )
     {
@@ -160,9 +159,8 @@ namespace selain::ui
       {
         m_active_view->execute_script(
           script,
-          cancellable,
           callback,
-          user_data,
+          cancellable,
           world_name
         );
       }

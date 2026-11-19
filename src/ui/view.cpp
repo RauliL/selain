@@ -390,24 +390,58 @@ namespace selain::ui
     ::webkit_web_view_stop_loading(m_web_view);
   }
 
+  static void
+  execute_script_callback(
+    GObject* web_view_object,
+    GAsyncResult* result,
+    gpointer user_data
+  )
+  {
+    const auto callback = std::unique_ptr<View::script_callback_type>(
+      static_cast<View::script_callback_type*>(user_data)
+    );
+    GError* error = nullptr;
+    const auto value = webkit_web_view_evaluate_javascript_finish(
+      WEBKIT_WEB_VIEW(web_view_object),
+      result,
+      &error
+    );
+
+    if (callback && *callback)
+    {
+      (*callback)(value, error);
+    }
+    if (value)
+    {
+      g_object_unref(value);
+    }
+    if (error)
+    {
+      g_error_free(error);
+    }
+  }
+
   void
   View::execute_script(
     const Glib::ustring& script,
+    const script_callback_type& callback,
     const Glib::RefPtr<Gio::Cancellable>& cancellable,
-    ::GAsyncReadyCallback callback,
-    void* user_data,
     const char* world_name
   )
   {
-    ::webkit_web_view_evaluate_javascript(
+    auto* callback_pointer = callback
+      ? new script_callback_type(std::move(callback))
+      : nullptr;
+
+    webkit_web_view_evaluate_javascript(
       m_web_view,
       script.c_str(),
-      static_cast<::gssize>(script.bytes()),
+      static_cast<gssize>(script.bytes()),
       world_name,
       nullptr,
       cancellable ? cancellable->gobj() : nullptr,
-      callback,
-      static_cast<::gpointer>(user_data)
+      callback_pointer ? execute_script_callback : nullptr,
+      static_cast<gpointer>(callback_pointer)
     );
   }
 

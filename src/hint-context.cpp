@@ -352,7 +352,6 @@ namespace selain
       ),
       nullptr,
       nullptr,
-      nullptr,
       hint_script_world
     );
   }

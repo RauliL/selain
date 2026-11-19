@@ -41,6 +41,8 @@ namespace selain::ui
   class View : public Gtk::Box
   {
   public:
+    using script_callback_type = std::function<void(JSCValue*, GError*)>;
+
     explicit View(
       const Glib::RefPtr<WebContext>& context,
       const Glib::RefPtr<WebSettings>& settings
@@ -90,9 +92,8 @@ namespace selain::ui
 
     void execute_script(
       const Glib::ustring& script,
+      const script_callback_type& callback = nullptr,
       const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
-      ::GAsyncReadyCallback callback = nullptr,
-      void* user_data = nullptr,
       const char* world_name = nullptr
     );
 

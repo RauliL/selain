@@ -706,51 +706,6 @@ cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 
 // Commands that require tab.
 
-static void
-js_command_callback(
-  GObject* web_view_object,
-  GAsyncResult* result,
-  gpointer tab_data
-)
-{
-  const auto tab = static_cast<selain::ui::Tab*>(tab_data);
-  const auto window = tab ? tab->get_main_window() : nullptr;
-  GError* error = nullptr;
-  const auto value = webkit_web_view_evaluate_javascript_finish(
-    WEBKIT_WEB_VIEW(web_view_object),
-    result,
-    &error
-  );
-
-  if (!value)
-  {
-    if (window && error)
-    {
-      window->show_error(error->message);
-    }
-    if (error)
-    {
-      g_error_free(error);
-    }
-    return;
-  }
-
-  if (window)
-  {
-    const auto exception = jsc_context_get_exception(
-      jsc_value_get_context(value)
-    );
-
-    if (exception)
-    {
-      window->show_error(jsc_exception_get_message(exception));
-    } else {
-      window->show_info(selain::utils::js_value_to_text(value));
-    }
-  }
-  g_object_unref(value);
-}
-
 static bool
 cmd_js(
   selain::ui::MainWindow& window,
@@ -766,9 +721,24 @@ cmd_js(
   }
   tab.execute_script(
     args,
-    nullptr,
-    js_command_callback,
-    static_cast<void*>(&tab)
+    [&window](JSCValue* value, GError* error)
+    {
+      if (value)
+      {
+        const auto exception = jsc_context_get_exception(jsc_value_get_context(value));
+
+        if (exception)
+        {
+          window.show_error(jsc_exception_get_message(exception));
+        } else {
+          window.show_info(selain::utils::js_value_to_text(value));
+        }
+      }
+      else if (error)
+      {
+        window.show_error(error->message);
+      }
+    }
   );
 
   return true; // TODO: Try to get JavaScript execution status.

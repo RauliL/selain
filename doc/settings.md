@@ -20,6 +20,7 @@ accept one of the values listed for that setting.
 
 | Setting      | Description                                            |
 |--------------|--------------------------------------------------------|
+| `adblock`    | Enable content filters from `~/.config/selain/blocklists` (default `true`). See [adblock.md](adblock.md). |
 | `homepage`   | URL that is opened when the browser starts.            |
 | `hint-chars` | Characters to use for typing hints in hit-a-hint mode. |
 

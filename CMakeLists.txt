@@ -31,6 +31,8 @@ CMRC_ADD_RESOURCE_LIBRARY(
 
 ADD_EXECUTABLE(
   selain
+  src/adblock.cpp
+  src/adblock/easylist.cpp
   src/core/command.cpp
   src/core/setting.cpp
   src/format/gemtext.cpp

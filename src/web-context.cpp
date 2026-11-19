@@ -25,6 +25,7 @@
  */
 #include <selain/web-context.hpp>
 
+#include <selain/adblock.hpp>
 #include <selain/protocol/finger/scheme.hpp>
 #include <selain/protocol/gemini/scheme.hpp>
 #include <selain/protocol/gopher/scheme.hpp>
@@ -48,10 +49,12 @@ namespace selain
     protocol::finger::register_schemes(m_context);
     protocol::gemini::register_schemes(m_context);
     protocol::gopher::register_schemes(m_context);
+    adblock::initialize(m_user_content_manager);
   }
 
   WebContext::~WebContext()
   {
+    adblock::shutdown();
     g_clear_object(&m_session);
     g_clear_object(&m_context);
     g_clear_object(&m_user_content_manager);

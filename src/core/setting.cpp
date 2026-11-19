@@ -25,7 +25,20 @@
  */
 #include <glibmm/ustring_hash.h>
 
+#include <selain/adblock.hpp>
 #include <selain/core/setting.hpp>
+
+static inline bool
+is_true(const Glib::ustring& value)
+{
+  return value == "true" || value == "on" || value == "1";
+}
+
+static inline bool
+is_false(const Glib::ustring& value)
+{
+  return value == "false" || value == "off" || value == "0";
+}
 
 namespace selain::setting
 {
@@ -46,6 +59,42 @@ namespace selain::setting
       value = new_value;
 
       return true;
+    }
+  };
+
+  struct BoolSetting : Setting
+  {
+    using get_type = std::function<bool()>;
+    using set_type = std::function<void(bool)>;
+
+    const get_type getter;
+    const set_type setter;
+
+    explicit BoolSetting(const get_type& getter_, const set_type& setter_)
+      : getter(getter_)
+      , setter(setter_) {}
+
+    Glib::ustring get(ui::MainWindow&) const override
+    {
+      return getter() ? "true" : "false";
+    }
+
+    bool set(ui::MainWindow&, const Glib::ustring& new_value) override
+    {
+      if (is_true(new_value))
+      {
+        setter(true);
+
+        return true;
+      }
+      else if (is_false(new_value))
+      {
+        setter(false);
+
+        return true;
+      }
+
+      return false;
     }
   };
 
@@ -71,11 +120,11 @@ namespace selain::setting
     {
       bool value;
 
-      if (new_value == "true" || new_value == "1")
+      if (is_true(new_value))
       {
         value = true;
       }
-      else if (new_value == "false" || new_value == "0")
+      else if (is_false(new_value))
       {
         value = false;
       } else {
@@ -182,6 +231,7 @@ namespace selain::setting
 
   static std::unordered_map<Glib::ustring, std::shared_ptr<Setting>> mapping =
   {
+    { "adblock", std::make_shared<BoolSetting>(adblock::is_enabled, adblock::set_enabled) },
     { "hint-chars", std::make_shared<StringSetting>("sadfjklewc") },
     { "homepage", std::make_shared<StringSetting>("https://duckduckgo.com") },
 

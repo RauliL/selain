@@ -33,35 +33,6 @@ namespace selain::ui
   static constexpr int DEFAULT_WIDTH = 640;
   static constexpr int DEFAULT_HEIGHT = 480;
 
-  static Glib::ustring
-  uri_without_query(const Glib::ustring& uri)
-  {
-    const auto pos = uri.find('?');
-
-    if (pos == Glib::ustring::npos)
-    {
-      return uri;
-    }
-
-    return uri.substr(0, pos);
-  }
-
-  static Glib::ustring
-  append_gemini_query(const Glib::ustring& uri, const Glib::ustring& input)
-  {
-    char* escaped = ::g_uri_escape_string(input.c_str(), nullptr, TRUE);
-    Glib::ustring result = uri_without_query(uri);
-
-    result += '?';
-    if (escaped)
-    {
-      result += escaped;
-      g_free(escaped);
-    }
-
-    return result;
-  }
-
   MainWindow::MainWindow(const Glib::RefPtr<Gtk::Application>& application)
     : Gtk::ApplicationWindow(application)
     , m_web_context(WebContext::create())
@@ -147,10 +118,10 @@ namespace selain::ui
         context.reset();
       }
     }
-    if (m_mode == Mode::GEMINI_INPUT && mode != Mode::GEMINI_INPUT)
+    if (m_mode == Mode::PROMPT && mode != Mode::PROMPT)
     {
-      clear_gemini_input_ui();
-      m_gemini_input.reset();
+      clear_prompt_ui();
+      m_prompt.reset();
     }
     m_status_bar.set_mode(mode);
     switch (m_mode = mode)
@@ -161,7 +132,7 @@ namespace selain::ui
         m_command_entry.grab_focus();
         break;
 
-      case Mode::GEMINI_INPUT:
+      case Mode::PROMPT:
         m_command_entry.grab_focus();
         break;
 
@@ -187,23 +158,23 @@ namespace selain::ui
   }
 
   void
-  MainWindow::prompt_gemini_input(
+  MainWindow::prompt(
     View* view,
-    const Glib::ustring& uri,
-    const Glib::ustring& prompt,
-    bool sensitive
+    const Glib::ustring& message,
+    bool sensitive,
+    prompt_callback_type on_submit
   )
   {
-    if (!view || uri.empty())
+    if (!view || !on_submit)
     {
       return;
     }
 
-    m_gemini_input = GeminiInputRequest{
+    m_prompt = PromptRequest{
       .view = view,
-      .uri = uri,
-      .prompt = prompt,
-      .sensitive = sensitive
+      .message = message,
+      .sensitive = sensitive,
+      .on_submit = std::move(on_submit)
     };
     m_command_entry.set_text(Glib::ustring());
     m_command_entry.set_visibility(!sensitive);
@@ -212,29 +183,29 @@ namespace selain::ui
         ? "Sensitive input (Enter to submit, Esc to cancel)"
         : "Input (Enter to submit, Esc to cancel)"
     );
-    set_mode(Mode::GEMINI_INPUT);
+    set_mode(Mode::PROMPT);
     m_status_bar.set_status(
-      prompt.empty() ? "Gemini input required" : prompt
+      message.empty() ? "Input required" : message
     );
   }
 
   void
-  MainWindow::cancel_gemini_input_for(View* view)
+  MainWindow::cancel_prompt_for(View* view)
   {
-    if (!m_gemini_input || m_gemini_input->view != view)
+    if (!m_prompt || m_prompt->view != view)
     {
       return;
     }
 
-    m_gemini_input.reset();
-    if (m_mode == Mode::GEMINI_INPUT)
+    m_prompt.reset();
+    if (m_mode == Mode::PROMPT)
     {
       set_mode(Mode::NORMAL);
     }
   }
 
   void
-  MainWindow::clear_gemini_input_ui()
+  MainWindow::clear_prompt_ui()
   {
     m_command_entry.set_visibility(true);
     m_command_entry.set_placeholder_text(Glib::ustring());
@@ -242,20 +213,20 @@ namespace selain::ui
   }
 
   void
-  MainWindow::complete_gemini_input(const Glib::ustring& text)
+  MainWindow::complete_prompt(const Glib::ustring& text)
   {
-    const auto request = m_gemini_input;
+    auto request = std::move(m_prompt);
 
-    m_gemini_input.reset();
-    clear_gemini_input_ui();
+    m_prompt.reset();
+    clear_prompt_ui();
     set_mode(Mode::NORMAL);
 
-    if (!request || !request->view)
+    if (!request || !request->on_submit)
     {
       return;
     }
 
-    request->view->load_uri(append_gemini_query(request->uri, text));
+    request->on_submit(text);
   }
 
   Tab*
@@ -418,8 +389,8 @@ namespace selain::ui
       return true;
     }
 
-    // Gemini input is free-form text; do not run tab completion.
-    if (m_mode == Mode::GEMINI_INPUT)
+    // Prompt input is free-form text; do not run tab completion.
+    if (m_mode == Mode::PROMPT)
     {
       return false;
     }
@@ -447,9 +418,9 @@ namespace selain::ui
   void
   MainWindow::on_command_received(const Glib::ustring& command)
   {
-    if (m_mode == Mode::GEMINI_INPUT || m_gemini_input)
+    if (m_mode == Mode::PROMPT || m_prompt)
     {
-      complete_gemini_input(command);
+      complete_prompt(command);
 
       return;
     }

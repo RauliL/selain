@@ -42,6 +42,7 @@ namespace selain::ui
   {
   public:
     using script_callback_type = std::function<void(JSCValue*, GError*)>;
+    using prompt_callback_type = std::function<void(const Glib::ustring&)>;
 
     explicit View(
       const Glib::RefPtr<WebContext>& context,
@@ -65,13 +66,13 @@ namespace selain::ui
     void stop_loading();
 
     /**
-     * Asks the parent window to collect Gemini input for @p uri via the
-     * command bar (keyboard only).
+     * Asks the parent window to collect free-form text via the command bar
+     * (keyboard only). @p on_submit is called with the typed value on Enter.
      */
-    void request_gemini_input(
-      const Glib::ustring& uri,
+    void request_prompt(
       const Glib::ustring& prompt,
-      bool sensitive
+      bool sensitive,
+      prompt_callback_type on_submit
     );
 
     /**

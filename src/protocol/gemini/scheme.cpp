@@ -189,17 +189,51 @@ namespace selain::protocol::gemini
     g_error_free(error);
   }
 
+  static Glib::ustring
+  uri_without_query(const Glib::ustring& uri)
+  {
+    const auto pos = uri.find('?');
+
+    if (pos == Glib::ustring::npos)
+    {
+      return uri;
+    }
+
+    return uri.substr(0, pos);
+  }
+
+  static Glib::ustring
+  append_query(const Glib::ustring& uri, const Glib::ustring& input)
+  {
+    char* escaped = ::g_uri_escape_string(input.c_str(), nullptr, TRUE);
+    Glib::ustring result = uri_without_query(uri);
+
+    result += '?';
+    if (escaped)
+    {
+      result += escaped;
+      g_free(escaped);
+    }
+
+    return result;
+  }
+
   static gboolean
-  prompt_gemini_input_idle(gpointer user_data)
+  prompt_input_idle(gpointer user_data)
   {
     auto* data = static_cast<InputPrompt*>(user_data);
 
     if (data->view)
     {
-      data->view->request_gemini_input(
-        data->uri,
+      const auto uri = data->uri;
+      auto* view = data->view;
+
+      view->request_prompt(
         data->prompt,
-        data->sensitive
+        data->sensitive,
+        [view, uri](const Glib::ustring& text) {
+          view->load_uri(append_query(uri, text));
+        }
       );
     }
     delete data;
@@ -208,7 +242,7 @@ namespace selain::protocol::gemini
   }
 
   static void
-  schedule_gemini_input_prompt(
+  schedule_input_prompt(
     ::WebKitURISchemeRequest* request,
     const Response& response
   )
@@ -233,7 +267,7 @@ namespace selain::protocol::gemini
       .sensitive = response.status == 11
     };
 
-    g_idle_add(prompt_gemini_input_idle, data);
+    g_idle_add(prompt_input_idle, data);
   }
 
   static void
@@ -376,7 +410,7 @@ namespace selain::protocol::gemini
         {
           view->reset_gemini_redirect_hops();
         }
-        schedule_gemini_input_prompt(request, response);
+        schedule_input_prompt(request, response);
         break;
 
       case 2:

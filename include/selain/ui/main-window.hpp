@@ -25,6 +25,9 @@
  */
 #pragma once
 
+#include <functional>
+#include <optional>
+
 #include <gtkmm.h>
 
 #include <selain/tab-completion.hpp>
@@ -193,28 +196,33 @@ namespace selain::ui
     std::vector<Glib::ustring> get_history_uris() const;
 
     /**
-     * Focuses the command bar for Gemini status 10/11 input. Enter submits the
-     * typed value as a query string; Escape cancels.
+     * Callback invoked when the user submits text collected by prompt().
      */
-    void prompt_gemini_input(
+    using prompt_callback_type = std::function<void(const Glib::ustring&)>;
+
+    /**
+     * Focuses the command bar for free-form text input. Enter calls
+     * @p on_submit with the typed value; Escape cancels without calling it.
+     */
+    void prompt(
       View* view,
-      const Glib::ustring& uri,
-      const Glib::ustring& prompt,
-      bool sensitive
+      const Glib::ustring& message,
+      bool sensitive,
+      prompt_callback_type on_submit
     );
 
     /**
-     * Cancels an in-progress Gemini input prompt for @p view, if any.
+     * Cancels an in-progress prompt for @p view, if any.
      */
-    void cancel_gemini_input_for(View* view);
+    void cancel_prompt_for(View* view);
 
   private:
-    struct GeminiInputRequest
+    struct PromptRequest
     {
       View* view = nullptr;
-      Glib::ustring uri;
-      Glib::ustring prompt;
+      Glib::ustring message;
       bool sensitive = false;
+      prompt_callback_type on_submit;
     };
 
     bool on_command_entry_key_pressed(
@@ -226,8 +234,8 @@ namespace selain::ui
     void on_tab_status_change(Tab* tab, const Glib::ustring& status);
     void on_tab_switch(Gtk::Widget* widget, guint page_number);
     bool on_tab_list_scroll(double dx, double dy);
-    void clear_gemini_input_ui();
-    void complete_gemini_input(const Glib::ustring& text);
+    void clear_prompt_ui();
+    void complete_prompt(const Glib::ustring& text);
 
   private:
     Glib::RefPtr<WebContext> m_web_context;
@@ -239,6 +247,6 @@ namespace selain::ui
     CommandEntry m_command_entry;
     Glib::RefPtr<Gtk::EventControllerKey> m_command_entry_key_controller;
     TabCompletion m_tab_completion;
-    std::optional<GeminiInputRequest> m_gemini_input;
+    std::optional<PromptRequest> m_prompt;
   };
 }

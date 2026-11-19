@@ -187,7 +187,7 @@ namespace selain::ui
     {
       if (const auto window = tab->get_main_window())
       {
-        window->cancel_gemini_input_for(this);
+        window->cancel_prompt_for(this);
       }
     }
     ::g_object_set_data(G_OBJECT(m_web_view), view_quark, nullptr);
@@ -214,10 +214,10 @@ namespace selain::ui
   }
 
   void
-  View::request_gemini_input(
-    const Glib::ustring& uri,
+  View::request_prompt(
     const Glib::ustring& prompt,
-    bool sensitive
+    bool sensitive,
+    prompt_callback_type on_submit
   )
   {
     const auto tab = get_tab();
@@ -228,7 +228,7 @@ namespace selain::ui
       return;
     }
 
-    window->prompt_gemini_input(this, uri, prompt, sensitive);
+    window->prompt(this, prompt, sensitive, std::move(on_submit));
   }
 
   bool
@@ -525,7 +525,7 @@ namespace selain::ui
 
     if (window
         && (window->get_mode() == Mode::COMMAND
-            || window->get_mode() == Mode::GEMINI_INPUT))
+            || window->get_mode() == Mode::PROMPT))
     {
       window->get_command_entry().grab_focus();
     }

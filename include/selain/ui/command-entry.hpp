@@ -55,7 +55,7 @@ namespace selain::ui
     void set_text(const Glib::ustring& text);
 
     /**
-     * Shows or hides typed characters. Used for Gemini sensitive input (11).
+     * Shows or hides typed characters. Used for sensitive prompts.
      */
     void set_visibility(bool visible);
 

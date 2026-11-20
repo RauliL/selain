@@ -253,7 +253,12 @@ namespace selain::utils
     {
       g_free(scheme);
 
-      return trimmed;
+      // g_uri_parse_scheme treats host:port (e.g. localhost:8080) as a
+      // scheme. Only keep the input unchanged when it is not domain-like.
+      if (!looks_like_domain_or_host(trimmed.raw()))
+      {
+        return trimmed;
+      }
     }
     if (looks_like_domain_or_host(trimmed.raw()))
     {

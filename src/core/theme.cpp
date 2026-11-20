@@ -76,11 +76,17 @@ namespace selain::theme
     auto provider = Gtk::CssProvider::create();
     auto fs = cmrc::selain::rc::get_filesystem();
     auto stylesheet = fs.open("src/theme.css");
-
-    provider->load_from_string(std::string(
+    const auto css = std::string(
       std::begin(stylesheet),
       std::end(stylesheet)
-    ));
+    );
+
+    // load_from_string() requires gtkmm 4.12+; Ubuntu 24.04 ships 4.10.
+#if GTKMM_CHECK_VERSION(4, 12, 0)
+    provider->load_from_string(css);
+#else
+    provider->load_from_data(css);
+#endif
     Gtk::StyleProvider::add_provider_for_display(
       Gdk::Display::get_default(),
       provider,

@@ -25,6 +25,7 @@
  */
 #include <algorithm>
 
+#include <selain/gtk-compat.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view-list-dialog.hpp>
 #include <selain/utils.hpp>
@@ -277,7 +278,7 @@ namespace selain::ui
       preferred = tab->get_active_view();
     }
 
-    m_list.remove_all();
+    gtk_compat::remove_all(m_list);
     m_filtered.clear();
     m_filtered.reserve(ranked.size());
 

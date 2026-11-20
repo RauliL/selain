@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+
+    env:
+      APT_CACHE_DIR: ${{ github.workspace }}/.apt-cache
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_COMPRESS: "1"
+      CCACHE_MAXSIZE: 500M
+      FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
+      # Reuse populated FetchContent trees from cache without re-querying remotes.
+      FETCHCONTENT_UPDATES_DISCONNECTED: "ON"
+      DEBIAN_FRONTEND: noninteractive
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache apt package archives
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.APT_CACHE_DIR }}
+          key: apt-${{ runner.os }}-ubuntu-24.04-gtkmm4-webkit6-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-ubuntu-24.04-gtkmm4-webkit6-
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: fetchcontent-${{ runner.os }}-inja-v3.5.0-catch2-v3.16.1-${{ hashFiles('CMakeLists.txt', 'tests/CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-inja-v3.5.0-catch2-v3.16.1-
+            fetchcontent-${{ runner.os }}-
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'tests/CMakeLists.txt', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          mkdir -p "${APT_CACHE_DIR}"
+          sudo apt-get update
+          sudo apt-get -o Dir::Cache::Archives="${APT_CACHE_DIR}" \
+            install -y --no-install-recommends \
+            build-essential \
+            ccache \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtkmm-4.0-dev \
+            libwebkitgtk-6.0-dev
+          sudo chown -R "$(id -u):$(id -g)" "${APT_CACHE_DIR}"
+
+      - name: Configure ccache
+        run: |
+          ccache --set-config=compression=true
+          ccache --zero-stats
+          echo "/usr/lib/ccache" >> "$GITHUB_PATH"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DSELAIN_BUILD_TESTS=ON \
+            -DSELAIN_FETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Show ccache stats
+        if: always()
+        run: ccache --show-stats

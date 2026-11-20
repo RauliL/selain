@@ -25,6 +25,7 @@
  */
 #include <limits>
 
+#include <selain/gtk-compat.hpp>
 #include <selain/ui/main-window.hpp>
 
 namespace selain::ui
@@ -298,8 +299,8 @@ namespace selain::ui
       return;
     }
 
-    parent->unset_start_child();
-    parent->unset_end_child();
+    gtk_compat::unset_start_child(*parent);
+    gtk_compat::unset_end_child(*parent);
     promote_sibling(*parent, *sibling);
 
     for (auto it = std::begin(m_views); it != std::end(m_views); ++it)
@@ -676,9 +677,9 @@ namespace selain::ui
 
       if (is_start)
       {
-        parent_paned->unset_start_child();
+        gtk_compat::unset_start_child(*parent_paned);
       } else {
-        parent_paned->unset_end_child();
+        gtk_compat::unset_end_child(*parent_paned);
       }
       paned->set_start_child(next);
       paned->set_end_child(current);
@@ -714,10 +715,10 @@ namespace selain::ui
 
     if (paned_is_start)
     {
-      parent_paned->unset_start_child();
+      gtk_compat::unset_start_child(*parent_paned);
       parent_paned->set_start_child(sibling);
     } else {
-      parent_paned->unset_end_child();
+      gtk_compat::unset_end_child(*parent_paned);
       parent_paned->set_end_child(sibling);
     }
   }

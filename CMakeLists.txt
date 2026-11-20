@@ -54,6 +54,7 @@ ADD_EXECUTABLE(
   src/ui/status-bar.cpp
   src/ui/tab-label.cpp
   src/ui/tab.cpp
+  src/ui/view-list-dialog.cpp
   src/ui/view.cpp
   src/utils.cpp
   src/web-context.cpp

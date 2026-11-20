@@ -417,4 +417,52 @@ namespace selain::utils
 
     return result;
   }
+
+  std::optional<int>
+  fuzzy_match_score(const Glib::ustring& haystack, const Glib::ustring& needle)
+  {
+    if (needle.empty())
+    {
+      return 0;
+    }
+
+    const auto hay = haystack.casefold();
+    const auto nee = needle.casefold();
+    int score = 0;
+    int consecutive = 0;
+    Glib::ustring::size_type hi = 0;
+
+    for (Glib::ustring::size_type ni = 0; ni < nee.size(); ++ni)
+    {
+      bool found = false;
+
+      for (; hi < hay.size(); ++hi)
+      {
+        if (hay[hi] != nee[ni])
+        {
+          consecutive = 0;
+          continue;
+        }
+
+        if (hi == 0 || !g_unichar_isalnum(hay[hi - 1]))
+        {
+          score += 10;
+        }
+        ++consecutive;
+        score += 1 + consecutive * 5;
+        ++hi;
+        found = true;
+        break;
+      }
+
+      if (!found)
+      {
+        return std::nullopt;
+      }
+    }
+
+    score -= static_cast<int>(hay.size());
+
+    return score;
+  }
 }

@@ -29,6 +29,7 @@
 #include <cctype>
 #include <cstring>
 #include <concepts>
+#include <optional>
 
 #include <glibmm.h>
 #include <webkit/webkit.h>
@@ -196,4 +197,15 @@ namespace selain::utils
    * URI is empty, invalid, or already at the root.
    */
   Glib::ustring url_hierarchy_root(const Glib::ustring& uri);
+
+  /**
+   * Fuzzy-matches @p needle against @p haystack (case-insensitive subsequence).
+   * Returns a score (higher is better) when all needle characters appear in
+   * order, or std::nullopt when there is no match. An empty needle matches
+   * with score 0.
+   */
+  std::optional<int> fuzzy_match_score(
+    const Glib::ustring& haystack,
+    const Glib::ustring& needle
+  );
 }

@@ -18,6 +18,7 @@ shortcuts can be customized with `:bind` and `:unbind` commands.
 |`r`              |Reload current tab.                 |
 |`R`              |Reload current tab, bypassing cache.|
 |`t`              |Open new tab.                       |
+|`T`              |Open searchable view list.          |
 |`x`              |Close current tab.                  |
 |`J`              |Switch to previous tab.             |
 |`K`              |Switch to next tab.                 |

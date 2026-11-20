@@ -135,6 +135,11 @@ namespace selain::ui
      */
     void cycle_view(bool backwards = false);
 
+    /**
+     * Replaces \p output with pointers to every split view in this tab.
+     */
+    void collect_views(std::vector<View*>& output) const;
+
     Glib::ustring get_uri() const;
 
     /**
@@ -215,7 +220,6 @@ namespace selain::ui
       Gtk::Orientation orientation
     );
     void promote_sibling(Gtk::Paned& paned, Gtk::Widget& sibling);
-    void collect_views(std::vector<View*>& output) const;
     void sync_active_chrome();
     void on_close_button_clicked();
 

@@ -120,6 +120,7 @@ namespace selain::keyboard
     bind("r", "reload");
     bind("R", "reload!");
     bind("t", "open-tab");
+    bind("T", "view-list");
     bind("x", "quit");
     bind("J", "tab-prev");
     bind("K", "tab-next");

@@ -5,11 +5,11 @@ shortcuts can be customized with `:bind` and `:unbind` commands.
 
 ## Switching between modes
 
-|Key|                                                        |
-|---|--------------------------------------------------------|
-|`:` |Enter command mode.                                   |
-|`i` |Enter insert mode.                                    |
-|`gi`|Focus first input or textarea and enter insert mode.  |
+|Key|                                                     |
+|----|----------------------------------------------------|
+|`:` |Enter command mode.                                 |
+|`i` |Enter insert mode.                                  |
+|`gi`|Focus first input or textarea and enter insert mode.|
 
 ## Tab management
 
@@ -44,28 +44,24 @@ These bindings follow Vim's `Ctrl-W` window commands.
 
 ## Navigating the page
 
-|Key        |                                     |
-|-----------|-------------------------------------|
-|`f`        |Open link in current tab.            |
-|`F`        |Open link in new tab.                |
-|`k`        |Scroll up.                           |
-|`j`        |Scroll down.                         |
-|`h`        |Scroll left.                         |
-|`l`        |Scroll right.                        |
-|`d`        |Scroll a half page down.             |
-|`Page Down`|Scroll a half page down.             |
-|`u`        |Scroll a half page up.               |
-|`Page Up`  |Scroll a half page up.               |
-|`gg`       |Scroll to top of the page.           |
-|`Home`     |Scroll to top of the page.           |
-|`G`        |Scroll to bottom of the page.        |
-|`End`      |Scroll to bottom of the page.        |
-|`p`        |Open URI from clipboard.             |
-|`P`        |Open URI from clipboard in a new tab.|
-|`yy`       |Copy current URI to clipboard.       |
-|`+`        |Zoom in by 10%.                      |
-|`-`        |Zoom out by 10%.                     |
-|`Ctrl+0`   |Reset zoom.                          |
+|Key             |                                     |
+|----------------|-------------------------------------|
+|`f`             |Open link in current tab.            |
+|`F`             |Open link in new tab.                |
+|`k`             |Scroll up.                           |
+|`j`             |Scroll down.                         |
+|`h`             |Scroll left.                         |
+|`l`             |Scroll right.                        |
+|`d`, `Page Down`|Scroll a half page down.             |
+|`u`, `Page Up`  |Scroll a half page up.               |
+|`gg`, `Home`    |Scroll to top of the page.           |
+|`G`, `End`      |Scroll to bottom of the page.        |
+|`p`             |Open URI from clipboard.             |
+|`P`             |Open URI from clipboard in a new tab.|
+|`yy`            |Copy current URI to clipboard.       |
+|`+`             |Zoom in by 10%.                      |
+|`-`             |Zoom out by 10%.                     |
+|`Ctrl+0`        |Reset zoom.                          |
 
 ## Navigating history
 
@@ -76,12 +72,12 @@ These bindings follow Vim's `Ctrl-W` window commands.
 
 ## Navigating the URL hierarchy
 
-|Key |                                                 |
-|----|-------------------------------------------------|
-|`gu`|Go up one level in the URL hierarchy.            |
-|`gU`|Go up to the root of the URL hierarchy.          |
-|`ge`|Edit current URI with `:open`.                   |
-|`gE`|Edit current URI with `:open-tab`.               |
+|Key |                                       |
+|----|---------------------------------------|
+|`gu`|Go up one level in the URL hierarchy.  |
+|`gU`|Go up to the root of the URL hierarchy.|
+|`ge`|Edit current URI with `:open`.         |
+|`gE`|Edit current URI with `:open-tab`.     |
 
 ## Searching
 

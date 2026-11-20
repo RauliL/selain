@@ -80,6 +80,8 @@ These bindings follow Vim's `Ctrl-W` window commands.
 |----|-------------------------------------------------|
 |`gu`|Go up one level in the URL hierarchy.            |
 |`gU`|Go up to the root of the URL hierarchy.          |
+|`ge`|Edit current URI with `:open`.                   |
+|`gE`|Edit current URI with `:open-tab`.               |
 
 ## Searching
 

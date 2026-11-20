@@ -7,6 +7,7 @@ Selain currently supports following commands:
 |`:back`       |`:b`    |Goes back in browsing history.         |
 |`:bind`       |        |Add keyboard binding.                  |
 |`:command`    |`:c`    |Switches to command mode.              |
+|`:execute`    |`:ex`   |Evaluates JS; runs result as a command.|
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
 |`:go-root`    |`:gr`   |Goes up to the root of the URL hierarchy.|
 |`:go-up`      |`:gu`   |Goes up one level in the URL hierarchy.|
@@ -39,6 +40,10 @@ Selain currently supports following commands:
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |
 |`:zoom`       |`:z`    |Changes zoom level of the current view.|
+
+`:execute` evaluates a JavaScript expression in the current tab and runs the
+resulting string as a browser command. Example:
+`:execute "command :open " + window.location.href`.
 
 `:js` takes a JavaScript expression or statement as argument and shows the
 result (or an error) as a notification. Example: `:js document.title`.

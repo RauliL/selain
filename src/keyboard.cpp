@@ -166,6 +166,8 @@ namespace selain::keyboard
     bind("L", "forward");
     bind("o", "command :open ");
     bind("O", "command :open-tab ");
+    bind("ge", "execute \"command :open \" + window.location.href");
+    bind("gE", "execute \"command :open-tab \" + window.location.href");
     bind("p", "paste");
     bind("P", "paste-tab");
     bind("u", "scroll page-up");

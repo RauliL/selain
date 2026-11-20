@@ -65,6 +65,7 @@ static bool cmd_tab(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_unbind(selain::ui::MainWindow&, Glib::ustring);
 
 // Commands that require tab.
+static bool cmd_execute(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_insert_input(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
@@ -93,6 +94,11 @@ namespace selain::command
       "command", { "c" },
       "Switches to command mode.",
       cmd_command
+    },
+    {
+      "execute", { "ex" },
+      "Evaluates a JavaScript expression and runs the result as a command.",
+      require_tab(cmd_execute)
     },
     {
       "forward", { "f" },
@@ -731,6 +737,69 @@ cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 }
 
 // Commands that require tab.
+
+static bool
+cmd_execute(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring args
+)
+{
+  if (selain::utils::is_blank(args))
+  {
+    window.show_error("Usage: :execute <expression>");
+
+    return false;
+  }
+  tab.execute_script(
+    args,
+    [&window](JSCValue* value, GError* error)
+    {
+      if (value)
+      {
+        const auto exception = jsc_context_get_exception(
+          jsc_value_get_context(value)
+        );
+
+        if (exception)
+        {
+          window.show_error(jsc_exception_get_message(exception));
+
+          return;
+        }
+        if (
+          ::jsc_value_is_undefined(value) ||
+          ::jsc_value_is_null(value)
+        )
+        {
+          window.show_error("Expression did not produce a command.");
+
+          return;
+        }
+
+        char* text = ::jsc_value_to_string(value);
+
+        if (!text)
+        {
+          window.show_error("Expression did not produce a command.");
+
+          return;
+        }
+
+        const Glib::ustring command(text);
+
+        g_free(text);
+        window.run_command(command, false);
+      }
+      else if (error)
+      {
+        window.show_error(error->message);
+      }
+    }
+  );
+
+  return true;
+}
 
 static bool
 cmd_insert_input(

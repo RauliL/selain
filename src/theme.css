@@ -69,3 +69,7 @@ window {
 .selain-view-active:only-child {
   border-color: transparent;
 }
+
+.selain-view-list-dialog .uri-label {
+  color: @selain-mode-bar-insert-background;
+}

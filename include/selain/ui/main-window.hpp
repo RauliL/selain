@@ -170,6 +170,21 @@ namespace selain::ui
     void prev_tab();
 
     /**
+     * Returns the number of open tabs.
+     */
+    int get_tab_count() const;
+
+    /**
+     * Focuses @p view: switches to its tab and activates the split.
+     */
+    void focus_view(View& view);
+
+    /**
+     * Opens the keyboard-driven view list dialog.
+     */
+    void show_view_list_dialog();
+
+    /**
      * Displays an info message in command entry.
      */
     void show_info(const Glib::ustring& text)

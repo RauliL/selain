@@ -37,6 +37,7 @@ Selain currently supports following commands:
 |`:tab-next`   |`:tn`   |Switches to next tab.                  |
 |`:tab-prev`   |`:tp`   |Switches to previous tab.              |
 |`:unbind`     |        |Remove keyboard binding.               |
+|`:view-list`  |`:vl`   |Opens a searchable list of all views.  |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |
 |`:zoom`       |`:z`    |Changes zoom level of the current view.|

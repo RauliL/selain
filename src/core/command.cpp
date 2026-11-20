@@ -247,6 +247,11 @@ namespace selain::command
       cmd_unbind
     },
     {
+      "view-list", { "vl" },
+      "Opens a searchable list of all open views.",
+      window_method(&ui::MainWindow::show_view_list_dialog)
+    },
+    {
       "vsplit", { "vs", "vsp" },
       "Splits the current view vertically.",
       tab_split(true)

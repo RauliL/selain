@@ -26,6 +26,7 @@
 #include <algorithm>
 
 #include <selain/ui/main-window.hpp>
+#include <selain/ui/view-list-dialog.hpp>
 #include <selain/ui/view.hpp>
 
 namespace selain::ui
@@ -355,6 +356,44 @@ namespace selain::ui
   MainWindow::prev_tab()
   {
     m_notebook.prev_page();
+  }
+
+  int
+  MainWindow::get_tab_count() const
+  {
+    return m_notebook.get_n_pages();
+  }
+
+  void
+  MainWindow::focus_view(View& view)
+  {
+    auto* tab = view.get_tab();
+
+    if (!tab)
+    {
+      return;
+    }
+
+    const auto index = m_notebook.page_num(*tab);
+
+    if (index < 0)
+    {
+      return;
+    }
+
+    set_current_tab(index);
+    if (tab->get_active_view() == &view)
+    {
+      view.grab_focus();
+    } else {
+      tab->set_active_view(view);
+    }
+  }
+
+  void
+  MainWindow::show_view_list_dialog()
+  {
+    ViewListDialog::show(*this);
   }
 
   std::vector<Glib::ustring>

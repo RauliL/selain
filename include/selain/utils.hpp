@@ -131,12 +131,12 @@ namespace selain::utils
     const auto i = find_first_non_whitespace(input);
     const auto j = find_last_non_whitespace(input);
 
-    if (i != 0 && j != input.length())
+    if (i == 0 && j == input.length())
     {
-      return input.substr(i, j - i);
+      return input;
     }
 
-    return input;
+    return input.substr(i, j - i);
   }
 
   /**

@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 PROJECT(selain C CXX)
 
+OPTION(SELAIN_BUILD_TESTS "Build unit tests" ON)
+
 FIND_PACKAGE(PkgConfig)
 
 PKG_CHECK_MODULES(GTKMM gtkmm-4.0 REQUIRED)
@@ -8,6 +10,13 @@ PKG_CHECK_MODULES(WEBKITGTK webkitgtk-6.0 REQUIRED)
 
 INCLUDE(FetchContent)
 INCLUDE(cmake/CMakeRC.cmake)
+
+SET(SELAIN_FETCHCONTENT_BASE_DIR "${CMAKE_BINARY_DIR}/_deps" CACHE PATH
+  "Base directory for FetchContent dependencies"
+)
+SET(FETCHCONTENT_BASE_DIR "${SELAIN_FETCHCONTENT_BASE_DIR}")
+
+SET(INJA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
 FETCHCONTENT_DECLARE(
   inja
@@ -27,6 +36,50 @@ CMRC_ADD_RESOURCE_LIBRARY(
   src/document.html
   src/hint-mode.js
   src/theme.css
+)
+
+ADD_LIBRARY(
+  selain_utils
+  STATIC
+  src/utils.cpp
+)
+
+TARGET_COMPILE_FEATURES(
+  selain_utils
+  PUBLIC
+    cxx_std_20
+)
+
+TARGET_INCLUDE_DIRECTORIES(
+  selain_utils
+  PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${GTKMM_INCLUDE_DIRS}
+    ${WEBKITGTK_INCLUDE_DIRS}
+)
+
+TARGET_COMPILE_OPTIONS(
+  selain_utils
+  PUBLIC
+    ${GTKMM_CFLAGS_OTHER}
+    ${WEBKITGTK_CFLAGS_OTHER}
+  PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Werror>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>
+)
+
+TARGET_LINK_DIRECTORIES(
+  selain_utils
+  PUBLIC
+    ${GTKMM_LIBRARY_DIRS}
+    ${WEBKITGTK_LIBRARY_DIRS}
+)
+
+TARGET_LINK_LIBRARIES(
+  selain_utils
+  PUBLIC
+    ${GTKMM_LIBRARIES}
+    ${WEBKITGTK_LIBRARIES}
 )
 
 ADD_EXECUTABLE(
@@ -56,7 +109,6 @@ ADD_EXECUTABLE(
   src/ui/tab.cpp
   src/ui/view-list-dialog.cpp
   src/ui/view.cpp
-  src/utils.cpp
   src/web-context.cpp
   src/web-settings.cpp
 )
@@ -67,35 +119,17 @@ TARGET_COMPILE_FEATURES(
     cxx_std_20
 )
 
-TARGET_INCLUDE_DIRECTORIES(
-  selain
-  PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${GTKMM_INCLUDE_DIRS}
-    ${WEBKITGTK_INCLUDE_DIRS}
-)
-
 TARGET_COMPILE_OPTIONS(
   selain
   PRIVATE
-    ${GTKMM_CFLAGS_OTHER}
-    ${WEBKITGTK_CFLAGS_OTHER}
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Werror>
     $<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>
-)
-
-TARGET_LINK_DIRECTORIES(
-  selain
-  PRIVATE
-    ${GTKMM_LIBRARY_DIRS}
-    ${WEBKITGTK_LIBRARY_DIRS}
 )
 
 TARGET_LINK_LIBRARIES(
   selain
   PRIVATE
-    ${GTKMM_LIBRARIES}
-    ${WEBKITGTK_LIBRARIES}
+    selain_utils
     inja
     selain::rc
 )
@@ -115,3 +149,9 @@ INSTALL(
 )
 
 ADD_SUBDIRECTORY(icons)
+
+IF(SELAIN_BUILD_TESTS)
+  INCLUDE(CTest)
+  ENABLE_TESTING()
+  ADD_SUBDIRECTORY(tests)
+ENDIF()

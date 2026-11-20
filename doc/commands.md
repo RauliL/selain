@@ -13,6 +13,7 @@ Selain currently supports following commands:
 |`:hint`       |`:h`    |Switches to hint mode.                 |
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |
 |`:insert`     |`:i`    |Switches to insert mode.               |
+|`:insert-input`|`:ii`  |Focuses first input/textarea; insert mode.|
 |`:inspector`  |`:insp` |Toggles developer tools.               |
 |`:js`         |`:j`    |Runs JavaScript in the current tab.    |
 |`:only`       |`:on`   |Closes all splits except the current.  |

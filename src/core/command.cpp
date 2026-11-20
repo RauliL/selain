@@ -67,6 +67,7 @@ static bool cmd_unbind(selain::ui::MainWindow&, Glib::ustring);
 // Commands that require tab.
 static bool cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
+static bool cmd_insert_input(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_js(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_paste(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
@@ -122,6 +123,11 @@ namespace selain::command
       "insert", { "i" },
       "Switches to insert mode.",
       switch_mode(selain::Mode::INSERT)
+    },
+    {
+      "insert-input", { "ii" },
+      "Focuses the first input or textarea and enters insert mode.",
+      require_tab(cmd_insert_input)
     },
     {
       "inspector", { "insp" },
@@ -725,6 +731,54 @@ cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 }
 
 // Commands that require tab.
+
+static bool
+cmd_insert_input(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring
+)
+{
+  tab.execute_script(
+    R"JS(
+      (() => {
+        const nodes = document.querySelectorAll(
+          'input:not([type="hidden"]),textarea'
+        );
+
+        for (const el of nodes) {
+          const type = (el.type || "").toLowerCase();
+
+          if (
+            type === "button" ||
+            type === "submit" ||
+            type === "reset" ||
+            type === "image" ||
+            el.disabled
+          ) {
+            continue;
+          }
+          el.focus();
+
+          return true;
+        }
+
+        return false;
+      })()
+    )JS",
+    [&window](JSCValue* value, GError*)
+    {
+      if (value && ::jsc_value_to_boolean(value))
+      {
+        window.set_mode(selain::Mode::INSERT);
+      } else {
+        window.show_error("No input found.");
+      }
+    }
+  );
+
+  return true;
+}
 
 static bool
 cmd_js(

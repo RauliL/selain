@@ -112,6 +112,7 @@ namespace selain::keyboard
     // Switching between modes.
     bind(":", "command :");
     bind("i", "insert");
+    bind("gi", "insert-input");
     bind("f", "hint");
     bind("F", "hint-tab");
 

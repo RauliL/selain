@@ -5,10 +5,11 @@ shortcuts can be customized with `:bind` and `:unbind` commands.
 
 ## Switching between modes
 
-|Key|                   |
-|---|-------------------|
-|`:`|Enter command mode.|
-|`i`|Enter insert mode. |
+|Key|                                                        |
+|---|--------------------------------------------------------|
+|`:` |Enter command mode.                                   |
+|`i` |Enter insert mode.                                    |
+|`gi`|Focus first input or textarea and enter insert mode.  |
 
 ## Tab management
 

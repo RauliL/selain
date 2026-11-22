@@ -27,12 +27,14 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include <selain/core/command.hpp>
 #include <selain/core/setting.hpp>
 #include <selain/core/theme.hpp>
 #include <selain/keyboard.hpp>
 #include <selain/ui/main-window.hpp>
+#include <selain/version.hpp>
 
 /**
  * WebKitGTK on NVIDIA proprietary drivers SIGSEGVs in
@@ -162,6 +164,16 @@ on_command_line(
 int
 main(int argc, char** argv)
 {
+  for (int i = 1; i < argc; ++i)
+  {
+    if (std::strcmp(argv[i], "--version") == 0)
+    {
+      std::cout << SELAIN_VERSION << std::endl;
+
+      return EXIT_SUCCESS;
+    }
+  }
+
   maybe_workaround_nvidia_webkit();
 
   const auto app = Gtk::Application::create(

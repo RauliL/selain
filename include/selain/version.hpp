@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,5 +25,5 @@
  */
 #pragma once
 
-#define SELAIN_VERSION "0.9"
+#define SELAIN_VERSION "0.2"
 

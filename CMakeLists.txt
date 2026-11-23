@@ -1,9 +1,18 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 PROJECT(selain C CXX)
 
+# Additional protocol support.
 OPTION(SELAIN_ENABLE_FINGER "Enable finger:// protocol" ON)
 OPTION(SELAIN_ENABLE_GEMINI "Enable gemini:// protocol" ON)
 OPTION(SELAIN_ENABLE_GOPHER "Enable gopher:// protocol" ON)
+
+# Integrations.
+OPTION(
+  SELAIN_ENABLE_PASS_INTEGRATION
+  "Enable pass password manager integration"
+  OFF
+)
+
 OPTION(SELAIN_BUILD_TESTS "Build unit tests" ON)
 
 CONFIGURE_FILE(

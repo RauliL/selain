@@ -308,6 +308,7 @@ split_command(
 )
 {
   using selain::utils::string::trim;
+  using selain::utils::string::trim_start;
 
   const auto pos = input.find(' ');
 
@@ -316,7 +317,8 @@ split_command(
     name = trim(input);
   } else {
     name = trim(input.substr(0, pos));
-    args = trim(input.substr(pos + 1));
+    // Keep trailing whitespace so prefills like "command :open " stay intact.
+    args = trim_start(input.substr(pos + 1));
   }
 }
 

@@ -31,7 +31,7 @@
 #include <selain/protocol/gopher/client.hpp>
 #include <selain/protocol/gopher/menu.hpp>
 #include <selain/protocol/gopher/scheme.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain::protocol::gopher
 {
@@ -42,8 +42,8 @@ namespace selain::protocol::gopher
       title,
       std::format(
         "<h1>{}</h1><p>{}</p>",
-        utils::html_escape(title),
-        utils::html_escape(message)
+        utils::string::html_escape(title),
+        utils::string::html_escape(message)
       )
     );
   }
@@ -51,7 +51,7 @@ namespace selain::protocol::gopher
   static std::string
   make_search_page(const std::string& uri)
   {
-    const auto escaped_js = utils::js_string_escape(uri);
+    const auto escaped_js = utils::string::js_string_escape(uri);
 
     return theme::render_document(
       "Gopher search",
@@ -220,7 +220,10 @@ namespace selain::protocol::gopher
     {
       const auto html = theme::render_document(
         "Gopher text",
-        std::format("<pre>{}</pre>", utils::html_escape(body_as_text(response)))
+        std::format(
+          "<pre>{}</pre>\n",
+          utils::string::html_escape(body_as_text(response))
+        )
       );
 
       finish_with_html(request, html);

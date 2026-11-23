@@ -23,13 +23,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <cctype>
+#include <format>
 #include <sstream>
 
 #include <selain/core/theme.hpp>
 #include <selain/protocol/gopher/client.hpp>
 #include <selain/protocol/gopher/menu.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain::protocol::gopher
 {
@@ -164,6 +164,8 @@ namespace selain::protocol::gopher
   std::string
   menu_to_html(std::string_view menu, std::string_view base_uri)
   {
+    using selain::utils::string::html_escape;
+
     const auto scheme = document_scheme(base_uri);
     std::ostringstream body;
 
@@ -218,11 +220,11 @@ namespace selain::protocol::gopher
         }
       }
 
-      body << "<li data-type=\"" << utils::html_escape(type_label(type)) << "\">";
+      body << "<li data-type=\"" << html_escape(type_label(type)) << "\">";
 
       if (type == 'i' || type == '3' || !is_linkable_type(type) || host.empty())
       {
-        body << utils::html_escape(label);
+        body << html_escape(label);
       } else {
         std::string href;
         const auto url_selector = external_url_from_selector(selector);
@@ -242,9 +244,9 @@ namespace selain::protocol::gopher
 
         body
           << "<a href=\""
-          << utils::html_escape(href)
+          << html_escape(href)
           << "\">"
-          << utils::html_escape(label)
+          << html_escape(label)
           << "</a>";
       }
 
@@ -308,7 +310,7 @@ namespace selain::protocol::gopher
 
     return theme::render_document(
       "Gopher text",
-      std::string("<pre>") + utils::html_escape(cleaned) + "</pre>\n"
+      std::format("<pre>{}</pre>\n", utils::string::html_escape(cleaned))
     );
   }
 }

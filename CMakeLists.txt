@@ -39,19 +39,20 @@ CMRC_ADD_RESOURCE_LIBRARY(
 )
 
 ADD_LIBRARY(
-  selain_utils
+  selain-utils
   STATIC
-  src/utils.cpp
+  src/utils/string.cpp
+  src/utils/url.cpp
 )
 
 TARGET_COMPILE_FEATURES(
-  selain_utils
+  selain-utils
   PUBLIC
     cxx_std_20
 )
 
 TARGET_INCLUDE_DIRECTORIES(
-  selain_utils
+  selain-utils
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${GTKMM_INCLUDE_DIRS}
@@ -59,7 +60,7 @@ TARGET_INCLUDE_DIRECTORIES(
 )
 
 TARGET_COMPILE_OPTIONS(
-  selain_utils
+  selain-utils
   PUBLIC
     ${GTKMM_CFLAGS_OTHER}
     ${WEBKITGTK_CFLAGS_OTHER}
@@ -69,14 +70,14 @@ TARGET_COMPILE_OPTIONS(
 )
 
 TARGET_LINK_DIRECTORIES(
-  selain_utils
+  selain-utils
   PUBLIC
     ${GTKMM_LIBRARY_DIRS}
     ${WEBKITGTK_LIBRARY_DIRS}
 )
 
 TARGET_LINK_LIBRARIES(
-  selain_utils
+  selain-utils
   PUBLIC
     ${GTKMM_LIBRARIES}
     ${WEBKITGTK_LIBRARIES}
@@ -129,7 +130,7 @@ TARGET_COMPILE_OPTIONS(
 TARGET_LINK_LIBRARIES(
   selain
   PRIVATE
-    selain_utils
+    selain-utils
     inja
     selain::rc
 )

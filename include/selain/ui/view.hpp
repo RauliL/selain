@@ -50,11 +50,30 @@ namespace selain::ui
     );
     ~View() override;
 
+    /**
+     * Returns pointer to the tab this view is associated with, or `nullptr` if
+     * no tab is associated with the view for some reason.
+     */
     Tab* get_tab();
+
+    /**
+     * Returns pointer to the tab this view is associated with, or `nullptr` if
+     * no tab is associated with the view for some reason.
+     */
     const Tab* get_tab() const;
 
-    Glib::ustring get_uri() const;
-    Glib::ustring get_title() const;
+    /**
+     * Returns the URI that this view is displaying at the moment, or
+     * `std::nullopt` if the view isn't displaying anything.
+     */
+    std::optional<Glib::ustring> get_uri() const;
+
+    /**
+     * Returns title of the document that this view is displaying at the
+     * moment, or `std::nullopt` if the view isn't displaying an document or
+     * the document has no title.
+     */
+    std::optional<Glib::ustring> get_title() const;
 
     /**
      * Appends URIs from this view's back/forward list into \p uris.

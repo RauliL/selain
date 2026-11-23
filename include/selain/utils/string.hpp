@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,16 +25,14 @@
  */
 #pragma once
 
-#include <algorithm>
 #include <cctype>
-#include <cstring>
 #include <concepts>
-#include <optional>
+#include <cstring>
 
 #include <glibmm.h>
 #include <webkit/webkit.h>
 
-namespace selain::utils
+namespace selain::utils::string
 {
   template<typename T>
   concept TrimableString = requires(const T& s, std::size_t i, std::size_t n)
@@ -44,25 +42,8 @@ namespace selain::utils
     { s.substr(i, n) } -> std::convertible_to<T>;
   };
 
-  /**
-   * Tests whether given string is empty or contains only whitespace
-   * characters.
-   */
   template<typename T>
-  bool is_blank(const T& input)
-  {
-    return input.empty() || std::all_of(
-      std::begin(input),
-      std::end(input),
-      [](T::const_reference c) -> bool
-      {
-        return std::isspace(static_cast<int>(c));
-      }
-    );
-  }
-
-  template<typename T>
-  inline bool starts_with(const T& input, const T& prefix)
+  bool starts_with(const T& input, const T& prefix)
   {
     return (
       input.length() >= prefix.length() &&
@@ -82,9 +63,9 @@ namespace selain::utils
   }
 
   template<typename T>
-  inline bool starts_with(const T& input, typename T::value_type c)
+  bool starts_with(const T& input, typename T::value_type c)
   {
-    return !input.empty() && input[0] == c;
+    return input.length() > 0 && input[0] == c;
   }
 
   template<TrimableString T>
@@ -122,9 +103,9 @@ namespace selain::utils
   }
 
   /**
-   * Strips whitespace from beginning and of end of given string and returns
-   * result.
-   */
+    * Strips whitespace from beginning and of end of given string and returns
+    * result.
+    */
   template<TrimableString T>
   T trim(const T& input)
   {
@@ -140,8 +121,8 @@ namespace selain::utils
   }
 
   /**
-   * Strips whitespace from beginning of given string and returns result.
-   */
+    * Strips whitespace from beginning of given string and returns result.
+    */
   template<TrimableString T>
   T trim_start(const T& input)
   {
@@ -156,54 +137,66 @@ namespace selain::utils
   }
 
   /**
-   * Returns textual representation of given JavaScript value.
+   * Tests whether given string is empty or contains only whitespace
+   * characters.
    */
-  Glib::ustring js_value_to_text(::JSCValue* value);
+  template<TrimableString T>
+  bool is_blank(const T& input)
+  {
+    const auto length = input.length();
+
+    if (length == 0)
+    {
+      return true;
+    }
+    for (std::size_t i = 0; i < length; ++i)
+    {
+      if (!std::isspace(input[i]))
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  template<TrimableString T>
+  bool has_whitespace(const T& input)
+  {
+    const auto length = input.length();
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+      if (std::isspace(input[i]))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /**
-   * Escapes HTML entities from given string.
-   */
+    * Escapes HTML entities from given string.
+    */
   std::string html_escape(std::string_view text);
 
   /**
-   * Escapes JavaScript string literal escape sequences from given string.
-   */
+    * Escapes JavaScript string literal escape sequences from given string.
+    */
   std::string js_string_escape(std::string_view text);
 
   /**
-   * Resolves user-entered navigation text to a loadable URI.
-   *
-   * - Absolute URIs (with a scheme) are returned unchanged.
-   * - Domain-like hosts (e.g. `example.com`, `localhost`) get an `https://`
-   *   prefix.
-   * - Anything else becomes a search URL: `%s` in
-   *   @p search_engine_template is replaced with the URL-encoded query.
-   */
-  Glib::ustring resolve_navigation_uri(
-    const Glib::ustring& input,
-    const Glib::ustring& search_engine_template
-  );
+    * Returns textual representation of given JavaScript value.
+    */
+  Glib::ustring js_value_to_text(JSCValue* value);
 
   /**
-   * Returns the URI one path level above @p uri, with query and fragment
-   * removed. Returns an empty string when the URI is empty, invalid, or
-   * already at the hierarchy root.
-   */
-  Glib::ustring url_hierarchy_up(const Glib::ustring& uri);
-
-  /**
-   * Returns the root of the URL hierarchy for @p uri (scheme, authority, and
-   * `/`), with query and fragment removed. Returns an empty string when the
-   * URI is empty, invalid, or already at the root.
-   */
-  Glib::ustring url_hierarchy_root(const Glib::ustring& uri);
-
-  /**
-   * Fuzzy-matches @p needle against @p haystack (case-insensitive subsequence).
-   * Returns a score (higher is better) when all needle characters appear in
-   * order, or std::nullopt when there is no match. An empty needle matches
-   * with score 0.
-   */
+    * Fuzzy-matches @p needle against @p haystack (case-insensitive subsequence).
+    * Returns a score (higher is better) when all needle characters appear in
+    * order, or std::nullopt when there is no match. An empty needle matches
+    * with score 0.
+    */
   std::optional<int> fuzzy_match_score(
     const Glib::ustring& haystack,
     const Glib::ustring& needle

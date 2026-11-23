@@ -35,7 +35,7 @@
 #include <selain/hint-context.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 CMRC_DECLARE(selain::rc);
 
@@ -347,7 +347,7 @@ namespace selain
     data["open-to-new-tab"] = m_open_in_new_tab;
     if (const auto window = tab.get_main_window())
     {
-      data["hint-chars"] = utils::js_string_escape(
+      data["hint-chars"] = utils::string::js_string_escape(
         setting::get(*window, "hint-chars").value_or("").raw()
       );
     } else {

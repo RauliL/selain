@@ -242,7 +242,10 @@ namespace selain::ui
   }
 
   void
-  Tab::split(bool vertical, const Glib::ustring& uri)
+  Tab::split(
+    Gtk::Orientation orientation,
+    const std::optional<Glib::ustring>& uri
+  )
   {
     if (!m_active_view)
     {
@@ -251,17 +254,19 @@ namespace selain::ui
 
     auto& current = *m_active_view;
     const auto next = create_view();
-    const auto load_uri = uri.empty() ? current.get_uri() : uri;
+    const auto load_uri = !uri || uri->empty() ? current.get_uri() : uri;
 
-    if (!load_uri.empty())
+    if (load_uri && !load_uri->empty())
     {
-      next->load_uri(load_uri);
+      next->load_uri(*load_uri);
     }
 
     replace_view_with_paned(
       current,
       *next.get(),
-      vertical ? Gtk::Orientation::HORIZONTAL : Gtk::Orientation::VERTICAL
+      orientation == Gtk::Orientation::VERTICAL
+        ? Gtk::Orientation::HORIZONTAL
+        : Gtk::Orientation::VERTICAL
     );
     set_active_view(*next.get());
   }
@@ -462,12 +467,6 @@ namespace selain::ui
     set_active_view(*views[index]);
   }
 
-  Glib::ustring
-  Tab::get_uri() const
-  {
-    return m_active_view ? m_active_view->get_uri() : Glib::ustring();
-  }
-
   void
   Tab::collect_history_uris(std::vector<Glib::ustring>& uris) const
   {
@@ -618,10 +617,7 @@ namespace selain::ui
     {
       return;
     }
-
-    const auto title = view.get_title();
-
-    m_tab_label.set_text(title.empty() ? "Untitled" : title);
+    m_tab_label.set_text(view.get_title().value_or("Untitled"));
   }
 
   void
@@ -746,10 +742,7 @@ namespace selain::ui
       m_signal_status_changed.emit(this, Glib::ustring());
       return;
     }
-
-    const auto title = m_active_view->get_title();
-
-    m_tab_label.set_text(title.empty() ? "Untitled" : title);
+    m_tab_label.set_text(m_active_view->get_title().value_or("Untitled"));
     m_tab_label.set_icon(m_active_view->get_favicon());
     m_signal_status_changed.emit(this, m_active_view->get_status());
   }

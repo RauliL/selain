@@ -29,7 +29,7 @@
 #include <selain/core/setting.hpp>
 #include <selain/tab-completion.hpp>
 #include <selain/ui/main-window.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain
 {
@@ -86,7 +86,7 @@ namespace selain
 
     for (const auto& candidate : candidates)
     {
-      if (utils::starts_with(candidate, prefix))
+      if (utils::string::starts_with(candidate, prefix))
       {
         matches.push_back(candidate);
       }
@@ -117,9 +117,9 @@ namespace selain
     for (const auto& candidate : candidates)
     {
       if (
-        utils::starts_with(candidate, prefix) ||
-        utils::starts_with(candidate, http_prefix) ||
-        utils::starts_with(candidate, https_prefix)
+        utils::string::starts_with(candidate, prefix) ||
+        utils::string::starts_with(candidate, http_prefix) ||
+        utils::string::starts_with(candidate, https_prefix)
       )
       {
         matches.push_back(candidate);
@@ -140,7 +140,7 @@ namespace selain
     {
       return false;
     }
-    if (utils::starts_with(common, token))
+    if (utils::string::starts_with(common, token))
     {
       return true;
     }
@@ -150,8 +150,8 @@ namespace selain
     }
 
     return (
-      utils::starts_with(common, "http://" + token) ||
-      utils::starts_with(common, "https://" + token)
+      utils::string::starts_with(common, "http://" + token) ||
+      utils::string::starts_with(common, "https://" + token)
     );
   }
 
@@ -210,11 +210,11 @@ namespace selain
       token = body;
       candidates = command::names();
     } else {
-      const auto command_name = utils::trim(body.substr(0, space));
+      const auto command_name = utils::string::trim(body.substr(0, space));
       const auto args = body.substr(space + 1);
 
       line_prefix = ":" + command_name + " ";
-      token = utils::trim(args);
+      token = utils::string::trim(args);
 
       if (is_set_command(command_name))
       {

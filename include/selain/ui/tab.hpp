@@ -101,12 +101,13 @@ namespace selain::ui
     void set_active_view(View& view);
 
     /**
-     * Splits the active view. When vertical is false, creates a horizontal
-     * split (:split). When vertical is true, creates a vertical split
-     * (:vsplit). Optional URI is loaded in the new view; otherwise the
-     * current URI is reused.
+     * Splits the active view. Optional URI is loaded in the new view;
+     * otherwise the current URI is reused.
      */
-    void split(bool vertical, const Glib::ustring& uri = Glib::ustring());
+    void split(
+      Gtk::Orientation orientation = Gtk::Orientation::HORIZONTAL,
+      const std::optional<Glib::ustring>& uri = std::nullopt
+    );
 
     /**
      * Closes the active split view. If it is the only view, closes the tab.
@@ -140,7 +141,19 @@ namespace selain::ui
      */
     void collect_views(std::vector<View*>& output) const;
 
-    Glib::ustring get_uri() const;
+    /**
+     * Returns URI that currently active view is displaying or `std::nullopt`
+     * if there is no active view or it's not displaying anything.
+     */
+    inline std::optional<Glib::ustring> get_uri() const
+    {
+      if (m_active_view)
+      {
+        return m_active_view->get_uri();
+      }
+
+      return std::nullopt;
+    }
 
     /**
      * Appends URIs from every split view's browsing history into \p uris.

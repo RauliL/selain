@@ -35,7 +35,8 @@
 #include <selain/keyboard.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/tab.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
+#include <selain/utils/url.hpp>
 
 using tab_callback_type = std::function<bool(
   selain::ui::MainWindow&,
@@ -50,7 +51,7 @@ static selain::command::callback_type switch_mode(selain::Mode);
 static selain::command::callback_type require_tab(const tab_callback_type&);
 static selain::command::callback_type tab_method(const tab_method_type&);
 static selain::command::callback_type tab_reload(bool);
-static selain::command::callback_type tab_split(bool);
+static selain::command::callback_type tab_split(Gtk::Orientation);
 static selain::command::callback_type window_method(const window_method_type&);
 
 // Commands that do not require tab.
@@ -214,7 +215,7 @@ namespace selain::command
     {
       "split", { "sp" },
       "Splits the current view horizontally.",
-      tab_split(false)
+      tab_split(Gtk::Orientation::HORIZONTAL)
     },
     {
       "split-focus", { "spf" },
@@ -254,7 +255,7 @@ namespace selain::command
     {
       "vsplit", { "vs", "vsp" },
       "Splits the current view vertically.",
-      tab_split(true)
+      tab_split(Gtk::Orientation::VERTICAL)
     },
     {
       "yank", { "y" },
@@ -306,7 +307,7 @@ split_command(
   Glib::ustring& args
 )
 {
-  using selain::utils::trim;
+  using selain::utils::string::trim;
 
   const auto pos = input.find(' ');
 
@@ -329,8 +330,8 @@ namespace selain::ui
 
     // Skip empty commands and comments.
     if (
-      utils::is_blank(command) ||
-      utils::starts_with(utils::trim_start(command), '"')
+      utils::string::is_blank(command) ||
+      utils::string::starts_with(utils::string::trim_start(command), '"')
     )
     {
       return true;
@@ -446,12 +447,16 @@ tab_reload(bool force)
 }
 
 static selain::command::callback_type
-tab_split(bool vertical)
+tab_split(Gtk::Orientation orientation)
 {
   return require_tab(
-    [vertical](selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring uri)
+    [orientation](
+      selain::ui::MainWindow&,
+      selain::ui::Tab& tab,
+      Glib::ustring uri
+    )
     {
-      tab.split(vertical, uri);
+      tab.split(orientation, uri);
 
       return true;
     }
@@ -502,7 +507,7 @@ require_arg(
   Glib::ustring& slot
 )
 {
-  args = selain::utils::trim_start(args);
+  args = selain::utils::string::trim_start(args);
 
   if (args.empty())
   {
@@ -523,7 +528,7 @@ require_arg(
   }
 
   slot = args.substr(0, i);
-  args = selain::utils::trim_start(args.substr(i));
+  args = selain::utils::string::trim_start(args.substr(i));
 
   return true;
 }
@@ -598,7 +603,7 @@ cmd_bind(selain::ui::MainWindow& window, Glib::ustring args)
   {
     return false;
   }
-  else if (selain::utils::is_blank(args))
+  else if (selain::utils::string::is_blank(args))
   {
     window.show_error("Missing command.");
 
@@ -670,12 +675,14 @@ cmd_quit(selain::ui::MainWindow& window, Glib::ustring)
 static bool
 cmd_set(selain::ui::MainWindow& window, Glib::ustring args)
 {
+  using selain::utils::string::trim;
+
   const auto index = args.find('=');
 
   if (index != Glib::ustring::npos)
   {
-    const auto name = selain::utils::trim(args.substr(0, index));
-    const auto value = selain::utils::trim(args.substr(index + 1));
+    const auto name = trim(args.substr(0, index));
+    const auto value = trim(args.substr(index + 1));
 
     if (!selain::setting::set(window, name, value))
     {
@@ -686,9 +693,9 @@ cmd_set(selain::ui::MainWindow& window, Glib::ustring args)
 
     return true;
   }
-  else if (!selain::utils::is_blank(args))
+  else if (!selain::utils::string::is_blank(args))
   {
-    const auto name = selain::utils::trim(args);
+    const auto name = trim(args);
 
     if (const auto value = selain::setting::get(window, name))
     {
@@ -728,11 +735,11 @@ cmd_tab(selain::ui::MainWindow& window, Glib::ustring args)
 static bool
 cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 {
-  if (selain::utils::is_blank(args))
+  if (selain::utils::string::is_blank(args))
   {
     window.show_error("Missing sequence.");
   }
-  else if (selain::keyboard::unbind(selain::utils::trim(args)))
+  else if (selain::keyboard::unbind(selain::utils::string::trim(args)))
   {
     return true;
   }
@@ -750,7 +757,7 @@ cmd_execute(
   Glib::ustring args
 )
 {
-  if (selain::utils::is_blank(args))
+  if (selain::utils::string::is_blank(args))
   {
     window.show_error("Usage: :execute <expression>");
 
@@ -861,7 +868,7 @@ cmd_js(
   Glib::ustring args
 )
 {
-  if (selain::utils::is_blank(args))
+  if (selain::utils::string::is_blank(args))
   {
     window.show_error("Usage: :js <script>");
 
@@ -879,7 +886,7 @@ cmd_js(
         {
           window.show_error(jsc_exception_get_message(exception));
         } else {
-          window.show_info(selain::utils::js_value_to_text(value));
+          window.show_info(selain::utils::string::js_value_to_text(value));
         }
       }
       else if (error)
@@ -895,13 +902,13 @@ cmd_js(
 static bool
 cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
 {
-  const auto next = selain::utils::url_hierarchy_root(tab.get_uri());
-
-  if (next.empty())
+  if (const auto uri = tab.get_uri())
   {
-    return true;
+    if (const auto next = selain::utils::url::get_root(*uri))
+    {
+      tab.load_uri(*next);
+    }
   }
-  tab.load_uri(next);
 
   return true;
 }
@@ -909,13 +916,13 @@ cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
 static bool
 cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
 {
-  const auto next = selain::utils::url_hierarchy_up(tab.get_uri());
-
-  if (next.empty())
+  if (const auto uri = tab.get_uri())
   {
-    return true;
+    if (const auto next = selain::utils::url::get_parent(*uri))
+    {
+      tab.load_uri(*next);
+    }
   }
-  tab.load_uri(next);
 
   return true;
 }
@@ -941,7 +948,7 @@ cmd_scroll(
 {
   // TODO: Allow finer control by accepting direction _and_ amount as
   // arguments.
-  const auto arg = selain::utils::trim(args);
+  const auto arg = selain::utils::string::trim(args);
   Glib::ustring method = "scrollBy";
   Glib::ustring direction;
   Glib::ustring value;
@@ -1043,12 +1050,12 @@ cmd_yank(selain::ui::MainWindow& window, selain::ui::Tab& tab, Glib::ustring)
   const auto clipboard = window.get_clipboard();
   const auto uri = tab.get_uri();
 
-  if (uri.empty())
+  if (!uri || uri->empty())
   {
     return false;
   }
-  clipboard->set_text(uri);
-  window.show_info("Yanked " + uri.raw());
+  clipboard->set_text(*uri);
+  window.show_info(std::format("Yanked {}", uri->raw()));
 
   return true;
 }
@@ -1063,7 +1070,7 @@ cmd_zoom(
   static constexpr double min_zoom = 0.1;
   static constexpr double max_zoom = 5.0;
 
-  const auto arg = selain::utils::trim(args);
+  const auto arg = selain::utils::string::trim(args);
   const auto current = tab.get_zoom_level();
 
   if (arg.empty())

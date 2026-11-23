@@ -29,7 +29,7 @@
 #include <selain/protocol/gemini/client.hpp>
 #include <selain/protocol/gemini/scheme.hpp>
 #include <selain/ui/view.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain::format::gemtext
 {
@@ -95,8 +95,8 @@ namespace selain::protocol::gemini
       title,
       std::format(
         "<h1>{}</h1><p>{}</p>",
-        utils::html_escape(title),
-        utils::html_escape(message)
+        utils::string::html_escape(title),
+        utils::string::html_escape(message)
       )
     );
   }
@@ -111,7 +111,9 @@ namespace selain::protocol::gemini
         "<p>{}</p>"
         "<p>Type your {} in the command bar, then press "
         "<kbd>Enter</kbd> to submit or <kbd>Esc</kbd> to cancel.</p>",
-        utils::html_escape(prompt.empty() ? "This capsule requests input." : prompt),
+        utils::string::html_escape(
+          prompt.empty() ? "This capsule requests input." : prompt
+        ),
         sensitive ? "sensitive input" : "reply"
       )
     );
@@ -120,8 +122,8 @@ namespace selain::protocol::gemini
   static std::string
   make_redirect_page(const std::string& target_uri)
   {
-    const auto escaped_html = utils::html_escape(target_uri);
-    const auto escaped_js = utils::js_string_escape(target_uri);
+    const auto escaped_html = utils::string::html_escape(target_uri);
+    const auto escaped_js = utils::string::js_string_escape(target_uri);
 
     return std::format(
       "<!DOCTYPE html>\n"
@@ -350,7 +352,10 @@ namespace selain::protocol::gemini
     {
       const auto html = theme::render_document(
         mime,
-        std::format("<pre>{}</pre>", utils::html_escape(body_as_text(response)))
+        std::format(
+          "<pre>{}</pre>",
+          utils::string::html_escape(body_as_text(response))
+        )
       );
 
       finish_with_html(request, html);

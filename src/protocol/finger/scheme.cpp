@@ -25,12 +25,11 @@
  */
 #include <cstdint>
 #include <format>
-#include <string_view>
 
 #include <selain/core/theme.hpp>
 #include <selain/protocol/finger/client.hpp>
 #include <selain/protocol/finger/scheme.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain::protocol::finger
 {
@@ -41,8 +40,8 @@ namespace selain::protocol::finger
       title,
       std::format(
         "<h1>{}</h1><p>{}</p>",
-        utils::html_escape(title),
-        utils::html_escape(message)
+        utils::string::html_escape(title),
+        utils::string::html_escape(message)
       )
     );
   }
@@ -140,7 +139,7 @@ namespace selain::protocol::finger
 
     return theme::render_document(
       "Finger",
-      std::string("<pre>") + utils::html_escape(cleaned) + "</pre>\n"
+      std::format("<pre>{}</pre>\n", utils::string::html_escape(cleaned))
     );
   }
 

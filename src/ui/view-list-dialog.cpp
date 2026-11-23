@@ -28,7 +28,7 @@
 #include <selain/gtk-compat.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view-list-dialog.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain::ui
 {
@@ -39,20 +39,18 @@ namespace selain::ui
     {
       const auto title = view.get_title();
 
-      if (!title.empty())
+      if (title && !title->empty())
       {
-        return title;
+        return *title;
       }
 
-      const auto uri = view.get_uri();
-
-      return uri.empty() ? Glib::ustring("Untitled") : uri;
+      return view.get_uri().value_or("Untitled");
     }
 
     Glib::ustring
     view_haystack(const View& view)
     {
-      return view_label(view) + ' ' + view.get_uri();
+      return view_label(view) + ' ' + view.get_uri().value_or("");
     }
   }
 
@@ -64,7 +62,7 @@ namespace selain::ui
       , m_box(Gtk::Orientation::HORIZONTAL)
       , m_text_box(Gtk::Orientation::VERTICAL)
       , m_title(view_label(view))
-      , m_uri(view.get_uri())
+      , m_uri(view.get_uri().value_or(""))
     {
       add_css_class("view-row");
 
@@ -250,10 +248,10 @@ namespace selain::ui
         ranked.push_back({ view, 0 });
         continue;
       }
-      if (const auto score = utils::fuzzy_match_score(
-            view_haystack(*view),
-            query
-          ))
+      if (const auto score = utils::string::fuzzy_match_score(
+        view_haystack(*view),
+        query
+      ))
       {
         ranked.push_back({ view, *score });
       }

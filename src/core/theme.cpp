@@ -31,7 +31,7 @@
 #include <inja/inja.hpp>
 
 #include <selain/core/theme.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 CMRC_DECLARE(selain::rc);
 
@@ -131,7 +131,7 @@ namespace selain::theme
     inja::json data;
 
     add_theme_colors(data);
-    data["title"] = utils::html_escape(title);
+    data["title"] = utils::string::html_escape(title);
     data["body"] = body;
 
     return inja::render(std::string(std::begin(tmpl), std::end(tmpl)), data);

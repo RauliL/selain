@@ -24,7 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <selain/core/theme.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/string.hpp>
 
 namespace selain::format::gemtext
 {
@@ -66,7 +66,7 @@ namespace selain::format::gemtext
   static void
   append_preformatted(std::ostringstream& html, std::string_view text)
   {
-    html << "<pre>" << utils::html_escape(text) << "</pre>\n";
+    html << "<pre>" << utils::string::html_escape(text) << "</pre>\n";
   }
 
   /**
@@ -78,6 +78,10 @@ namespace selain::format::gemtext
   std::string
   render(std::string_view source, std::string_view base_uri)
   {
+    using selain::utils::string::html_escape;
+    using selain::utils::string::starts_with;
+    using selain::utils::string::trim_start;
+
     std::optional<std::string> title;
     std::ostringstream body;
     std::string preformatted;
@@ -107,7 +111,7 @@ namespace selain::format::gemtext
         line.remove_suffix(1);
       }
 
-      if (utils::starts_with(line, "```"))
+      if (starts_with(line, "```"))
       {
         close_list();
         if (in_pre)
@@ -127,11 +131,11 @@ namespace selain::format::gemtext
         }
         preformatted.append(line);
       }
-      else if (utils::starts_with(line, "=>"))
+      else if (starts_with(line, "=>"))
       {
         close_list();
 
-        auto rest = utils::trim_start(line.substr(2));
+        auto rest = trim_start(line.substr(2));
         std::string_view url;
         std::string_view label;
         const auto sep = rest.find_first_of(" \t");
@@ -142,7 +146,7 @@ namespace selain::format::gemtext
           label = rest;
         } else {
           url = rest.substr(0, sep);
-          label = utils::trim_start(rest.substr(sep));
+          label = trim_start(rest.substr(sep));
           if (label.empty())
           {
             label = url;
@@ -153,59 +157,47 @@ namespace selain::format::gemtext
 
         body
           << "<p class=\"link\"><a href=\""
-          << utils::html_escape(href)
+          << html_escape(href)
           << "\">"
-          << utils::html_escape(label)
+          << html_escape(label)
           << "</a></p>\n";
       }
-      else if (
-        utils::starts_with(line, "* ") ||
-        utils::starts_with(line, "*\t")
-      )
+      else if (starts_with(line, "* ") || starts_with(line, "*\t"))
       {
         if (!in_list)
         {
           body << "<ul>\n";
           in_list = true;
         }
-        body
-          << "<li>"
-          << utils::html_escape(utils::trim_start(line.substr(1)))
-          << "</li>\n";
+        body << "<li>" << html_escape(trim_start(line.substr(1))) << "</li>\n";
       }
-      else if (utils::starts_with(line, "###"))
+      else if (starts_with(line, "###"))
       {
         close_list();
-        body
-          << "<h3>"
-          << utils::html_escape(utils::trim_start(line.substr(3)))
-          << "</h3>\n";
+        body << "<h3>" << html_escape(trim_start(line.substr(3))) << "</h3>\n";
       }
-      else if (utils::starts_with(line, "##"))
+      else if (starts_with(line, "##"))
       {
         close_list();
-        body
-          << "<h2>"
-          << utils::html_escape(utils::trim_start(line.substr(2)))
-          << "</h2>\n";
+        body << "<h2>" << html_escape(trim_start(line.substr(2))) << "</h2>\n";
       }
-      else if (utils::starts_with(line, "#"))
+      else if (starts_with(line, "#"))
       {
-        const auto heading = utils::trim_start(line.substr(1));
+        const auto heading = trim_start(line.substr(1));
 
         close_list();
-        body << "<h1>" << utils::html_escape(heading) << "</h1>\n";
+        body << "<h1>" << html_escape(heading) << "</h1>\n";
         if (!title)
         {
           title = heading;
         }
       }
-      else if (utils::starts_with(line, ">"))
+      else if (starts_with(line, ">"))
       {
         close_list();
         body
           << "<blockquote>"
-          << utils::html_escape(utils::trim_start(line.substr(1)))
+          << html_escape(trim_start(line.substr(1)))
           << "</blockquote>\n";
       }
       else if (line.empty())
@@ -214,7 +206,7 @@ namespace selain::format::gemtext
         body << "<br/>\n";
       } else {
         close_list();
-        body << "<p>" << utils::html_escape(line) << "</p>\n";
+        body << "<p>" << html_escape(line) << "</p>\n";
       }
 
       if (end == std::string_view::npos)

@@ -28,7 +28,7 @@
 
 #include <selain/core/setting.hpp>
 #include <selain/ui/main-window.hpp>
-#include <selain/utils.hpp>
+#include <selain/utils/url.hpp>
 
 namespace selain::keyboard
 {
@@ -261,7 +261,11 @@ namespace selain::ui
   Tab*
   View::get_tab()
   {
-    for (Gtk::Widget* widget = get_parent(); widget; widget = widget->get_parent())
+    for (
+      Gtk::Widget* widget = get_parent();
+      widget;
+      widget = widget->get_parent()
+    )
     {
       if (auto* tab = dynamic_cast<Tab*>(widget))
       {
@@ -290,27 +294,27 @@ namespace selain::ui
     return nullptr;
   }
 
-  Glib::ustring
+  std::optional<Glib::ustring>
   View::get_uri() const
   {
     const auto uri = ::webkit_web_view_get_uri(m_web_view);
 
     if (!uri || !*uri)
     {
-      return Glib::ustring();
+      return std::nullopt;
     }
 
     return uri;
   }
 
-  Glib::ustring
+  std::optional<Glib::ustring>
   View::get_title() const
   {
-    const auto title = ::webkit_web_view_get_title(m_web_view);
+    const auto title = webkit_web_view_get_title(m_web_view);
 
     if (!title || !*title)
     {
-      return Glib::ustring();
+      return std::nullopt;
     }
 
     return title;
@@ -381,13 +385,15 @@ namespace selain::ui
       }
     }
 
-    const auto resolved = utils::resolve_navigation_uri(uri, search_engine);
+    const auto resolved = utils::url::resolve_navigation_uri(
+      uri,
+      search_engine
+    );
 
-    if (resolved.empty())
+    if (resolved && !resolved->empty())
     {
-      return;
+      webkit_web_view_load_uri(m_web_view, resolved->c_str());
     }
-    ::webkit_web_view_load_uri(m_web_view, resolved.c_str());
   }
 
   void

@@ -13,23 +13,23 @@ FETCHCONTENT_MAKEAVAILABLE(Catch2)
 LIST(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
 ADD_EXECUTABLE(
-  selain_tests
+  selain-tests
   utils_test.cpp
 )
 
 TARGET_LINK_LIBRARIES(
-  selain_tests
+  selain-tests
   PRIVATE
-    selain_utils
+    selain-utils
     Catch2::Catch2WithMain
 )
 
 TARGET_COMPILE_OPTIONS(
-  selain_tests
+  selain-tests
   PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Werror>
     $<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>
 )
 
 INCLUDE(Catch)
-CATCH_DISCOVER_TESTS(selain_tests)
+CATCH_DISCOVER_TESTS(selain-tests)

@@ -37,6 +37,7 @@ using selain::utils::string::js_string_escape;
 using selain::utils::string::starts_with;
 using selain::utils::string::trim;
 using selain::utils::string::trim_start;
+using selain::utils::url::get_host;
 using selain::utils::url::get_parent;
 using selain::utils::url::get_root;
 using selain::utils::url::resolve_navigation_uri;
@@ -149,6 +150,16 @@ TEST_CASE("resolve_navigation_uri", "[utils::url]")
       == "https://example.com/search?q=hello"
     );
   }
+}
+
+TEST_CASE("get_host", "[utils::url]")
+{
+  REQUIRE(!get_host(""));
+  REQUIRE(!get_host("not a uri"));
+  REQUIRE(!get_host("mailto:user@example.com"));
+  REQUIRE(get_host("https://example.com/") == "example.com");
+  REQUIRE(get_host("https://login.github.com/path?x=1") == "login.github.com");
+  REQUIRE(get_host("http://127.0.0.1:8080/") == "127.0.0.1");
 }
 
 TEST_CASE("get_parent", "[utils::url]")

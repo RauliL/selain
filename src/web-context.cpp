@@ -23,16 +23,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/web-context.hpp>
+#include <selain/config.hpp>
 
 #include <selain/adblock.hpp>
-#include <selain/protocol/finger/scheme.hpp>
-#include <selain/protocol/gemini/scheme.hpp>
-#include <selain/protocol/gopher/scheme.hpp>
+#if defined(SELAIN_ENABLE_FINGER)
+# include <selain/protocol/finger/scheme.hpp>
+#endif
+#if defined(SELAIN_ENABLE_GEMINI)
+# include <selain/protocol/gemini/scheme.hpp>
+#endif
+#if defined(SELAIN_ENABLE_GOPHER)
+# include <selain/protocol/gopher/scheme.hpp>
+#endif
+#include <selain/web-context.hpp>
 
 namespace selain
 {
-  static ::WebKitNetworkSession* create_network_session();
+  static WebKitNetworkSession* create_network_session();
 
   Glib::RefPtr<WebContext>
   WebContext::create()
@@ -42,13 +49,19 @@ namespace selain
 
   WebContext::WebContext()
     : Glib::ObjectBase(typeid(WebContext))
-    , m_context(::webkit_web_context_new())
+    , m_context(webkit_web_context_new())
     , m_session(create_network_session())
-    , m_user_content_manager(::webkit_user_content_manager_new())
+    , m_user_content_manager(webkit_user_content_manager_new())
   {
+#if defined(SELAIN_ENABLE_FINGER)
     protocol::finger::register_schemes(m_context);
+#endif
+#if defined(SELAIN_ENABLE_GEMINI)
     protocol::gemini::register_schemes(m_context);
+#endif
+#if defined(SELAIN_ENABLE_GOPHER)
     protocol::gopher::register_schemes(m_context);
+#endif
     adblock::initialize(m_user_content_manager);
   }
 
@@ -60,10 +73,10 @@ namespace selain
     g_clear_object(&m_user_content_manager);
   }
 
-  ::WebKitWebView*
+  WebKitWebView*
   WebContext::create_web_view()
   {
-    return WEBKIT_WEB_VIEW(::g_object_new(
+    return WEBKIT_WEB_VIEW(g_object_new(
       WEBKIT_TYPE_WEB_VIEW,
       "web-context",
       m_context,
@@ -75,7 +88,7 @@ namespace selain
     ));
   }
 
-  static ::WebKitNetworkSession*
+  static WebKitNetworkSession*
   create_network_session()
   {
     const auto user_cache_dir = Glib::get_user_cache_dir();
@@ -94,19 +107,19 @@ namespace selain
       "selain",
       "cookies.sqlite"
     );
-    ::WebKitNetworkSession* session;
+    WebKitNetworkSession* session;
 
-    session = ::webkit_network_session_new(
+    session = webkit_network_session_new(
       base_data_dir.c_str(),
       base_cache_dir.c_str()
     );
 
-    ::webkit_website_data_manager_set_favicons_enabled(
-      ::webkit_network_session_get_website_data_manager(session),
+    webkit_website_data_manager_set_favicons_enabled(
+      webkit_network_session_get_website_data_manager(session),
       true
     );
-    ::webkit_cookie_manager_set_persistent_storage(
-      ::webkit_network_session_get_cookie_manager(session),
+    webkit_cookie_manager_set_persistent_storage(
+      webkit_network_session_get_cookie_manager(session),
       cookie_file.c_str(),
       WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
     );

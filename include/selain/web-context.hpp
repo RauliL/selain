@@ -44,15 +44,15 @@ namespace selain
     /**
      * Creates new web view using the wrapped web context and network session.
      */
-    ::WebKitWebView* create_web_view();
+    WebKitWebView* create_web_view();
 
   private:
     explicit WebContext();
     ~WebContext() override;
 
   private:
-    ::WebKitWebContext* m_context;
-    ::WebKitNetworkSession* m_session;
-    ::WebKitUserContentManager* m_user_content_manager;
+    WebKitWebContext* m_context;
+    WebKitNetworkSession* m_session;
+    WebKitUserContentManager* m_user_content_manager;
   };
 }

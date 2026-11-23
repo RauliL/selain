@@ -1,7 +1,15 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 PROJECT(selain C CXX)
 
+OPTION(SELAIN_ENABLE_FINGER "Enable finger:// protocol" ON)
+OPTION(SELAIN_ENABLE_GEMINI "Enable gemini:// protocol" ON)
+OPTION(SELAIN_ENABLE_GOPHER "Enable gopher:// protocol" ON)
 OPTION(SELAIN_BUILD_TESTS "Build unit tests" ON)
+
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/selain/config.hpp.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/selain/config.hpp"
+)
 
 FIND_PACKAGE(PkgConfig)
 
@@ -83,8 +91,8 @@ TARGET_LINK_LIBRARIES(
     ${WEBKITGTK_LIBRARIES}
 )
 
-ADD_EXECUTABLE(
-  selain
+SET(
+  SELAIN_SOURCES
   src/adblock.cpp
   src/adblock/easylist.cpp
   src/core/command.cpp
@@ -95,13 +103,6 @@ ADD_EXECUTABLE(
   src/keyboard.cpp
   src/main.cpp
   src/mode.cpp
-  src/protocol/finger/client.cpp
-  src/protocol/finger/scheme.cpp
-  src/protocol/gemini/client.cpp
-  src/protocol/gemini/scheme.cpp
-  src/protocol/gopher/client.cpp
-  src/protocol/gopher/menu.cpp
-  src/protocol/gopher/scheme.cpp
   src/tab-completion.cpp
   src/ui/command-entry.cpp
   src/ui/main-window.cpp
@@ -113,6 +114,36 @@ ADD_EXECUTABLE(
   src/web-context.cpp
   src/web-settings.cpp
 )
+
+IF(SELAIN_ENABLE_FINGER)
+  LIST(
+    APPEND
+    SELAIN_SOURCES
+    src/protocol/finger/client.cpp
+    src/protocol/finger/scheme.cpp
+  )
+ENDIF()
+
+IF(SELAIN_ENABLE_GEMINI)
+  LIST(
+    APPEND
+    SELAIN_SOURCES
+    src/protocol/gemini/client.cpp
+    src/protocol/gemini/scheme.cpp
+  )
+ENDIF()
+
+IF(SELAIN_ENABLE_GOPHER)
+  LIST(
+    APPEND
+    SELAIN_SOURCES
+    src/protocol/gopher/client.cpp
+    src/protocol/gopher/menu.cpp
+    src/protocol/gopher/scheme.cpp
+  )
+ENDIF()
+
+ADD_EXECUTABLE(selain ${SELAIN_SOURCES})
 
 TARGET_COMPILE_FEATURES(
   selain

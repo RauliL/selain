@@ -25,35 +25,63 @@
  */
 #pragma once
 
+#include <functional>
 #include <vector>
 
 #include <gtkmm.h>
 
 namespace selain::ui
 {
-  class MainWindow;
-  class View;
+  /**
+   * One selectable row in a ListDialog: primary title, secondary description,
+   * and an optional icon (paintable preferred, otherwise icon_name).
+   */
+  struct ListDialogEntry
+  {
+    Glib::ustring title;
+    Glib::ustring secondary;
+    /** When empty, filtering uses title + ' ' + secondary. */
+    Glib::ustring filter_text;
+    Glib::RefPtr<Gdk::Paintable> icon;
+    Glib::ustring icon_name{"text-x-generic"};
+  };
 
   /**
-   * Modal dialog listing all open views with favicon and title. Supports fuzzy
-   * filtering and keyboard-only navigation (Enter to select, Escape to close).
+   * Modal dialog listing entries with fuzzy filtering and keyboard-only
+   * navigation (Enter to select, Escape to close).
    */
-  class ViewListDialog : public Gtk::Window
+  class ListDialog : public Gtk::Window
   {
   public:
     /**
-     * Creates and presents a view-list dialog for @p window. The dialog
-     * destroys itself when closed.
+     * Creates and presents a list dialog. The dialog destroys itself when
+     * closed. @p on_activate receives the index into the original @p entries
+     * vector. When the filter is empty, @p preferred_index is selected;
+     * otherwise the top-ranked match is selected.
      */
-    static void show(MainWindow& window);
+    static void show(
+      Gtk::Window& parent,
+      const Glib::ustring& title,
+      const Glib::ustring& filter_placeholder,
+      std::vector<ListDialogEntry> entries,
+      std::function<void(std::size_t index)> on_activate,
+      int preferred_index = 0
+    );
 
   private:
     class Row;
 
-    explicit ViewListDialog(MainWindow& window);
-    ~ViewListDialog() override;
+    ListDialog(
+      Gtk::Window& parent,
+      const Glib::ustring& title,
+      const Glib::ustring& filter_placeholder,
+      std::vector<ListDialogEntry> entries,
+      std::function<void(std::size_t index)> on_activate,
+      int preferred_index
+    );
+    ~ListDialog() override;
 
-    void populate();
+    const Glib::ustring& entry_haystack(std::size_t index) const;
     void apply_filter();
     void select_index(int index);
     void move_selection(int delta);
@@ -64,13 +92,15 @@ namespace selain::ui
     void on_row_activated(Gtk::ListBoxRow* row);
 
   private:
-    MainWindow& m_window;
     Gtk::Box m_box;
     Gtk::Entry m_filter;
     Gtk::ScrolledWindow m_scrolled;
     Gtk::ListBox m_list;
     Glib::RefPtr<Gtk::EventControllerKey> m_key_controller;
-    std::vector<View*> m_views;
-    std::vector<View*> m_filtered;
+    std::vector<ListDialogEntry> m_entries;
+    std::vector<Glib::ustring> m_haystacks;
+    std::vector<std::size_t> m_filtered;
+    std::function<void(std::size_t index)> m_on_activate;
+    int m_preferred_index;
   };
 }

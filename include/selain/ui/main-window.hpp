@@ -25,9 +25,6 @@
  */
 #pragma once
 
-#include <functional>
-#include <optional>
-
 #include <gtkmm.h>
 
 #include <selain/tab-completion.hpp>
@@ -121,6 +118,16 @@ namespace selain::ui
     {
       return m_command_entry;
     }
+
+    /**
+     * Returns all tabs that the window has.
+     */
+    std::vector<Tab*> get_tabs();
+
+    /**
+     * Returns all tabs that the window has.
+     */
+    std::vector<const Tab*> get_tabs() const;
 
     /**
      * Returns pointer to the current tab, or null pointer if no tabs are open.

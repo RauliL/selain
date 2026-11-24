@@ -23,401 +23,78 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <algorithm>
-
-#include <selain/gtk-compat.hpp>
+#include <selain/ui/list-dialog.hpp>
 #include <selain/ui/main-window.hpp>
-#include <selain/ui/view-list-dialog.hpp>
-#include <selain/utils/string.hpp>
 
 namespace selain::ui
 {
-  namespace
+  static Glib::ustring
+  view_label(const View& view)
   {
-    Glib::ustring
-    view_label(const View& view)
+    const auto title = view.get_title();
+
+    if (title && !title->empty())
     {
-      const auto title = view.get_title();
-
-      if (title && !title->empty())
-      {
-        return *title;
-      }
-
-      return view.get_uri().value_or("Untitled");
+      return *title;
     }
 
-    Glib::ustring
-    view_haystack(const View& view)
-    {
-      return view_label(view) + ' ' + view.get_uri().value_or("");
-    }
+    return view.get_uri().value_or("Untitled");
   }
 
-  class ViewListDialog::Row : public Gtk::ListBoxRow
+  static Glib::ustring
+  view_haystack(const View& view)
   {
-  public:
-    explicit Row(View& view)
-      : m_view(&view)
-      , m_box(Gtk::Orientation::HORIZONTAL)
-      , m_text_box(Gtk::Orientation::VERTICAL)
-      , m_title(view_label(view))
-      , m_uri(view.get_uri().value_or(""))
-    {
-      add_css_class("view-row");
-
-      m_icon.add_css_class("favicon");
-      m_icon.set_from_icon_name("text-x-generic");
-      if (const auto favicon = view.get_favicon())
-      {
-        m_icon.set(favicon);
-      }
-      m_icon.set_margin_end(8);
-      m_icon.set_pixel_size(16);
-      m_icon.set_valign(Gtk::Align::START);
-
-      m_title.add_css_class("title-label");
-      m_title.set_halign(Gtk::Align::START);
-      m_title.set_hexpand(true);
-      m_title.set_ellipsize(Pango::EllipsizeMode::END);
-      m_title.set_xalign(0.0f);
-
-      m_uri.add_css_class("uri-label");
-      m_uri.set_halign(Gtk::Align::START);
-      m_uri.set_hexpand(true);
-      m_uri.set_ellipsize(Pango::EllipsizeMode::END);
-      m_uri.set_xalign(0.0f);
-
-      m_text_box.set_hexpand(true);
-      m_text_box.append(m_title);
-      m_text_box.append(m_uri);
-
-      m_box.set_margin_start(8);
-      m_box.set_margin_end(8);
-      m_box.set_margin_top(4);
-      m_box.set_margin_bottom(4);
-      m_box.append(m_icon);
-      m_box.append(m_text_box);
-      set_child(m_box);
-    }
-
-    View* get_view() const
-    {
-      return m_view;
-    }
-
-  private:
-    View* m_view;
-    Gtk::Box m_box;
-    Gtk::Box m_text_box;
-    Gtk::Image m_icon;
-    Gtk::Label m_title;
-    Gtk::Label m_uri;
-  };
-
-  void
-  ViewListDialog::show(MainWindow& window)
-  {
-    auto* dialog = new ViewListDialog(window);
-
-    dialog->present();
-    dialog->m_filter.grab_focus();
-  }
-
-  ViewListDialog::ViewListDialog(MainWindow& window)
-    : m_window(window)
-    , m_box(Gtk::Orientation::VERTICAL)
-    , m_key_controller(Gtk::EventControllerKey::create())
-  {
-    set_title("Views");
-    set_modal(true);
-    set_transient_for(window);
-    set_destroy_with_parent(true);
-    set_default_size(480, 360);
-    set_hide_on_close(true);
-    add_css_class("selain-view-list-dialog");
-
-    m_filter.add_css_class("filter-entry");
-    m_filter.set_placeholder_text("Filter views…");
-    m_filter.set_hexpand(true);
-    m_filter.set_margin_start(8);
-    m_filter.set_margin_end(8);
-    m_filter.set_margin_top(8);
-    m_filter.set_margin_bottom(4);
-
-    m_list.add_css_class("view-list");
-    m_list.set_selection_mode(Gtk::SelectionMode::SINGLE);
-    m_list.set_activate_on_single_click(true);
-
-    m_scrolled.set_policy(
-      Gtk::PolicyType::AUTOMATIC,
-      Gtk::PolicyType::AUTOMATIC
-    );
-    m_scrolled.set_vexpand(true);
-    m_scrolled.set_child(m_list);
-
-    m_box.set_spacing(0);
-    m_box.append(m_filter);
-    m_box.append(m_scrolled);
-    set_child(m_box);
-
-    m_filter.signal_changed().connect(sigc::mem_fun(
-      *this,
-      &ViewListDialog::on_filter_changed
-    ));
-    m_filter.signal_activate().connect(sigc::mem_fun(
-      *this,
-      &ViewListDialog::activate_selection
-    ));
-    m_list.signal_row_activated().connect(sigc::mem_fun(
-      *this,
-      &ViewListDialog::on_row_activated
-    ));
-
-    m_key_controller->set_propagation_phase(Gtk::PropagationPhase::CAPTURE);
-    m_key_controller->signal_key_pressed().connect(
-      sigc::mem_fun(*this, &ViewListDialog::on_key_pressed),
-      false
-    );
-    add_controller(m_key_controller);
-
-    signal_close_request().connect(
-      [this]() -> bool
-      {
-        close_dialog();
-
-        return true;
-      },
-      false
-    );
-
-    populate();
-  }
-
-  ViewListDialog::~ViewListDialog()
-  {
-    while (auto* child = m_box.get_first_child())
-    {
-      m_box.remove(*child);
-    }
+    return view_label(view) + ' ' + view.get_uri().value_or("");
   }
 
   void
-  ViewListDialog::populate()
+  MainWindow::show_view_list_dialog()
   {
-    // collect_views() replaces its output vector, so gather per-tab then merge.
-    m_views.clear();
-    for (int i = 0; i < m_window.get_tab_count(); ++i)
-    {
-      if (auto* tab = m_window.get_nth_tab(i))
-      {
-        std::vector<View*> tab_views;
-
-        tab->collect_views(tab_views);
-        m_views.insert(
-          std::end(m_views),
-          std::begin(tab_views),
-          std::end(tab_views)
-        );
-      }
-    }
-
-    apply_filter();
-  }
-
-  void
-  ViewListDialog::apply_filter()
-  {
-    const auto query = m_filter.get_text();
-    struct Ranked
-    {
-      View* view;
-      int score;
-    };
-    std::vector<Ranked> ranked;
-
-    ranked.reserve(m_views.size());
-    for (auto* view : m_views)
-    {
-      if (!view)
-      {
-        continue;
-      }
-      if (query.empty())
-      {
-        ranked.push_back({ view, 0 });
-        continue;
-      }
-      if (const auto score = utils::string::fuzzy_match_score(
-        view_haystack(*view),
-        query
-      ))
-      {
-        ranked.push_back({ view, *score });
-      }
-    }
-
-    if (!query.empty())
-    {
-      std::stable_sort(
-        std::begin(ranked),
-        std::end(ranked),
-        [](const Ranked& a, const Ranked& b)
-        {
-          return a.score > b.score;
-        }
-      );
-    }
-
+    std::vector<View*> views;
+    std::vector<ListDialogEntry> entries;
+    int preferred_index = 0;
     View* preferred = nullptr;
 
-    if (auto* tab = m_window.get_current_tab())
+    if (auto* tab = get_current_tab())
     {
       preferred = tab->get_active_view();
     }
 
-    gtk_compat::remove_all(m_list);
-    m_filtered.clear();
-    m_filtered.reserve(ranked.size());
-
-    int preferred_index = 0;
-
-    for (const auto& entry : ranked)
+    for (auto* tab : get_tabs())
     {
-      auto* row = Gtk::make_managed<Row>(*entry.view);
+      std::vector<View*> tab_views;
 
-      if (entry.view == preferred)
+      tab->collect_views(tab_views);
+      for (auto* view : tab_views)
       {
-        preferred_index = static_cast<int>(m_filtered.size());
+        ListDialogEntry entry;
+
+        entry.title = view_label(*view);
+        entry.secondary = view->get_uri().value_or("");
+        entry.filter_text = view_haystack(*view);
+        entry.icon = view->get_favicon();
+        if (view == preferred)
+        {
+          preferred_index = static_cast<int>(entries.size());
+        }
+        entries.push_back(std::move(entry));
+        views.push_back(view);
       }
-      m_list.append(*row);
-      m_filtered.push_back(entry.view);
     }
 
-    if (!m_filtered.empty())
-    {
-      select_index(query.empty() ? preferred_index : 0);
-    }
-  }
-
-  void
-  ViewListDialog::select_index(int index)
-  {
-    if (m_filtered.empty())
-    {
-      return;
-    }
-
-    const auto count = static_cast<int>(m_filtered.size());
-    const auto clamped = std::clamp(index, 0, count - 1);
-
-    if (auto* row = m_list.get_row_at_index(clamped))
-    {
-      m_list.select_row(*row);
-      row->grab_focus();
-      // Keep typing focus in the filter; selection is visual only.
-      m_filter.grab_focus_without_selecting();
-    }
-  }
-
-  void
-  ViewListDialog::move_selection(int delta)
-  {
-    if (m_filtered.empty())
-    {
-      return;
-    }
-
-    auto* selected = m_list.get_selected_row();
-    const int current = selected ? selected->get_index() : 0;
-    const auto count = static_cast<int>(m_filtered.size());
-    auto next = current + delta;
-
-    if (next < 0)
-    {
-      next = count - 1;
-    }
-    else if (next >= count)
-    {
-      next = 0;
-    }
-    select_index(next);
-  }
-
-  void
-  ViewListDialog::activate_selection()
-  {
-    auto* row = m_list.get_selected_row();
-
-    if (!row && !m_filtered.empty())
-    {
-      row = m_list.get_row_at_index(0);
-    }
-    if (!row)
-    {
-      return;
-    }
-
-    on_row_activated(row);
-  }
-
-  void
-  ViewListDialog::close_dialog()
-  {
-    set_visible(false);
-    Glib::signal_idle().connect_once([this]() {
-      delete this;
-    });
-  }
-
-  bool
-  ViewListDialog::on_key_pressed(guint keyval, guint, Gdk::ModifierType)
-  {
-    switch (keyval)
-    {
-      case GDK_KEY_Escape:
-        close_dialog();
-        return true;
-
-      case GDK_KEY_Up:
-      case GDK_KEY_KP_Up:
-        move_selection(-1);
-        return true;
-
-      case GDK_KEY_Down:
-      case GDK_KEY_KP_Down:
-        move_selection(1);
-        return true;
-
-      case GDK_KEY_Return:
-      case GDK_KEY_KP_Enter:
-        activate_selection();
-        return true;
-
-      default:
-        return false;
-    }
-  }
-
-  void
-  ViewListDialog::on_filter_changed()
-  {
-    apply_filter();
-  }
-
-  void
-  ViewListDialog::on_row_activated(Gtk::ListBoxRow* row)
-  {
-    auto* view_row = dynamic_cast<Row*>(row);
-
-    if (!view_row || !view_row->get_view())
-    {
-      return;
-    }
-
-    auto* view = view_row->get_view();
-
-    close_dialog();
-    m_window.focus_view(*view);
+    ListDialog::show(
+      *this,
+      "Views",
+      "Filter views…",
+      std::move(entries),
+      [&, views = std::move(views)](std::size_t index)
+      {
+        if (index < views.size() && views[index])
+        {
+          focus_view(*views[index]);
+        }
+      },
+      preferred_index
+    );
   }
 }

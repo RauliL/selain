@@ -70,6 +70,6 @@ window {
   border-color: transparent;
 }
 
-.selain-view-list-dialog .uri-label {
+.selain-list-dialog .secondary-label {
   color: @selain-mode-bar-insert-background;
 }

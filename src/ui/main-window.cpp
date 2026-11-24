@@ -26,7 +26,6 @@
 #include <algorithm>
 
 #include <selain/ui/main-window.hpp>
-#include <selain/ui/view-list-dialog.hpp>
 #include <selain/ui/view.hpp>
 
 namespace selain::ui
@@ -230,6 +229,42 @@ namespace selain::ui
     request->on_submit(text);
   }
 
+  std::vector<Tab*>
+  MainWindow::get_tabs()
+  {
+    std::vector<Tab*> result;
+    const auto count = get_tab_count();
+
+    result.reserve(count);
+    for (int i = 0; i < count; ++i)
+    {
+      if (auto* tab = get_nth_tab(i))
+      {
+        result.push_back(tab);
+      }
+    }
+
+    return result;
+  }
+
+  std::vector<const Tab*>
+  MainWindow::get_tabs() const
+  {
+    std::vector<const Tab*> result;
+    const auto count = get_tab_count();
+
+    result.reserve(count);
+    for (int i = 0; i < count; ++i)
+    {
+      if (const auto* tab = get_nth_tab(i))
+      {
+        result.push_back(tab);
+      }
+    }
+
+    return result;
+  }
+
   Tab*
   MainWindow::get_current_tab()
   {
@@ -388,12 +423,6 @@ namespace selain::ui
     } else {
       tab->set_active_view(view);
     }
-  }
-
-  void
-  MainWindow::show_view_list_dialog()
-  {
-    ViewListDialog::show(*this);
   }
 
   std::vector<Glib::ustring>

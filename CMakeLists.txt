@@ -109,6 +109,7 @@ SET(
   src/ui/status-bar.cpp
   src/ui/tab-label.cpp
   src/ui/tab.cpp
+  src/ui/list-dialog.cpp
   src/ui/view-list-dialog.cpp
   src/ui/view.cpp
   src/web-context.cpp

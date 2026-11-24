@@ -25,6 +25,11 @@
  */
 #include <algorithm>
 
+#include <selain/config.hpp>
+
+#if defined(SELAIN_ENABLE_PASS_INTEGRATION)
+# include <selain/integration/pass.hpp>
+#endif
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view.hpp>
 
@@ -41,6 +46,10 @@ namespace selain::ui
     , m_box(Gtk::Orientation::VERTICAL)
     , m_command_entry_key_controller(Gtk::EventControllerKey::create())
   {
+#if defined(SELAIN_ENABLE_PASS_INTEGRATION)
+    m_password_manager = integration::pass::PasswordManager::create();
+#endif
+
     set_title("Selain");
     set_icon_name("selain");
     set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT);

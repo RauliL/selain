@@ -154,6 +154,20 @@ namespace selain::ui
     }
 
     /**
+     * Returns the hostname part of URI that currently active view is
+     * displaying at the moment, or `std::nullopt` if it cannot be determined.
+     */
+    inline std::optional<Glib::ustring> get_host() const
+    {
+      if (m_active_view)
+      {
+        return m_active_view->get_host();
+      }
+
+      return std::nullopt;
+    }
+
+    /**
      * Appends URIs from every split view's browsing history into \p uris.
      */
     void collect_history_uris(std::vector<Glib::ustring>& uris) const;

@@ -35,6 +35,7 @@
 #include <selain/core/command.hpp>
 #include <selain/core/keyboard.hpp>
 #include <selain/core/setting.hpp>
+#include <selain/ui/list-dialog.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/tab.hpp>
 #include <selain/utils/string.hpp>
@@ -73,18 +74,12 @@ static bool cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring
 static bool cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_insert_input(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_js(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
+static bool cmd_login(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_paste(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_split_focus(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_yank(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_zoom(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-
-#if defined(SELAIN_ENABLE_PASS_INTEGRATION)
-namespace selain::integration::pass
-{
-  bool command(ui::MainWindow&, ui::Tab&, Glib::ustring);
-}
-#endif
 
 #if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
 namespace selain::integration::buku
@@ -93,8 +88,7 @@ namespace selain::integration::buku
 }
 #endif
 
-#if !defined(SELAIN_ENABLE_PASS_INTEGRATION) || \
-    !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
+#if !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
 static bool disabled_command(selain::ui::MainWindow&, Glib::ustring);
 #endif
 
@@ -178,6 +172,11 @@ namespace selain::command
       require_tab(cmd_js)
     },
     {
+      "login", { "l" },
+      "Fills login form with password manager.",
+      require_tab(cmd_login)
+    },
+    {
       "only", { "on" },
       "Closes all splits except the current.",
       tab_method(&ui::Tab::close_other_views)
@@ -191,15 +190,6 @@ namespace selain::command
       "open-tab", { "ot" },
       "Opens URI given as argument in new tab.",
       cmd_open_tab
-    },
-    {
-      "pass", {},
-      "Fills login form from the pass password store.",
-      #if defined(SELAIN_ENABLE_PASS_INTEGRATION)
-      require_tab(selain::integration::pass::command)
-      #else
-      disabled_command
-      #endif
     },
     {
       "paste", { "p" },
@@ -941,6 +931,252 @@ cmd_js(
 }
 
 static bool
+tab_still_open(selain::ui::MainWindow& window, selain::ui::Tab* tab)
+{
+  if (!tab)
+  {
+    return false;
+  }
+  for (int i = 0; i < window.get_tab_count(); ++i)
+  {
+    if (window.get_nth_tab(i) == tab)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static void
+fill_login_entry(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab* tab,
+  const Glib::ustring& entry,
+  selain::PasswordManager::FillMode mode
+)
+{
+  window.password_manager()->fetch(
+    entry,
+    [&window, tab, mode](
+      const std::optional<selain::PasswordManager::Entry>& secret,
+      const std::optional<Glib::ustring>& error
+    )
+    {
+      if (!tab_still_open(window, tab))
+      {
+        return;
+      }
+      if (!secret)
+      {
+        window.show_error(
+          !error || error->empty() ? "Failed to read pass entry." : *error
+        );
+
+        return;
+      }
+
+      const char* username_js = "null";
+      const char* password_js = "null";
+      std::string username_literal;
+      std::string password_literal;
+
+      if (mode != selain::PasswordManager::FillMode::PASSWORD)
+      {
+        username_literal = std::format(
+          "\"{}\"",
+          selain::utils::string::js_string_escape(secret->username.raw())
+        );
+        username_js = username_literal.c_str();
+      }
+      if (mode != selain::PasswordManager::FillMode::USERNAME)
+      {
+        password_literal = std::format(
+          "\"{}\"",
+          selain::utils::string::js_string_escape(secret->password.raw())
+        );
+        password_js = password_literal.c_str();
+      }
+
+      const auto script = std::format(
+        R"JS(
+          ((username, password) => {{
+            const setValue = (el, value) => {{
+              el.focus();
+              el.value = value;
+              el.dispatchEvent(new Event("input", {{ bubbles: true }}));
+              el.dispatchEvent(new Event("change", {{ bubbles: true }}));
+            }};
+
+            const isVisible = (el) => {{
+              if (typeof el.checkVisibility === "function") {{
+                return el.checkVisibility({{
+                  checkOpacity: false,
+                  checkVisibilityCSS: true
+                }});
+              }}
+              const s = getComputedStyle(el);
+              return s.display !== "none" && s.visibility !== "hidden";
+            }};
+
+            const usable = (el) =>
+              el && !el.disabled && !el.readOnly && isVisible(el);
+
+            const form =
+              document.activeElement?.closest?.("form") ||
+              [...document.querySelectorAll("form")].find((f) =>
+                [...f.querySelectorAll('input[type="password"]')].some(usable)
+              );
+
+            if (!form) {{
+              return false;
+            }}
+
+            const user = form.querySelector(
+              'input[type="email"],input[type="text"],input[type="username"],input:not([type])'
+            );
+            const pass = form.querySelector('input[type="password"]');
+
+            if (user && username !== null && usable(user)) {{
+              setValue(user, username);
+            }}
+            if (pass && password !== null && usable(pass)) {{
+              setValue(pass, password);
+            }}
+
+            return true;
+          }})({}, {})
+        )JS",
+        username_js,
+        password_js
+      );
+
+      tab->execute_script(
+        script,
+        [&window](JSCValue* value, GError* err)
+        {
+          if (err)
+          {
+            window.show_error(err->message);
+
+            return;
+          }
+          if (value && ::jsc_value_to_boolean(value))
+          {
+            window.set_mode(selain::Mode::INSERT);
+          } else {
+            window.show_error("No login form found.");
+          }
+        }
+      );
+    }
+  );
+}
+
+static std::optional<selain::PasswordManager::FillMode>
+parse_login_fill_mode(selain::ui::MainWindow& window, Glib::ustring& args)
+{
+  args = selain::utils::string::trim(args);
+  if (args.empty())
+  {
+    return selain::PasswordManager::FillMode::BOTH;
+  }
+  else if (args == "-u" || args == "--username")
+  {
+    return selain::PasswordManager::FillMode::USERNAME;
+  }
+  else if (args == "-p" || args == "--password")
+  {
+    return selain::PasswordManager::FillMode::PASSWORD;
+  }
+
+  return std::nullopt;
+}
+
+static bool
+cmd_login(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring args
+)
+{
+  const auto mode = parse_login_fill_mode(window, args);
+  const auto manager = window.password_manager();
+  const auto host = tab.get_host();
+
+  if (!mode)
+  {
+    window.show_error("Usage: :login [-u|-p]");
+
+    return false;
+  }
+
+  if (!manager)
+  {
+    window.show_error("No password manager found.");
+
+    return false;
+  }
+
+  if (!host || host->empty())
+  {
+    window.show_error("Cannot determine current hostname.");
+
+    return false;
+  }
+
+  const auto entries = manager->find_entries(*host);
+
+  if (entries.empty())
+  {
+    window.show_error(std::format("No pass entries for {}.", host->raw()));
+
+    return false;
+  }
+
+  auto* tab_ptr = &tab;
+  auto fill = [&window, tab_ptr, mode](const Glib::ustring& entry)
+  {
+    fill_login_entry(window, tab_ptr, entry, *mode);
+  };
+
+  if (entries.size() == 1)
+  {
+    fill(entries.front());
+  } else {
+    std::vector<selain::ui::ListDialogEntry> dialog_entries;
+
+    dialog_entries.reserve(entries.size());
+    for (const auto& path : entries)
+    {
+      selain::ui::ListDialogEntry entry;
+
+      entry.title = path;
+      entry.icon_name = "dialog-password";
+      dialog_entries.push_back(std::move(entry));
+    }
+
+    selain::ui::ListDialog::show(
+      window,
+      "Password manager",
+      "Filter password entries…",
+      std::move(dialog_entries),
+      [fill, entries](std::size_t index)
+      {
+        if (index < entries.size())
+        {
+          fill(entries[index]);
+        }
+      },
+      0,
+      *host
+    );
+  }
+
+  return true;
+}
+
+static bool
 cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
 {
   if (const auto uri = tab.get_uri())
@@ -1161,8 +1397,7 @@ cmd_zoom(
   return true;
 }
 
-#if !defined(SELAIN_ENABLE_PASS_INTEGRATION) || \
-    !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
+#if !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
 static bool
 disabled_command(selain::ui::MainWindow& window, Glib::ustring)
 {

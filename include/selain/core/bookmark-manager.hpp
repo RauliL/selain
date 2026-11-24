@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,47 +25,13 @@
  */
 #pragma once
 
-#include <filesystem>
-#include <functional>
-#include <optional>
-#include <vector>
-
 #include <glibmm.h>
 
-namespace selain::integration::pass
+namespace selain
 {
-  struct Secret
+  class BookmarkManager : public Glib::Object
   {
-    Glib::ustring password;
-    Glib::ustring username;
+  public:
+    virtual void pillu() const = 0;
   };
-
-  using show_callback = std::function<void(
-    std::optional<Secret> secret,
-    Glib::ustring error
-  )>;
-
-  /**
-   * Resolves the password store directory from `$PASSWORD_STORE_DIR`, or
-   * `~/.password-store` when unset.
-   */
-  std::filesystem::path store_directory();
-
-  /**
-   * Lists store-relative entry paths (without `.gpg`) that match @p host,
-   * trying the full host then progressively stripped subdomains. Matching is
-   * case-insensitive and does not decrypt any secrets.
-   */
-  std::vector<Glib::ustring> find_entries(const Glib::ustring& host);
-
-  /**
-   * Username derived from the last path segment of a store entry.
-   */
-  Glib::ustring username_from_entry(const Glib::ustring& entry);
-
-  /**
-   * Runs `pass show <entry>` asynchronously and invokes @p callback with the
-   * parsed secret (password = first line; username from the entry path).
-   */
-  void show_async(const Glib::ustring& entry, show_callback callback);
 }

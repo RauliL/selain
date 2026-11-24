@@ -162,8 +162,7 @@ IF(SELAIN_ENABLE_PASS_INTEGRATION)
   LIST(
     APPEND
     SELAIN_SOURCES
-    src/integration/pass/command.cpp
-    src/integration/pass/storage.cpp
+    src/integration/pass.cpp
   )
 ENDIF()
 

@@ -297,7 +297,7 @@ namespace selain::ui
   std::optional<Glib::ustring>
   View::get_uri() const
   {
-    const auto uri = ::webkit_web_view_get_uri(m_web_view);
+    const auto uri = webkit_web_view_get_uri(m_web_view);
 
     if (!uri || !*uri)
     {
@@ -305,6 +305,17 @@ namespace selain::ui
     }
 
     return uri;
+  }
+
+  std::optional<Glib::ustring>
+  View::get_host() const
+  {
+    if (const auto uri = get_uri())
+    {
+      return utils::url::get_host(*uri);
+    }
+
+    return std::nullopt;
   }
 
   std::optional<Glib::ustring>

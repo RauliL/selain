@@ -68,6 +68,12 @@ namespace selain::ui
     std::optional<Glib::ustring> get_uri() const;
 
     /**
+     * Returns the hostname part of URI that this view is displaying at the
+     * moment, or `std::nullopt` if it cannot be determined.
+     */
+    std::optional<Glib::ustring> get_host() const;
+
+    /**
      * Returns title of the document that this view is displaying at the
      * moment, or `std::nullopt` if the view isn't displaying an document or
      * the document has no title.

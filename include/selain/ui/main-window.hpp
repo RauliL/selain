@@ -25,6 +25,7 @@
  */
 #pragma once
 
+#include <selain/core/password-manager.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
 #include <selain/ui/tab-completion.hpp>
@@ -70,6 +71,22 @@ namespace selain::ui
     inline Glib::RefPtr<const webkit::Settings> web_settings() const
     {
       return m_web_settings;
+    }
+
+    /**
+     * Returns password manager used by the browser.
+     */
+    inline const Glib::RefPtr<PasswordManager>& password_manager()
+    {
+      return m_password_manager;
+    }
+
+    /**
+     * Returns password manager used by the browser.
+     */
+    inline Glib::RefPtr<const PasswordManager> password_manager() const
+    {
+      return m_password_manager;
     }
 
     /**
@@ -260,6 +277,7 @@ namespace selain::ui
   private:
     Glib::RefPtr<webkit::Context> m_web_context;
     Glib::RefPtr<webkit::Settings> m_web_settings;
+    Glib::RefPtr<PasswordManager> m_password_manager;
     Mode m_mode;
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;

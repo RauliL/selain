@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,12 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <algorithm>
-#include <cctype>
+#include <filesystem>
 
 #include <giomm.h>
 
-#include <selain/integration/pass/storage.hpp>
+#include <selain/integration/pass.hpp>
 
 namespace selain::integration::pass
 {
@@ -220,6 +219,54 @@ namespace selain::integration::pass
     return false;
   }
 
+  #if 0
+  static Glib::ustring
+  first_line(const Glib::ustring& text)
+  {
+    const auto end = text.find_first_of("\r\n");
+
+    if (end == Glib::ustring::npos)
+    {
+      return text;
+    }
+
+    return text.substr(0, end);
+  }
+
+  static Glib::ustring
+  trim_error(const Glib::ustring& text)
+  {
+    auto result = text;
+
+    while (!result.empty())
+    {
+      const auto last = result[result.size() - 1];
+
+      if (last != '\n' && last != '\r')
+      {
+        break;
+      }
+      result.erase(result.size() - 1, 1);
+    }
+
+    return result;
+  }
+  #endif
+
+  static std::filesystem::path
+  store_directory()
+  {
+    if (const auto env = Glib::getenv("PASSWORD_STORE_DIR"); !env.empty())
+    {
+      return std::filesystem::path(env);
+    }
+
+    return std::filesystem::path(Glib::build_filename(
+      Glib::get_home_dir(),
+      ".password-store"
+    ));
+  }
+
   static Glib::ustring
   first_line(const Glib::ustring& text)
   {
@@ -252,21 +299,7 @@ namespace selain::integration::pass
     return result;
   }
 
-  std::filesystem::path
-  store_directory()
-  {
-    if (const auto env = Glib::getenv("PASSWORD_STORE_DIR"); !env.empty())
-    {
-      return std::filesystem::path(env);
-    }
-
-    return std::filesystem::path(Glib::build_filename(
-      Glib::get_home_dir(),
-      ".password-store"
-    ));
-  }
-
-  Glib::ustring
+  static Glib::ustring
   username_from_entry(const Glib::ustring& entry)
   {
     if (entry.empty())
@@ -284,8 +317,16 @@ namespace selain::integration::pass
     return entry.substr(slash + 1);
   }
 
+  Glib::RefPtr<PasswordManager>
+  PasswordManager::create()
+  {
+    return Glib::make_refptr_for_instance<PasswordManager>(
+      new PasswordManager()
+    );
+  }
+
   std::vector<Glib::ustring>
-  find_entries(const Glib::ustring& host)
+  PasswordManager::find_entries(const Glib::ustring& host) const
   {
     if (host.empty())
     {
@@ -315,7 +356,10 @@ namespace selain::integration::pass
   }
 
   void
-  show_async(const Glib::ustring& entry, show_callback callback)
+  PasswordManager::fetch(
+    const Glib::ustring& entry,
+    const callback_type& callback
+  ) const
   {
     if (!callback)
     {
@@ -328,7 +372,7 @@ namespace selain::integration::pass
       return;
     }
 
-    gchar* pass_path = g_find_program_in_path("pass");
+    auto* pass_path = g_find_program_in_path("pass");
 
     if (!pass_path)
     {
@@ -374,7 +418,7 @@ namespace selain::integration::pass
               return;
             }
 
-            Secret secret;
+            Entry secret;
 
             secret.password = first_line(stdout_buf);
             secret.username = username_from_entry(entry);

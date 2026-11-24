@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <array>
 #include <filesystem>
 #include <format>
+#include <sstream>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include <cmrc/cmrc.hpp>
 #include <gtkmm.h>
@@ -37,10 +42,9 @@ CMRC_DECLARE(selain::rc);
 
 namespace selain::theme
 {
-  static void
-  add_theme_colors(inja::json& data)
+  namespace
   {
-    static const std::array color_names =
+    const std::array color_names =
     {
       "window-background",
       "window-foreground",
@@ -53,74 +57,121 @@ namespace selain::theme
       "mode-bar-insert-background",
       "mode-bar-insert-foreground",
     };
-    static Gtk::Label probe;
 
-    const auto context = probe.get_style_context();
-
-    for (const auto& name : color_names)
+    std::vector<std::pair<std::string_view, std::string>>
+    resolve_theme_colors()
     {
-      Gdk::RGBA color;
+      static Gtk::Label probe;
+      const auto context = probe.get_style_context();
+      std::vector<std::pair<std::string_view, std::string>> colors;
 
-      if (context->lookup_color(std::format("selain-{}", name), color))
+      colors.reserve(color_names.size());
+      for (const auto& name : color_names)
       {
-        data[name] = color.to_string();
-      } else {
-        data[name] = "";
+        Gdk::RGBA color;
+
+        if (context->lookup_color(std::format("selain-{}", name), color))
+        {
+          colors.emplace_back(name, color.to_string());
+        }
+        else
+        {
+          colors.emplace_back(name, "");
+        }
+      }
+
+      return colors;
+    }
+
+    void
+    add_theme_colors(inja::json& data)
+    {
+      for (const auto& [name, value] : resolve_theme_colors())
+      {
+        data[std::string(name)] = value;
       }
     }
-  }
 
-  static void
-  load_default_css()
-  {
-    auto provider = Gtk::CssProvider::create();
-    auto fs = cmrc::selain::rc::get_filesystem();
-    auto stylesheet = fs.open("src/theme.css");
-    const auto css = std::string(
-      std::begin(stylesheet),
-      std::end(stylesheet)
-    );
-
-    // load_from_string() requires gtkmm 4.12+; Ubuntu 24.04 ships 4.10.
-#if GTKMM_CHECK_VERSION(4, 12, 0)
-    provider->load_from_string(css);
-#else
-    provider->load_from_data(css);
-#endif
-    Gtk::StyleProvider::add_provider_for_display(
-      Gdk::Display::get_default(),
-      provider,
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
-  }
-
-  static void
-  load_custom_css()
-  {
-    const auto path = Glib::build_filename(
-      Glib::get_user_config_dir(),
-      "selain",
-      "style.css"
-    );
-
-    if (std::filesystem::exists(path))
+    void
+    load_default_css()
     {
       auto provider = Gtk::CssProvider::create();
+      auto fs = cmrc::selain::rc::get_filesystem();
+      auto stylesheet = fs.open("src/theme.css");
+      const auto css = std::string(
+        std::begin(stylesheet),
+        std::end(stylesheet)
+      );
 
-      provider->load_from_path(path);
+      // load_from_string() requires gtkmm 4.12+; Ubuntu 24.04 ships 4.10.
+#if GTKMM_CHECK_VERSION(4, 12, 0)
+      provider->load_from_string(css);
+#else
+      provider->load_from_data(css);
+#endif
       Gtk::StyleProvider::add_provider_for_display(
         Gdk::Display::get_default(),
         provider,
-        GTK_STYLE_PROVIDER_PRIORITY_USER
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
       );
+    }
+
+    void
+    load_custom_css()
+    {
+      const auto path = Glib::build_filename(
+        Glib::get_user_config_dir(),
+        "selain",
+        "style.css"
+      );
+
+      if (std::filesystem::exists(path))
+      {
+        auto provider = Gtk::CssProvider::create();
+
+        provider->load_from_path(path);
+        Gtk::StyleProvider::add_provider_for_display(
+          Gdk::Display::get_default(),
+          provider,
+          GTK_STYLE_PROVIDER_PRIORITY_USER
+        );
+      }
     }
   }
 
   void
   initialize()
   {
+    static bool initialized = false;
+
+    if (initialized)
+    {
+      return;
+    }
+
     load_default_css();
     load_custom_css();
+    initialized = true;
+  }
+
+  std::string
+  webkit_stylesheet_source()
+  {
+    std::ostringstream css;
+
+    css << ":root {\n";
+    for (const auto& [name, value] : resolve_theme_colors())
+    {
+      css << "  --selain-" << name << ": " << value << ";\n";
+    }
+    css
+      << "}\n"
+      << "html, body {\n"
+      << "  background: var(--selain-window-background);\n"
+      << "  color: var(--selain-window-foreground);\n"
+      << "}\n";
+
+    return css.str();
   }
 
   std::string

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,17 @@ namespace selain::theme
 {
   /**
    * Initializes CSS used for the application. Must be called during the
-   * application startup before the UI is being shown.
+   * application startup before the UI is being shown. Safe to call more than
+   * once; subsequent calls are no-ops.
    */
   void initialize();
+
+  /**
+   * Returns CSS that exposes resolved theme colors as custom properties and
+   * sets a matching default document background/foreground. Intended for a
+   * WebKit author-level user style sheet. Requires initialize() first.
+   */
+  std::string webkit_stylesheet_source();
 
   std::string render_document(
     const std::string& title,

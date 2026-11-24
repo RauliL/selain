@@ -73,6 +73,11 @@ static void cmd_command(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_echo(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_open(
   selain::ui::MainWindow&,
   Glib::ustring,
@@ -206,6 +211,11 @@ namespace selain::command
       "command", { "c" },
       "Switches to command mode.",
       cmd_command
+    },
+    {
+      "echo", { "ec" },
+      "Displays given arguments as a notification.",
+      cmd_echo
     },
     {
       "execute", { "ex" },
@@ -779,6 +789,17 @@ cmd_command(
     window.get_command_entry().set_text(args);
   }
   window.set_mode(selain::Mode::COMMAND);
+  finish(callback);
+}
+
+static void
+cmd_echo(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
+{
+  window.show_info(args);
   finish(callback);
 }
 

@@ -8,6 +8,7 @@ Selain currently supports following commands:
 |`:bind`       |        |Add keyboard binding.                  |
 |`:bookmark`   |`:bm`   |Opens or adds bookmarks.               |
 |`:command`    |`:c`    |Switches to command mode.              |
+|`:echo`       |`:ec`   |Displays given arguments as a notification.|
 |`:execute`    |`:ex`   |Evaluates JS; runs result as a command.|
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
 |`:go-root`    |`:gr`   |Goes up to the root of the URL hierarchy.|

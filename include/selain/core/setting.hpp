@@ -29,31 +29,25 @@
 
 namespace selain::setting
 {
-  struct Setting
-  {
-    /**
-     * Returns value of the setting.
-     */
-    virtual Glib::ustring get(ui::MainWindow& window) const = 0;
+  using set_result_type = std::optional<Glib::ustring>;
 
-    /**
-     * Attempts to set new value for the setting. Returns `true` if it was
-     * successful and `false` if the new value for setting was somehow invalid.
-     *
-     * TODO: Make this return error message instead.
-     */
-    virtual bool set(
-      ui::MainWindow& window,
-      const Glib::ustring& new_value
-    ) = 0;
-  };
-
+  /**
+   * Returns value of an setting as a string, or `std::nullopt` if the setting
+   * does not exist.
+   */
   std::optional<Glib::ustring> get(
     ui::MainWindow& window,
     const Glib::ustring& key
   );
 
-  bool set(
+  /**
+   * Sets value of an setting.
+   *
+   * If the value was changes successfully, `std::nullopt` will be returned.
+   * Otherwise an error message describing why the setting could not be changed
+   * is returned instead.
+   */
+  set_result_type set(
     ui::MainWindow& window,
     const Glib::ustring& key,
     const Glib::ustring& value

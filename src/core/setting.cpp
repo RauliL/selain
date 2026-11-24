@@ -23,25 +23,44 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <format>
+
 #include <glibmm/ustring_hash.h>
 
 #include <selain/core/setting.hpp>
 #include <selain/webkit/adblock.hpp>
 
-static inline bool
-is_true(const Glib::ustring& value)
-{
-  return value == "true" || value == "on" || value == "1";
-}
-
-static inline bool
-is_false(const Glib::ustring& value)
-{
-  return value == "false" || value == "off" || value == "0";
-}
-
 namespace selain::setting
 {
+  static inline bool
+  is_true(const Glib::ustring& value)
+  {
+    return value == "true" || value == "on" || value == "1";
+  }
+
+  static inline bool
+  is_false(const Glib::ustring& value)
+  {
+    return value == "false" || value == "off" || value == "0";
+  }
+
+  struct Setting
+  {
+    /**
+      * Returns value of the setting.
+      */
+    virtual Glib::ustring get(ui::MainWindow& window) const = 0;
+
+    /**
+      * Attempts to set new value for the setting. Returns `true` if it was
+      * successful and `false` if the new value for setting was somehow invalid.
+      */
+    virtual set_result_type set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) = 0;
+  };
+
   struct StringSetting : Setting
   {
     Glib::ustring value;
@@ -54,11 +73,14 @@ namespace selain::setting
       return value;
     }
 
-    bool set(ui::MainWindow&, const Glib::ustring& new_value) override
+    set_result_type set(
+      ui::MainWindow&,
+      const Glib::ustring& new_value
+    ) override
     {
       value = new_value;
 
-      return true;
+      return std::nullopt;
     }
   };
 
@@ -79,22 +101,25 @@ namespace selain::setting
       return getter() ? "true" : "false";
     }
 
-    bool set(ui::MainWindow&, const Glib::ustring& new_value) override
+    set_result_type set(
+      ui::MainWindow&,
+      const Glib::ustring& new_value
+    ) override
     {
       if (is_true(new_value))
       {
         setter(true);
 
-        return true;
+        return std::nullopt;
       }
       else if (is_false(new_value))
       {
         setter(false);
 
-        return true;
+        return std::nullopt;
       }
 
-      return false;
+      return std::format("{} is not valid boolean value.", new_value.raw());
     }
   };
 
@@ -116,7 +141,10 @@ namespace selain::setting
       return window.web_settings()->get_bool(name) ? "true" : "false";
     }
 
-    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
+    set_result_type set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) override
     {
       bool value;
 
@@ -128,11 +156,11 @@ namespace selain::setting
       {
         value = false;
       } else {
-        return false; // TODO: Return error message.
+        return std::format("{} is not valid boolean value.", new_value.raw());
       }
       window.web_settings()->set(name, value);
 
-      return true;
+      return std::nullopt;
     }
   };
 
@@ -146,25 +174,28 @@ namespace selain::setting
       return std::to_string(window.web_settings()->get_int(name));
     }
 
-    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
+    set_result_type set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) override
     {
-      ::guint numeric_value;
+      guint numeric_value;
 
       try
       {
-        numeric_value = static_cast<::guint>(std::stoi(new_value.raw()));
+        numeric_value = static_cast<guint>(std::stoi(new_value.raw()));
       }
       catch (const std::invalid_argument&)
       {
-        return false; // TODO: Return error message instead.
+        return std::format("{} is not valid integer.", new_value.raw());
       }
       catch (const std::out_of_range&)
       {
-        return false; // TODO: Return error message instead.
+        return std::format("{} is out of bounds.", new_value.raw());
       }
       window.web_settings()->set(name, numeric_value);
 
-      return true;
+      return std::nullopt;
     }
   };
 
@@ -178,11 +209,14 @@ namespace selain::setting
       return window.web_settings()->get_string(name);
     }
 
-    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
+    set_result_type set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) override
     {
       window.web_settings()->set(name, new_value);
 
-      return true;
+      return std::nullopt;
     }
   };
 
@@ -202,7 +236,10 @@ namespace selain::setting
       return "always";
     }
 
-    bool set(ui::MainWindow& window, const Glib::ustring& new_value) override
+    set_result_type set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) override
     {
       WebKitHardwareAccelerationPolicy policy;
 
@@ -214,11 +251,11 @@ namespace selain::setting
       {
         policy = WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER;
       } else {
-        return false; // TODO: Return error message.
+        return std::format("{} is not valid value.", new_value.raw());
       }
       window.web_settings()->set_hardware_acceleration_policy(policy);
 
-      return true;
+      return std::nullopt;
     }
   };
 
@@ -334,7 +371,7 @@ namespace selain::setting
     return std::nullopt;
   }
 
-  bool
+  set_result_type
   set(ui::MainWindow& window, const Glib::ustring& key, const Glib::ustring& value)
   {
     auto entry = mapping.find(key);
@@ -344,7 +381,7 @@ namespace selain::setting
       return entry->second->set(window, value);
     }
 
-    return false;
+    return std::format("Unknown setting: {}", key.raw());
   }
 
   std::vector<Glib::ustring>

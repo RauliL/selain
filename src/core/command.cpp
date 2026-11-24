@@ -701,9 +701,9 @@ cmd_set(selain::ui::MainWindow& window, Glib::ustring args)
     const auto name = trim(args.substr(0, index));
     const auto value = trim(args.substr(index + 1));
 
-    if (!selain::setting::set(window, name, value))
+    if (const auto error = selain::setting::set(window, name, value))
     {
-      window.show_error("Unknown setting: " + name);
+      window.show_error(*error);
 
       return false;
     }

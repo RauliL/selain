@@ -1,3 +1,4 @@
+/.cache
 /.vscode
 /build
 /include/selain/config.hpp

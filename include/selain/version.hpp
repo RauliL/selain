@@ -25,4 +25,4 @@
  */
 #pragma once
 
-#define SELAIN_VERSION "0.4"
+#define SELAIN_VERSION "0.5"

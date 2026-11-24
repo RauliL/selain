@@ -509,7 +509,17 @@ namespace selain::ui
     }
 
     set_mode(Mode::NORMAL);
-    run_command(command, true);
+    run_command(
+      command,
+      true,
+      [&](const std::optional<Glib::ustring>& error)
+      {
+        if (error)
+        {
+          show_error(*error);
+        }
+      }
+    );
   }
 
   void

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <selain/core/bookmark-manager.hpp>
+#include <selain/core/command.hpp>
 #include <selain/core/password-manager.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
@@ -53,10 +54,15 @@ namespace selain::ui
      * @param interactive Set `true` if called from the user input, `false` if
      *                    coming from some non-interactive context such as
      *                    initialization script.
-     * @return Boolean flag telling you whether command execution finished
-     *         successfully or not.
+     * @param callback Function that is executed after command execution with
+     *                 optional error message given as argument if execution of
+     *                 the command was not successful.
      */
-    bool run_command(const Glib::ustring& command, bool interactive);
+    void run_command(
+      const Glib::ustring& command,
+      bool interactive,
+      command::result_callback_type callback
+    );
 
     /**
      * Returns WebKit settings used for all browser tabs.

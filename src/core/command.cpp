@@ -41,15 +41,20 @@
 #include <selain/utils/string.hpp>
 #include <selain/utils/url.hpp>
 
-using tab_callback_type = std::function<bool(
+using tab_callback_type = std::function<void(
   selain::ui::MainWindow&,
   selain::ui::Tab&,
-  Glib::ustring
+  Glib::ustring,
+  selain::command::result_callback_type
 )>;
 using tab_method_type = std::function<void(selain::ui::Tab*)>;
 using window_method_type = std::function<void(selain::ui::MainWindow*)>;
 using paste_callback_type = std::function<void(const Glib::ustring&)>;
 
+static void finish(
+  const selain::command::result_callback_type& callback,
+  const std::optional<Glib::ustring>& error = std::nullopt
+);
 static selain::command::callback_type switch_mode(selain::Mode);
 static selain::command::callback_type require_tab(const tab_callback_type&);
 static selain::command::callback_type tab_method(const tab_method_type&);
@@ -58,29 +63,125 @@ static selain::command::callback_type tab_split(Gtk::Orientation);
 static selain::command::callback_type window_method(const window_method_type&);
 
 // Commands that do not require tab.
-static bool cmd_bind(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_command(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_open(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_open_tab(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_paste_tab(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_quit(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_set(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_tab(selain::ui::MainWindow&, Glib::ustring);
-static bool cmd_unbind(selain::ui::MainWindow&, Glib::ustring);
+static void cmd_bind(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_command(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_open(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_open_tab(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_paste_tab(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_quit(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_set(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_tab(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_unbind(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 
 // Commands that require tab.
-static bool cmd_bookmark(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_execute(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_insert_input(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_js(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_login(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_paste(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_split_focus(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_yank(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-static bool cmd_zoom(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
+static void cmd_bookmark(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_execute(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_go_root(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_go_up(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_insert_input(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_js(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_login(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_paste(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_scroll(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_split_focus(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_yank(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_zoom(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 
 namespace selain::command
 {
@@ -339,8 +440,12 @@ split_command(
 
 namespace selain::ui
 {
-  bool
-  MainWindow::run_command(const Glib::ustring& command, bool interactive)
+  void
+  MainWindow::run_command(
+    const Glib::ustring& command,
+    bool interactive,
+    command::result_callback_type callback
+  )
   {
     Glib::ustring name;
     Glib::ustring args;
@@ -351,7 +456,8 @@ namespace selain::ui
       utils::string::starts_with(utils::string::trim_start(command), '"')
     )
     {
-      return true;
+      finish(callback);
+      return;
     }
 
     if (interactive)
@@ -363,8 +469,8 @@ namespace selain::ui
         {
           tab->search(command.substr(1));
         }
-
-        return true;
+        finish(callback);
+        return;
       }
       // Activate backwards search mode.
       else if (command[0] == '?')
@@ -373,8 +479,8 @@ namespace selain::ui
         {
           tab->search(command.substr(1), false);
         }
-
-        return true;
+        finish(callback);
+        return;
       }
     }
 
@@ -389,64 +495,82 @@ namespace selain::ui
 
     if (name.empty())
     {
-      show_error("Missing command.");
-
-      return false;
+      finish(callback, "Missing command.");
+      return;
     }
 
     const auto entry = command::mapping.find(name);
 
-    if (entry != std::end(command::mapping))
+    if (entry == std::end(command::mapping))
     {
-      return entry->second(*this, args);
+      finish(callback, std::format("Unknown command: {}", command.raw()));
+      return;
     }
 
-    show_error("Unknown command: " + command);
+    entry->second(*this, args, std::move(callback));
+  }
+}
 
-    return false;
+static void
+finish(
+  const selain::command::result_callback_type& callback,
+  const std::optional<Glib::ustring>& error
+)
+{
+  if (callback)
+  {
+    callback(error);
   }
 }
 
 static selain::command::callback_type
 switch_mode(selain::Mode mode)
 {
-  return [mode](selain::ui::MainWindow& window, Glib::ustring)
+  return [mode](
+    selain::ui::MainWindow& window,
+    Glib::ustring,
+    selain::command::result_callback_type callback
+  )
   {
     window.set_mode(mode);
-
-    return true;
+    finish(callback);
   };
 }
 
 static selain::command::callback_type
 require_tab(const tab_callback_type& callback)
 {
-  return [callback](selain::ui::MainWindow& window, Glib::ustring args)
+  return [callback](
+    selain::ui::MainWindow& window,
+    Glib::ustring args,
+    selain::command::result_callback_type result_callback
+  )
   {
     if (const auto tab = window.get_current_tab())
     {
-      return callback(window, *tab, args);
+      callback(window, *tab, args, std::move(result_callback));
+      return;
     }
-    window.show_error("No tab open.");
-
-    return false;
+    finish(result_callback, "No tab open.");
   };
 }
 
 static selain::command::callback_type
 tab_method(const tab_method_type& callback)
 {
-  return [callback](selain::ui::MainWindow& window, Glib::ustring)
+  return [callback](
+    selain::ui::MainWindow& window,
+    Glib::ustring,
+    selain::command::result_callback_type result_callback
+  )
   {
     if (const auto tab = window.get_current_tab())
     {
       callback(tab);
-
-      return true;
+      finish(result_callback);
+      return;
     }
-    window.show_error("No tab open.");
-
-    return false;
+    finish(result_callback, "No tab open.");
   };
 }
 
@@ -454,11 +578,15 @@ static selain::command::callback_type
 tab_reload(bool force)
 {
   return require_tab(
-    [force](selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
+    [force](
+      selain::ui::MainWindow&,
+      selain::ui::Tab& tab,
+      Glib::ustring,
+      selain::command::result_callback_type callback
+    )
     {
       tab.reload(force);
-
-      return true;
+      finish(callback);
     }
   );
 }
@@ -470,12 +598,12 @@ tab_split(Gtk::Orientation orientation)
     [orientation](
       selain::ui::MainWindow&,
       selain::ui::Tab& tab,
-      Glib::ustring uri
+      Glib::ustring uri,
+      selain::command::result_callback_type callback
     )
     {
       tab.split(orientation, uri);
-
-      return true;
+      finish(callback);
     }
   );
 }
@@ -483,21 +611,30 @@ tab_split(Gtk::Orientation orientation)
 static selain::command::callback_type
 window_method(const window_method_type& callback)
 {
-  return [callback](selain::ui::MainWindow& window, Glib::ustring)
+  return [callback](
+    selain::ui::MainWindow& window,
+    Glib::ustring,
+    selain::command::result_callback_type result_callback
+  )
   {
     callback(&window);
-
-    return true;
+    finish(result_callback);
   };
 }
 
-static bool
-do_paste(selain::ui::MainWindow& window, const paste_callback_type& callback)
+static void
+do_paste(
+  selain::ui::MainWindow& window,
+  const paste_callback_type& on_uri,
+  selain::command::result_callback_type callback
+)
 {
   const auto clipboard = window.get_clipboard();
 
   clipboard->read_text_async(
-    [callback, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result)
+    [on_uri, clipboard, callback = std::move(callback)](
+      const Glib::RefPtr<Gio::AsyncResult>& result
+    )
     {
       try
       {
@@ -506,19 +643,20 @@ do_paste(selain::ui::MainWindow& window, const paste_callback_type& callback)
         // TODO: Do not even attempt if it doesn't look like an URI.
         if (!uri.empty())
         {
-          callback(uri);
+          on_uri(uri);
         }
+        finish(callback);
       }
-      catch (const Glib::Error&) {}
+      catch (const Glib::Error& error)
+      {
+        finish(callback, error.what());
+      }
     }
   );
-
-  return true;
 }
 
-static bool
+static std::optional<Glib::ustring>
 require_arg(
-  selain::ui::MainWindow& window,
   const char* what,
   Glib::ustring& args,
   Glib::ustring& slot
@@ -528,9 +666,7 @@ require_arg(
 
   if (args.empty())
   {
-    window.show_error(std::format("Missing {}.", what));
-
-    return false;
+    return std::format("Missing {}.", what);
   }
 
   const auto length = args.length();
@@ -547,12 +683,11 @@ require_arg(
   slot = args.substr(0, i);
   args = selain::utils::string::trim_start(args.substr(i));
 
-  return true;
+  return std::nullopt;
 }
 
-static bool
+static std::optional<Glib::ustring>
 require_int_arg(
-  selain::ui::MainWindow& window,
   const char* what,
   Glib::ustring& args,
   int& slot
@@ -560,21 +695,19 @@ require_int_arg(
 {
   Glib::ustring arg;
 
-  if (!require_arg(window, what, args, arg))
+  if (const auto error = require_arg(what, args, arg))
   {
-    return false;
+    return error;
   }
   try
   {
     slot = std::atoi(arg.raw().c_str());
 
-    return true;
+    return std::nullopt;
   }
   catch (const std::exception&)
   {
-    window.show_error(std::format("Invalid {}: {}", what, arg.raw()));
-
-    return false;
+    return std::format("Invalid {}: {}", what, arg.raw());
   }
 }
 
@@ -582,9 +715,8 @@ template<
   typename T,
   typename = typename std::enable_if<std::is_enum<T>::value>::type
 >
-static bool
+static std::optional<Glib::ustring>
 require_enum_arg(
-  selain::ui::MainWindow& window,
   const char* what,
   Glib::ustring& args,
   T& slot,
@@ -593,58 +725,69 @@ require_enum_arg(
 {
   Glib::ustring arg;
 
-  if (require_arg(window, what, args, arg))
+  if (const auto error = require_arg(what, args, arg))
   {
-    const auto it = mapping.find(arg);
-
-    if (it != std::end(mapping))
-    {
-      slot = it->second;
-
-      return true;
-    }
-    window.show_error(std::format("Unrecognized {}: {}", what, arg.raw()));
+    return error;
   }
 
-  return false;
+  const auto it = mapping.find(arg);
+
+  if (it != std::end(mapping))
+  {
+    slot = it->second;
+
+    return std::nullopt;
+  }
+
+  return std::format("Unrecognized {}: {}", what, arg.raw());
 }
 
 // Commands that do not require tab.
 
-static bool
-cmd_bind(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_bind(
+  selain::ui::MainWindow&,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
   Glib::ustring sequence;
 
-  if (!require_arg(window, "sequence", args, sequence))
+  if (const auto error = require_arg("sequence", args, sequence))
   {
-    return false;
+    finish(callback, error);
+    return;
   }
-  else if (selain::utils::string::is_blank(args))
+  if (selain::utils::string::is_blank(args))
   {
-    window.show_error("Missing command.");
-
-    return false;
+    finish(callback, "Missing command.");
+    return;
   }
   selain::keyboard::bind(sequence, args);
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_command(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_command(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
   if (!args.empty())
   {
     window.get_command_entry().set_text(args);
   }
   window.set_mode(selain::Mode::COMMAND);
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_open(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_open(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
   if (const auto tab = window.get_current_tab())
   {
@@ -652,32 +795,43 @@ cmd_open(selain::ui::MainWindow& window, Glib::ustring args)
   } else {
     window.open_tab(args);
   }
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_open_tab(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_open_tab(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
   window.open_tab(args);
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_paste_tab(selain::ui::MainWindow& window, Glib::ustring)
+static void
+cmd_paste_tab(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
 {
-  return do_paste(
+  do_paste(
     window,
     [&window](const Glib::ustring& uri)
     {
       window.open_tab(uri);
-    }
+    },
+    std::move(callback)
   );
 }
 
-static bool
-cmd_quit(selain::ui::MainWindow& window, Glib::ustring)
+static void
+cmd_quit(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
 {
   if (const auto tab = window.get_current_tab())
   {
@@ -685,12 +839,15 @@ cmd_quit(selain::ui::MainWindow& window, Glib::ustring)
   } else {
     window.schedule_close();
   }
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_set(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_set(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
   using selain::utils::string::trim;
 
@@ -701,68 +858,66 @@ cmd_set(selain::ui::MainWindow& window, Glib::ustring args)
     const auto name = trim(args.substr(0, index));
     const auto value = trim(args.substr(index + 1));
 
-    if (const auto error = selain::setting::set(window, name, value))
-    {
-      window.show_error(*error);
-
-      return false;
-    }
-
-    return true;
+    finish(callback, selain::setting::set(window, name, value));
+    return;
   }
-  else if (!selain::utils::string::is_blank(args))
+  if (!selain::utils::string::is_blank(args))
   {
     const auto name = trim(args);
 
     if (const auto value = selain::setting::get(window, name))
     {
       window.show_info(std::format("  {}={}", name.raw(), value->raw()));
-
-      return true;
+      finish(callback);
+      return;
     }
-    window.show_error("Unknown setting: " + name.raw());
-
-    return false;
+    finish(callback, "Unknown setting: " + name.raw());
+    return;
   }
-  window.show_error("Missing setting name.");
-
-  return false;
+  finish(callback, "Missing setting name.");
 }
 
-static bool
-cmd_tab(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_tab(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
-  int number;
+  int number = -1;
 
-  if (!require_int_arg(window, "tab number", args, number))
+  if (const auto error = require_int_arg("tab number", args, number))
   {
-    return false;
+    finish(callback, error);
+    return;
   }
-  else if (number < 1)
+  if (number < 1)
   {
-    window.show_error("Invalid tab number.");
-
-    return false;
+    finish(callback, "Invalid tab number.");
+    return;
   }
   window.set_current_tab(number - 1);
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
+static void
+cmd_unbind(
+  selain::ui::MainWindow&,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
 {
   if (selain::utils::string::is_blank(args))
   {
-    window.show_error("Missing sequence.");
+    finish(callback, "Missing sequence.");
+    return;
   }
-  else if (selain::keyboard::unbind(selain::utils::string::trim(args)))
+  if (selain::keyboard::unbind(selain::utils::string::trim(args)))
   {
-    return true;
+    finish(callback);
+    return;
   }
-  window.show_error("No such binding.");
-
-  return false;
+  finish(callback, "No such binding.");
 }
 
 // Commands that require tab.
@@ -873,12 +1028,13 @@ show_bookmarks(
   selain::ui::Tab* tab,
   bool new_tab,
   const std::vector<selain::BookmarkManager::Entry>& bookmarks,
-  const Glib::ustring& initial_filter
+  const Glib::ustring& initial_filter,
+  selain::command::result_callback_type callback
 )
 {
   if (bookmarks.empty())
   {
-    window.show_error("No bookmarks found.");
+    finish(callback, "No bookmarks found.");
     return;
   }
 
@@ -930,6 +1086,7 @@ show_bookmarks(
     0,
     initial_filter
   );
+  finish(callback);
 }
 
 static void
@@ -937,7 +1094,8 @@ open_bookmarks(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
   bool new_tab,
-  const std::vector<Glib::ustring>& keywords
+  const std::vector<Glib::ustring>& keywords,
+  selain::command::result_callback_type callback
 )
 {
   auto* tab_ptr = &tab;
@@ -952,15 +1110,20 @@ open_bookmarks(
     filter += keywords[i];
   }
 
-  auto on_result = [&window, tab_ptr, new_tab, filter](
+  auto on_result = [
+    &window,
+    tab_ptr,
+    new_tab,
+    filter,
+    callback = std::move(callback)
+  ](
     const std::vector<selain::BookmarkManager::Entry>& bookmarks,
     Glib::ustring error
   )
   {
     if (!error.empty())
     {
-      window.show_error(error);
-
+      finish(callback, error);
       return;
     }
     show_bookmarks(
@@ -968,7 +1131,8 @@ open_bookmarks(
       tab_ptr,
       new_tab,
       std::move(bookmarks),
-      filter
+      filter,
+      callback
     );
   };
 
@@ -984,15 +1148,15 @@ static void
 add_current_page(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  const std::vector<Glib::ustring>& tags
+  const std::vector<Glib::ustring>& tags,
+  selain::command::result_callback_type callback
 )
 {
   const auto uri = tab.get_uri();
 
   if (!uri || uri->empty())
   {
-    window.show_error("Current view has no URI.");
-
+    finish(callback, "Current view has no URI.");
     return;
   }
 
@@ -1013,11 +1177,15 @@ add_current_page(
     *uri,
     title,
     tags,
-    [&window](bool ok, const std::optional<Glib::ustring>& message)
+    [&window, callback = std::move(callback)](
+      bool ok,
+      const std::optional<Glib::ustring>& message
+    )
     {
       if (!ok)
       {
-        window.show_error(
+        finish(
+          callback,
           !message || message->empty() ? "Failed to add bookmark." : *message
         );
         return;
@@ -1025,15 +1193,17 @@ add_current_page(
       window.show_info(
         !message || message->empty() ? "Bookmark added." : *message
       );
+      finish(callback);
     }
   );
 }
 
-static bool
+static void
 cmd_bookmark(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   const auto manager = window.bookmark_manager();
@@ -1041,46 +1211,47 @@ cmd_bookmark(
 
   if (!options)
   {
-    window.show_error("Usage: :bookmark [-t|-a] [query|tags…]");
-
-    return false;
+    finish(callback, "Usage: :bookmark [-t|-a] [query|tags…]");
+    return;
   }
 
   if (!manager)
   {
-    window.show_error("No bookmark manager found.");
-
-    return false;
+    finish(callback, "No bookmark manager found.");
+    return;
   }
 
   if (options->mode == BookmarkMode::ADD)
   {
-    add_current_page(window, tab, options->tokens);
-
-    return true;
+    add_current_page(window, tab, options->tokens, std::move(callback));
+    return;
   }
 
-  open_bookmarks(window, tab, options->new_tab, options->tokens);
-
-  return true;
+  open_bookmarks(
+    window,
+    tab,
+    options->new_tab,
+    options->tokens,
+    std::move(callback)
+  );
 }
 
-static bool
+static void
 cmd_execute(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   if (selain::utils::string::is_blank(args))
   {
-    window.show_error("Usage: :execute <expression>");
-
-    return false;
+    finish(callback, "Usage: :execute <expression>");
+    return;
   }
   tab.execute_script(
     args,
-    [&window](JSCValue* value, GError* error)
+    [&window, callback = std::move(callback)](JSCValue* value, GError* error)
     {
       if (value)
       {
@@ -1090,49 +1261,47 @@ cmd_execute(
 
         if (exception)
         {
-          window.show_error(jsc_exception_get_message(exception));
-
+          finish(callback, jsc_exception_get_message(exception));
           return;
         }
         if (
-          ::jsc_value_is_undefined(value) ||
-          ::jsc_value_is_null(value)
+          jsc_value_is_undefined(value) ||
+          jsc_value_is_null(value)
         )
         {
-          window.show_error("Expression did not produce a command.");
-
+          finish(callback, "Expression did not produce a command.");
           return;
         }
 
-        char* text = ::jsc_value_to_string(value);
+        char* text = jsc_value_to_string(value);
 
         if (!text)
         {
-          window.show_error("Expression did not produce a command.");
-
+          finish(callback, "Expression did not produce a command.");
           return;
         }
 
         const Glib::ustring command(text);
 
         g_free(text);
-        window.run_command(command, false);
+        window.run_command(command, false, callback);
       }
       else if (error)
       {
-        window.show_error(error->message);
+        finish(callback, error->message);
+      } else {
+        finish(callback, "Expression did not produce a command.");
       }
     }
   );
-
-  return true;
 }
 
-static bool
+static void
 cmd_insert_input(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  Glib::ustring
+  Glib::ustring,
+  selain::command::result_callback_type callback
 )
 {
   tab.execute_script(
@@ -1162,56 +1331,64 @@ cmd_insert_input(
         return false;
       })()
     )JS",
-    [&window](JSCValue* value, GError*)
+    [&window, callback = std::move(callback)](JSCValue* value, GError* error)
     {
-      if (value && ::jsc_value_to_boolean(value))
+      if (error)
+      {
+        finish(callback, error->message);
+        return;
+      }
+      if (value && jsc_value_to_boolean(value))
       {
         window.set_mode(selain::Mode::INSERT);
-      } else {
-        window.show_error("No input found.");
+        finish(callback);
+        return;
       }
+      finish(callback, "No input found.");
     }
   );
-
-  return true;
 }
 
-static bool
+static void
 cmd_js(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   if (selain::utils::string::is_blank(args))
   {
-    window.show_error("Usage: :js <script>");
-
-    return false;
+    finish(callback, "Usage: :js <script>");
+    return;
   }
   tab.execute_script(
     args,
-    [&window](JSCValue* value, GError* error)
+    [&window, callback = std::move(callback)](JSCValue* value, GError* error)
     {
       if (value)
       {
-        const auto exception = jsc_context_get_exception(jsc_value_get_context(value));
+        const auto exception = jsc_context_get_exception(
+          jsc_value_get_context(value)
+        );
 
         if (exception)
         {
-          window.show_error(jsc_exception_get_message(exception));
-        } else {
-          window.show_info(selain::utils::string::js_value_to_text(value));
+          finish(callback, jsc_exception_get_message(exception));
+          return;
         }
+        window.show_info(selain::utils::string::js_value_to_text(value));
+        finish(callback);
+        return;
       }
-      else if (error)
+      if (error)
       {
-        window.show_error(error->message);
+        finish(callback, error->message);
+        return;
       }
+      finish(callback);
     }
   );
-
-  return true; // TODO: Try to get JavaScript execution status.
 }
 
 static void
@@ -1219,26 +1396,28 @@ fill_login_entry(
   selain::ui::MainWindow& window,
   selain::ui::Tab* tab,
   const Glib::ustring& entry,
-  selain::PasswordManager::FillMode mode
+  selain::PasswordManager::FillMode mode,
+  selain::command::result_callback_type callback
 )
 {
   window.password_manager()->fetch(
     entry,
-    [&window, tab, mode](
+    [&window, tab, mode, callback = std::move(callback)](
       const std::optional<selain::PasswordManager::Entry>& secret,
       const std::optional<Glib::ustring>& error
     )
     {
       if (!tab_still_open(window, tab))
       {
+        finish(callback);
         return;
       }
       if (!secret)
       {
-        window.show_error(
+        finish(
+          callback,
           !error || error->empty() ? "Failed to read pass entry." : *error
         );
-
         return;
       }
 
@@ -1319,20 +1498,20 @@ fill_login_entry(
 
       tab->execute_script(
         script,
-        [&window](JSCValue* value, GError* err)
+        [&window, callback](JSCValue* value, GError* err)
         {
           if (err)
           {
-            window.show_error(err->message);
-
+            finish(callback, err->message);
             return;
           }
-          if (value && ::jsc_value_to_boolean(value))
+          if (value && jsc_value_to_boolean(value))
           {
             window.set_mode(selain::Mode::INSERT);
-          } else {
-            window.show_error("No login form found.");
+            finish(callback);
+            return;
           }
+          finish(callback, "No login form found.");
         }
       );
     }
@@ -1359,11 +1538,12 @@ parse_login_fill_mode(Glib::ustring& args)
   return std::nullopt;
 }
 
-static bool
+static void
 cmd_login(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   const auto mode = parse_login_fill_mode(args);
@@ -1372,78 +1552,96 @@ cmd_login(
 
   if (!mode)
   {
-    window.show_error("Usage: :login [-u|-p]");
-
-    return false;
+    finish(callback, "Usage: :login [-u|-p]");
+    return;
   }
 
   if (!manager)
   {
-    window.show_error("No password manager found.");
-
-    return false;
+    finish(callback, "No password manager found.");
+    return;
   }
 
   if (!host || host->empty())
   {
-    window.show_error("Cannot determine current hostname.");
-
-    return false;
+    finish(callback, "Cannot determine current hostname.");
+    return;
   }
 
   const auto entries = manager->find_entries(*host);
 
   if (entries.empty())
   {
-    window.show_error(std::format("No pass entries for {}.", host->raw()));
-
-    return false;
+    finish(callback, std::format("No pass entries for {}.", host->raw()));
+    return;
   }
 
   auto* tab_ptr = &tab;
-  auto fill = [&window, tab_ptr, mode](const Glib::ustring& entry)
-  {
-    fill_login_entry(window, tab_ptr, entry, *mode);
-  };
 
   if (entries.size() == 1)
   {
-    fill(entries.front());
-  } else {
-    std::vector<selain::ui::ListDialogEntry> dialog_entries;
-
-    dialog_entries.reserve(entries.size());
-    for (const auto& path : entries)
-    {
-      selain::ui::ListDialogEntry entry;
-
-      entry.title = path;
-      entry.icon_name = "dialog-password";
-      dialog_entries.push_back(std::move(entry));
-    }
-
-    selain::ui::ListDialog::show(
+    fill_login_entry(
       window,
-      "Password manager",
-      "Filter password entries…",
-      std::move(dialog_entries),
-      [fill, entries](std::size_t index)
-      {
-        if (index < entries.size())
-        {
-          fill(entries[index]);
-        }
-      },
-      0,
-      *host
+      tab_ptr,
+      entries.front(),
+      *mode,
+      std::move(callback)
     );
+    return;
   }
 
-  return true;
+  std::vector<selain::ui::ListDialogEntry> dialog_entries;
+
+  dialog_entries.reserve(entries.size());
+  for (const auto& path : entries)
+  {
+    selain::ui::ListDialogEntry entry;
+
+    entry.title = path;
+    entry.icon_name = "dialog-password";
+    dialog_entries.push_back(std::move(entry));
+  }
+
+  selain::ui::ListDialog::show(
+    window,
+    "Password manager",
+    "Filter password entries…",
+    std::move(dialog_entries),
+    [&window, tab_ptr, mode, entries, callback](std::size_t index)
+    {
+      if (index >= entries.size())
+      {
+        return;
+      }
+      // Report only failures from the follow-up fill; the command itself
+      // already completed successfully by presenting the entry picker.
+      fill_login_entry(
+        window,
+        tab_ptr,
+        entries[index],
+        *mode,
+        [callback](const std::optional<Glib::ustring>& error)
+        {
+          if (error)
+          {
+            finish(callback, error);
+          }
+        }
+      );
+    },
+    0,
+    *host
+  );
+  finish(callback);
 }
 
-static bool
-cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
+static void
+cmd_go_root(
+  selain::ui::MainWindow&,
+  selain::ui::Tab& tab,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
 {
   if (const auto uri = tab.get_uri())
   {
@@ -1452,12 +1650,16 @@ cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
       tab.load_uri(*next);
     }
   }
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
+static void
+cmd_go_up(
+  selain::ui::MainWindow&,
+  selain::ui::Tab& tab,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
 {
   if (const auto uri = tab.get_uri())
   {
@@ -1466,27 +1668,33 @@ cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab& tab, Glib::ustring)
       tab.load_uri(*next);
     }
   }
-
-  return true;
+  finish(callback);
 }
 
-static bool
-cmd_paste(selain::ui::MainWindow& window, selain::ui::Tab& tab, Glib::ustring)
+static void
+cmd_paste(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
 {
-  return do_paste(
+  do_paste(
     window,
     [&tab](const Glib::ustring& uri)
     {
       tab.load_uri(uri);
-    }
+    },
+    std::move(callback)
   );
 }
 
-static bool
+static void
 cmd_scroll(
-  selain::ui::MainWindow& window,
+  selain::ui::MainWindow&,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   // TODO: Allow finer control by accepting direction _and_ amount as
@@ -1498,9 +1706,8 @@ cmd_scroll(
 
   if (arg.empty())
   {
-    window.show_error("Missing direction/amount.");
-
-    return false;
+    finish(callback, "Missing direction/amount.");
+    return;
   }
   else if (arg == "top")
   {
@@ -1544,9 +1751,8 @@ cmd_scroll(
     direction = "top";
     value = "window.innerHeight / 2";
   } else {
-    window.show_error("Unrecognized direction.");
-
-    return false;
+    finish(callback, "Unrecognized direction.");
+    return;
   }
   tab.execute_script(std::format(
     "window.{}({{ {}: {} }});",
@@ -1554,15 +1760,15 @@ cmd_scroll(
     direction.raw(),
     value.raw()
   ));
-
-  return true;
+  finish(callback);
 }
 
-static bool
+static void
 cmd_split_focus(
-  selain::ui::MainWindow& window,
+  selain::ui::MainWindow&,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   static const std::unordered_map<Glib::ustring, Gtk::DirectionType> mapping =
@@ -1575,39 +1781,49 @@ cmd_split_focus(
     { "prev", Gtk::DirectionType::TAB_BACKWARD },
   };
 
-  Gtk::DirectionType direction;
+  Gtk::DirectionType direction = Gtk::DirectionType::LEFT;
 
-  if (require_enum_arg(window, "direction", args, direction, mapping))
+  if (const auto error = require_enum_arg(
+    "direction",
+    args,
+    direction,
+    mapping
+  ))
   {
-    tab.focus_view(direction);
-
-    return true;
+    finish(callback, error);
+    return;
   }
-
-  return false;
+  tab.focus_view(direction);
+  finish(callback);
 }
 
-static bool
-cmd_yank(selain::ui::MainWindow& window, selain::ui::Tab& tab, Glib::ustring)
+static void
+cmd_yank(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
 {
   const auto clipboard = window.get_clipboard();
   const auto uri = tab.get_uri();
 
   if (!uri || uri->empty())
   {
-    return false;
+    finish(callback, "Current view has no URI.");
+    return;
   }
   clipboard->set_text(*uri);
   window.show_info(std::format("Yanked {}", uri->raw()));
-
-  return true;
+  finish(callback);
 }
 
-static bool
+static void
 cmd_zoom(
   selain::ui::MainWindow& window,
   selain::ui::Tab& tab,
-  Glib::ustring args
+  Glib::ustring args,
+  selain::command::result_callback_type callback
 )
 {
   static constexpr double min_zoom = 0.1;
@@ -1622,8 +1838,8 @@ cmd_zoom(
       "Zoom: {}%",
       static_cast<int>(std::lround(current * 100.0))
     ));
-
-    return true;
+    finish(callback);
+    return;
   }
 
   const auto& raw = arg.raw();
@@ -1650,25 +1866,14 @@ cmd_zoom(
 
   if (!ok)
   {
-    window.show_error(
+    finish(
+      callback,
       "Invalid zoom. Use percentage (e.g. 120%) or relative (+20, -5)."
     );
-
-    return false;
+    return;
   }
 
   level = std::clamp(level, min_zoom, max_zoom);
   tab.set_zoom_level(level);
-
-  return true;
+  finish(callback);
 }
-
-#if !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
-static bool
-disabled_command(selain::ui::MainWindow& window, Glib::ustring)
-{
-  window.show_error("This feature is not enabled.");
-
-  return false;
-}
-#endif

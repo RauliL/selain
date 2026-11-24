@@ -29,9 +29,54 @@
 
 namespace selain
 {
+  /**
+   * Abstract base class for bookmark manager implementation.
+   */
   class BookmarkManager : public Glib::Object
   {
   public:
-    virtual void pillu() const = 0;
+    /**
+     * Represents a single bookmark in the bookmark manager.
+     */
+    struct Entry
+    {
+      int index = 0;
+      Glib::ustring uri;
+      Glib::ustring title;
+      Glib::ustring tags;
+      Glib::ustring description;
+    };
+
+    using list_callback_type = std::function<void(
+      std::vector<Entry> bookmarks,
+      Glib::ustring error
+    )>;
+    using add_callback_type = std::function<void(
+      bool,
+      const std::optional<Glib::ustring>&
+    )>;
+
+    /**
+     * Lists all entries found in the bookmark manager.
+     */
+    virtual void list(const list_callback_type& callback) const = 0;
+
+    /**
+     * Searches for available bookmarks found in the bookmark manager.
+     */
+    virtual void search(
+      const std::vector<Glib::ustring>& keywords,
+      const list_callback_type& callback
+    ) const = 0;
+
+    /**
+     * Inserts new entry to the bookmark manager.
+     */
+    virtual void add(
+      const Glib::ustring& url,
+      const Glib::ustring& title,
+      const std::vector<Glib::ustring>& tags,
+      const add_callback_type& callback
+    ) = 0;
   };
 }

@@ -25,6 +25,7 @@
  */
 #pragma once
 
+#include <selain/core/bookmark-manager.hpp>
 #include <selain/core/password-manager.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
@@ -71,6 +72,22 @@ namespace selain::ui
     inline Glib::RefPtr<const webkit::Settings> web_settings() const
     {
       return m_web_settings;
+    }
+
+    /**
+     * Returns bookmark manager used by the browser.
+     */
+    inline const Glib::RefPtr<BookmarkManager>& bookmark_manager()
+    {
+      return m_bookmark_manager;
+    }
+
+    /**
+     * Returns bookmark manager used by the browser.
+     */
+    inline Glib::RefPtr<const BookmarkManager> bookmark_manager() const
+    {
+      return m_bookmark_manager;
     }
 
     /**
@@ -277,6 +294,7 @@ namespace selain::ui
   private:
     Glib::RefPtr<webkit::Context> m_web_context;
     Glib::RefPtr<webkit::Settings> m_web_settings;
+    Glib::RefPtr<BookmarkManager> m_bookmark_manager;
     Glib::RefPtr<PasswordManager> m_password_manager;
     Mode m_mode;
     Gtk::Box m_box;

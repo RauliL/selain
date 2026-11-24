@@ -69,6 +69,7 @@ static bool cmd_tab(selain::ui::MainWindow&, Glib::ustring);
 static bool cmd_unbind(selain::ui::MainWindow&, Glib::ustring);
 
 // Commands that require tab.
+static bool cmd_bookmark(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_execute(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_go_root(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_go_up(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
@@ -80,17 +81,6 @@ static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring)
 static bool cmd_split_focus(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_yank(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_zoom(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
-
-#if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
-namespace selain::integration::buku
-{
-  bool command(ui::MainWindow&, ui::Tab&, Glib::ustring);
-}
-#endif
-
-#if !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
-static bool disabled_command(selain::ui::MainWindow&, Glib::ustring);
-#endif
 
 namespace selain::command
 {
@@ -107,13 +97,9 @@ namespace selain::command
       cmd_bind
     },
     {
-      "buku", {},
-      "Opens or adds bookmarks via the Buku bookmark manager.",
-      #if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
-      require_tab(selain::integration::buku::command)
-      #else
-      disabled_command
-      #endif
+      "bookmark", { "bm" },
+      "Opens or adds bookmarks via bookmark manager.",
+      require_tab(cmd_bookmark)
     },
     {
       "command", { "c" },
@@ -781,6 +767,304 @@ cmd_unbind(selain::ui::MainWindow& window, Glib::ustring args)
 
 // Commands that require tab.
 
+namespace
+{
+  enum class BookmarkMode
+  {
+    OPEN,
+    ADD,
+  };
+
+  struct BookmarkOptions
+  {
+    BookmarkMode mode = BookmarkMode::OPEN;
+    bool new_tab = false;
+    std::vector<Glib::ustring> tokens;
+  };
+}
+
+static bool
+tab_still_open(selain::ui::MainWindow& window, selain::ui::Tab* tab)
+{
+  if (!tab)
+  {
+    return false;
+  }
+  for (int i = 0; i < window.get_tab_count(); ++i)
+  {
+    if (window.get_nth_tab(i) == tab)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static std::vector<Glib::ustring>
+split_args(const Glib::ustring& args)
+{
+  std::vector<Glib::ustring> tokens;
+  Glib::ustring current;
+  bool in_token = false;
+
+  for (const auto ch : args)
+  {
+    if (g_unichar_isspace(ch))
+    {
+      if (in_token)
+      {
+        tokens.push_back(current);
+        current.clear();
+        in_token = false;
+      }
+      continue;
+    }
+    current.push_back(ch);
+    in_token = true;
+  }
+  if (in_token)
+  {
+    tokens.push_back(current);
+  }
+
+  return tokens;
+}
+
+static std::optional<BookmarkOptions>
+parse_bookmark_options(Glib::ustring& args)
+{
+  BookmarkOptions options = {};
+
+  options.tokens = split_args(selain::utils::string::trim(args));
+
+  if (options.tokens.empty())
+  {
+    return options;
+  }
+
+  const auto& first = options.tokens.front();
+
+  if (first == "-a" || first == "--add")
+  {
+    options.mode = BookmarkMode::ADD;
+    options.tokens.erase(options.tokens.begin());
+
+    return options;
+  }
+  else if (first == "-t" || first == "--tab")
+  {
+    options.new_tab = true;
+    options.tokens.erase(options.tokens.begin());
+
+    return options;
+  }
+  if (first.size() > 1 && first[0] == '-')
+  {
+    return std::nullopt;
+  }
+
+  return options;
+}
+
+static void
+show_bookmarks(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab* tab,
+  bool new_tab,
+  const std::vector<selain::BookmarkManager::Entry>& bookmarks,
+  const Glib::ustring& initial_filter
+)
+{
+  if (bookmarks.empty())
+  {
+    window.show_error("No bookmarks found.");
+    return;
+  }
+
+  std::vector<selain::ui::ListDialogEntry> dialog_entries;
+
+  dialog_entries.reserve(bookmarks.size());
+  for (const auto& bookmark : bookmarks)
+  {
+    selain::ui::ListDialogEntry entry;
+
+    entry.title = bookmark.title;
+    entry.secondary = bookmark.uri;
+    entry.filter_text = bookmark.title + ' ' + bookmark.uri;
+    if (!bookmark.tags.empty())
+    {
+      entry.filter_text += ' ' + bookmark.tags;
+    }
+    entry.icon_name = "user-bookmarks";
+    dialog_entries.push_back(std::move(entry));
+  }
+
+  selain::ui::ListDialog::show(
+    window,
+    "Buku",
+    "Filter bookmarks…",
+    std::move(dialog_entries),
+    [&window, tab, new_tab, bookmarks = std::move(bookmarks)](std::size_t index)
+    {
+      if (index >= bookmarks.size())
+      {
+        return;
+      }
+
+      const auto& uri = bookmarks[index].uri;
+
+      if (new_tab)
+      {
+        window.open_tab(uri);
+
+        return;
+      }
+      if (tab_still_open(window, tab))
+      {
+        tab->load_uri(uri);
+      } else {
+        window.open_tab(uri);
+      }
+    },
+    0,
+    initial_filter
+  );
+}
+
+static void
+open_bookmarks(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  bool new_tab,
+  const std::vector<Glib::ustring>& keywords
+)
+{
+  auto* tab_ptr = &tab;
+  Glib::ustring filter;
+
+  for (std::size_t i = 0; i < keywords.size(); ++i)
+  {
+    if (i > 0)
+    {
+      filter += ' ';
+    }
+    filter += keywords[i];
+  }
+
+  auto on_result = [&window, tab_ptr, new_tab, filter](
+    const std::vector<selain::BookmarkManager::Entry>& bookmarks,
+    Glib::ustring error
+  )
+  {
+    if (!error.empty())
+    {
+      window.show_error(error);
+
+      return;
+    }
+    show_bookmarks(
+      window,
+      tab_ptr,
+      new_tab,
+      std::move(bookmarks),
+      filter
+    );
+  };
+
+  if (keywords.empty())
+  {
+    window.bookmark_manager()->list(std::move(on_result));
+  } else {
+    window.bookmark_manager()->search(keywords, std::move(on_result));
+  }
+}
+
+static void
+add_current_page(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  const std::vector<Glib::ustring>& tags
+)
+{
+  const auto uri = tab.get_uri();
+
+  if (!uri || uri->empty())
+  {
+    window.show_error("Current view has no URI.");
+
+    return;
+  }
+
+  Glib::ustring title = *uri;
+
+  if (const auto* view = tab.get_active_view())
+  {
+    if (const auto page_title = view->get_title())
+    {
+      if (!page_title->empty())
+      {
+        title = *page_title;
+      }
+    }
+  }
+
+  window.bookmark_manager()->add(
+    *uri,
+    title,
+    tags,
+    [&window](bool ok, const std::optional<Glib::ustring>& message)
+    {
+      if (!ok)
+      {
+        window.show_error(
+          !message || message->empty() ? "Failed to add bookmark." : *message
+        );
+        return;
+      }
+      window.show_info(
+        !message || message->empty() ? "Bookmark added." : *message
+      );
+    }
+  );
+}
+
+static bool
+cmd_bookmark(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring args
+)
+{
+  const auto manager = window.bookmark_manager();
+  const auto options = parse_bookmark_options(args);
+
+  if (!options)
+  {
+    window.show_error("Usage: :bookmark [-t|-a] [query|tags…]");
+
+    return false;
+  }
+
+  if (!manager)
+  {
+    window.show_error("No bookmark manager found.");
+
+    return false;
+  }
+
+  if (options->mode == BookmarkMode::ADD)
+  {
+    add_current_page(window, tab, options->tokens);
+
+    return true;
+  }
+
+  open_bookmarks(window, tab, options->new_tab, options->tokens);
+
+  return true;
+}
+
 static bool
 cmd_execute(
   selain::ui::MainWindow& window,
@@ -930,24 +1214,6 @@ cmd_js(
   return true; // TODO: Try to get JavaScript execution status.
 }
 
-static bool
-tab_still_open(selain::ui::MainWindow& window, selain::ui::Tab* tab)
-{
-  if (!tab)
-  {
-    return false;
-  }
-  for (int i = 0; i < window.get_tab_count(); ++i)
-  {
-    if (window.get_nth_tab(i) == tab)
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 static void
 fill_login_entry(
   selain::ui::MainWindow& window,
@@ -1074,7 +1340,7 @@ fill_login_entry(
 }
 
 static std::optional<selain::PasswordManager::FillMode>
-parse_login_fill_mode(selain::ui::MainWindow& window, Glib::ustring& args)
+parse_login_fill_mode(Glib::ustring& args)
 {
   args = selain::utils::string::trim(args);
   if (args.empty())
@@ -1100,7 +1366,7 @@ cmd_login(
   Glib::ustring args
 )
 {
-  const auto mode = parse_login_fill_mode(window, args);
+  const auto mode = parse_login_fill_mode(args);
   const auto manager = window.password_manager();
   const auto host = tab.get_host();
 

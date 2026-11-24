@@ -27,6 +27,9 @@
 
 #include <selain/config.hpp>
 
+#if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
+# include <selain/integration/buku.hpp>
+#endif
 #if defined(SELAIN_ENABLE_PASS_INTEGRATION)
 # include <selain/integration/pass.hpp>
 #endif
@@ -46,6 +49,9 @@ namespace selain::ui
     , m_box(Gtk::Orientation::VERTICAL)
     , m_command_entry_key_controller(Gtk::EventControllerKey::create())
   {
+#if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
+    m_bookmark_manager = integration::buku::BookmarkManager::create();
+#endif
 #if defined(SELAIN_ENABLE_PASS_INTEGRATION)
     m_password_manager = integration::pass::PasswordManager::create();
 #endif

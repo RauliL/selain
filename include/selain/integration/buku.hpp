@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,54 +25,27 @@
  */
 #pragma once
 
-#include <functional>
-#include <vector>
-
-#include <glibmm.h>
+#include <selain/core/bookmark-manager.hpp>
 
 namespace selain::integration::buku
 {
-  struct Bookmark
+  class BookmarkManager : public selain::BookmarkManager
   {
-    int index = 0;
-    Glib::ustring uri;
-    Glib::ustring title;
-    Glib::ustring tags;
-    Glib::ustring description;
+  public:
+    static Glib::RefPtr<BookmarkManager> create();
+
+    virtual void list(const list_callback_type& callback) const override;
+
+    virtual void search(
+      const std::vector<Glib::ustring>& keywords,
+      const list_callback_type& callback
+    ) const override;
+
+    void add(
+      const Glib::ustring& url,
+      const Glib::ustring& title,
+      const std::vector<Glib::ustring>& tags,
+      const add_callback_type& callback
+    );
   };
-
-  using list_callback = std::function<void(
-    std::vector<Bookmark> bookmarks,
-    Glib::ustring error
-  )>;
-
-  using add_callback = std::function<void(
-    bool ok,
-    Glib::ustring message
-  )>;
-
-  /**
-   * Runs `buku -p --json` asynchronously and invokes @p callback with the
-   * parsed bookmarks (or an empty list when the store has no records).
-   */
-  void list_async(list_callback callback);
-
-  /**
-   * Runs `buku -s <keywords…> --json` asynchronously. An empty @p keywords
-   * vector lists all bookmarks (same as list_async).
-   */
-  void search_async(
-    const std::vector<Glib::ustring>& keywords,
-    list_callback callback
-  );
-
-  /**
-   * Runs `buku -a <url> --title <title> [--tag tags]` asynchronously.
-   */
-  void add_async(
-    const Glib::ustring& url,
-    const Glib::ustring& title,
-    const std::vector<Glib::ustring>& tags,
-    add_callback callback
-  );
 }

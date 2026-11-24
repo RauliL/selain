@@ -170,8 +170,7 @@ IF(SELAIN_ENABLE_BUKU_INTEGRATION)
   LIST(
     APPEND
     SELAIN_SOURCES
-    src/integration/buku/command.cpp
-    src/integration/buku/storage.cpp
+    src/integration/buku.cpp
   )
 ENDIF()
 

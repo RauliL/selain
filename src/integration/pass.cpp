@@ -219,40 +219,6 @@ namespace selain::integration::pass
     return false;
   }
 
-  #if 0
-  static Glib::ustring
-  first_line(const Glib::ustring& text)
-  {
-    const auto end = text.find_first_of("\r\n");
-
-    if (end == Glib::ustring::npos)
-    {
-      return text;
-    }
-
-    return text.substr(0, end);
-  }
-
-  static Glib::ustring
-  trim_error(const Glib::ustring& text)
-  {
-    auto result = text;
-
-    while (!result.empty())
-    {
-      const auto last = result[result.size() - 1];
-
-      if (last != '\n' && last != '\r')
-      {
-        break;
-      }
-      result.erase(result.size() - 1, 1);
-    }
-
-    return result;
-  }
-  #endif
-
   static std::filesystem::path
   store_directory()
   {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Rauli Laine
+ * Copyright (c) 2019-2026, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,92 +23,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <giomm.h>
 #include <inja/inja.hpp>
 
-#include <giomm.h>
-
-#include <selain/integration/buku/storage.hpp>
+#include <selain/integration/buku.hpp>
 #include <selain/utils/string.hpp>
 
 namespace selain::integration::buku
 {
-  static Glib::ustring
-  json_string(const inja::json& value, const char* key)
-  {
-    if (!value.contains(key) || !value[key].is_string())
-    {
-      return {};
-    }
-
-    return value[key].get<std::string>();
-  }
-
-  static bool
-  parse_bookmarks(
-    const Glib::ustring& stdout_buf,
-    std::vector<Bookmark>& out,
-    Glib::ustring& error
-  )
-  {
-    out.clear();
-
-    const auto trimmed = utils::string::trim(stdout_buf);
-
-    if (trimmed.empty())
-    {
-      return true;
-    }
-
-    const auto parsed = inja::json::parse(trimmed.raw(), nullptr, false);
-
-    if (parsed.is_discarded() || !parsed.is_array())
-    {
-      error = "Failed to parse buku JSON output.";
-
-      return false;
-    }
-
-    out.reserve(parsed.size());
-    for (const auto& item : parsed)
-    {
-      if (!item.is_object())
-      {
-        continue;
-      }
-
-      Bookmark bookmark;
-
-      if (item.contains("index") && item["index"].is_number_integer())
-      {
-        bookmark.index = item["index"].get<int>();
-      }
-      bookmark.uri = json_string(item, "uri");
-      bookmark.title = json_string(item, "title");
-      bookmark.tags = json_string(item, "tags");
-      bookmark.description = json_string(item, "description");
-
-      if (bookmark.uri.empty())
-      {
-        continue;
-      }
-      if (bookmark.title.empty())
-      {
-        bookmark.title = bookmark.uri;
-      }
-      out.push_back(std::move(bookmark));
-    }
-
-    return true;
-  }
-
-  static bool
-  looks_like_empty_store(const Glib::ustring& stderr_buf)
-  {
-    const auto text = utils::string::trim(stderr_buf);
-
-    return text.find("0 records") != Glib::ustring::npos;
-  }
-
   static void
   run_buku_async(
     std::vector<std::string> argv,
@@ -173,10 +95,87 @@ namespace selain::integration::buku
     }
   }
 
+  static Glib::ustring
+  json_string(const inja::json& value, const char* key)
+  {
+    if (!value.contains(key) || !value[key].is_string())
+    {
+      return {};
+    }
+
+    return value[key].get<std::string>();
+  }
+
+  static bool
+  parse_bookmarks(
+    const Glib::ustring& stdout_buf,
+    std::vector<BookmarkManager::Entry>& out,
+    Glib::ustring& error
+  )
+  {
+    out.clear();
+
+    const auto trimmed = utils::string::trim(stdout_buf);
+
+    if (trimmed.empty())
+    {
+      return true;
+    }
+
+    const auto parsed = inja::json::parse(trimmed.raw(), nullptr, false);
+
+    if (parsed.is_discarded() || !parsed.is_array())
+    {
+      error = "Failed to parse buku JSON output.";
+
+      return false;
+    }
+
+    out.reserve(parsed.size());
+    for (const auto& item : parsed)
+    {
+      if (!item.is_object())
+      {
+        continue;
+      }
+
+      BookmarkManager::Entry bookmark;
+
+      if (item.contains("index") && item["index"].is_number_integer())
+      {
+        bookmark.index = item["index"].get<int>();
+      }
+      bookmark.uri = json_string(item, "uri");
+      bookmark.title = json_string(item, "title");
+      bookmark.tags = json_string(item, "tags");
+      bookmark.description = json_string(item, "description");
+
+      if (bookmark.uri.empty())
+      {
+        continue;
+      }
+      if (bookmark.title.empty())
+      {
+        bookmark.title = bookmark.uri;
+      }
+      out.push_back(std::move(bookmark));
+    }
+
+    return true;
+  }
+
+  static bool
+  looks_like_empty_store(const Glib::ustring& stderr_buf)
+  {
+    const auto text = utils::string::trim(stderr_buf);
+
+    return text.find("0 records") != Glib::ustring::npos;
+  }
+
   static void
   list_or_search_async(
     const std::vector<Glib::ustring>& keywords,
-    list_callback callback
+    const BookmarkManager::list_callback_type& callback
   )
   {
     if (!callback)
@@ -218,7 +217,7 @@ namespace selain::integration::buku
           return;
         }
 
-        std::vector<Bookmark> bookmarks;
+        std::vector<BookmarkManager::Entry> bookmarks;
         Glib::ustring parse_error;
 
         if (parse_bookmarks(stdout_buf, bookmarks, parse_error))
@@ -250,27 +249,35 @@ namespace selain::integration::buku
     );
   }
 
+  Glib::RefPtr<BookmarkManager>
+  BookmarkManager::create()
+  {
+    return Glib::make_refptr_for_instance<BookmarkManager>(
+      new BookmarkManager()
+    );
+  }
+
   void
-  list_async(list_callback callback)
+  BookmarkManager::list(const list_callback_type& callback) const
   {
     list_or_search_async({}, std::move(callback));
   }
 
   void
-  search_async(
+  BookmarkManager::search(
     const std::vector<Glib::ustring>& keywords,
-    list_callback callback
-  )
+    const list_callback_type& callback
+  ) const
   {
     list_or_search_async(keywords, std::move(callback));
   }
 
   void
-  add_async(
+  BookmarkManager::add(
     const Glib::ustring& url,
     const Glib::ustring& title,
     const std::vector<Glib::ustring>& tags,
-    add_callback callback
+    const add_callback_type& callback
   )
   {
     if (!callback)

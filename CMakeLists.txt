@@ -153,6 +153,15 @@ IF(SELAIN_ENABLE_GOPHER)
   )
 ENDIF()
 
+IF(SELAIN_ENABLE_PASS_INTEGRATION)
+  LIST(
+    APPEND
+    SELAIN_SOURCES
+    src/integration/pass/command.cpp
+    src/integration/pass/storage.cpp
+  )
+ENDIF()
+
 ADD_EXECUTABLE(selain ${SELAIN_SOURCES})
 
 TARGET_COMPILE_FEATURES(

@@ -28,28 +28,28 @@
 #include <glibmm.h>
 #include <webkit/webkit.h>
 
-namespace selain
+namespace selain::webkit
 {
   /**
    * Wrapper for the WebKitSettings type.
    */
-  class WebSettings : public Glib::Object
+  class Settings : public Glib::Object
   {
   public:
     /**
      * Constructs new web settings instance.
      */
-    static Glib::RefPtr<WebSettings> create();
+    static Glib::RefPtr<Settings> create();
 
-    void install(::WebKitWebView* view);
+    void install(WebKitWebView* view);
 
     bool get_bool(const Glib::ustring& setting) const;
 
-    ::guint get_int(const Glib::ustring& setting) const;
+    guint get_int(const Glib::ustring& setting) const;
 
     Glib::ustring get_string(const Glib::ustring& setting) const;
 
-    ::WebKitHardwareAccelerationPolicy get_hardware_acceleration_policy() const;
+    WebKitHardwareAccelerationPolicy get_hardware_acceleration_policy() const;
 
     void set(const Glib::ustring& setting, bool value);
 
@@ -58,15 +58,14 @@ namespace selain
     void set(const Glib::ustring& setting, const Glib::ustring& value);
 
     void set_hardware_acceleration_policy(
-      ::WebKitHardwareAccelerationPolicy policy
+      WebKitHardwareAccelerationPolicy policy
     );
 
   private:
-    explicit WebSettings();
-    ~WebSettings() override;
+    explicit Settings();
+    ~Settings() override;
 
   private:
-    ::WebKitSettings* m_settings;
+    WebKitSettings* m_settings;
   };
 }
-

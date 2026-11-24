@@ -30,7 +30,7 @@
 
 #include <gtkmm.h>
 
-#include <selain/notification.hpp>
+#include <selain/ui/notification.hpp>
 
 namespace selain::ui
 {

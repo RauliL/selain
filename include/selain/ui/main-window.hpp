@@ -25,11 +25,9 @@
  */
 #pragma once
 
-#include <gtkmm.h>
-
-#include <selain/tab-completion.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
+#include <selain/ui/tab-completion.hpp>
 #include <selain/ui/tab.hpp>
 
 namespace selain::ui
@@ -61,7 +59,7 @@ namespace selain::ui
     /**
      * Returns WebKit settings used for all browser tabs.
      */
-    inline const Glib::RefPtr<WebSettings>& web_settings()
+    inline const Glib::RefPtr<webkit::Settings>& web_settings()
     {
       return m_web_settings;
     }
@@ -69,7 +67,7 @@ namespace selain::ui
     /**
      * Returns WebKit settings used for all browser tabs.
      */
-    inline Glib::RefPtr<const WebSettings> web_settings() const
+    inline Glib::RefPtr<const webkit::Settings> web_settings() const
     {
       return m_web_settings;
     }
@@ -260,8 +258,8 @@ namespace selain::ui
     void complete_prompt(const Glib::ustring& text);
 
   private:
-    Glib::RefPtr<WebContext> m_web_context;
-    Glib::RefPtr<WebSettings> m_web_settings;
+    Glib::RefPtr<webkit::Context> m_web_context;
+    Glib::RefPtr<webkit::Settings> m_web_settings;
     Mode m_mode;
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;

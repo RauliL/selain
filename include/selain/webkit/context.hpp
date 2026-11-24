@@ -25,37 +25,34 @@
  */
 #pragma once
 
-#include <vector>
-
 #include <glibmm.h>
+#include <webkit/webkit.h>
 
-namespace selain
+namespace selain::webkit
 {
-  namespace ui
-  {
-    class MainWindow;
-  }
-
   /**
-   * Tab completion for the command line (command names and `:set` settings).
+   * Owns the shared `WebKitWebContext` and `WebKitNetworkSession` used by views.
    */
-  class TabCompletion
+  class Context : public Glib::Object
   {
   public:
     /**
-     * Completes the text currently in the window's command entry.
-     *
-     * \param reverse When true, cycles backwards through matches (Shift+Tab).
+     * Constructs new web context instance.
      */
-    void complete(ui::MainWindow& window, bool reverse);
+    static Glib::RefPtr<Context> create();
 
     /**
-     * Clears cycling state so the next Tab starts a fresh completion.
+     * Creates new web view using the wrapped web context and network session.
      */
-    void reset();
+    WebKitWebView* create_web_view();
 
   private:
-    std::vector<Glib::ustring> m_matches;
-    std::size_t m_index = 0;
+    explicit Context();
+    ~Context() override;
+
+  private:
+    WebKitWebContext* m_context;
+    WebKitNetworkSession* m_session;
+    WebKitUserContentManager* m_user_content_manager;
   };
 }

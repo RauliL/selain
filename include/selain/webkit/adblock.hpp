@@ -31,7 +31,7 @@
 
 #include <webkit/webkit.h>
 
-namespace selain::adblock
+namespace selain::webkit::adblock
 {
   /**
    * Directory under the user config dir that holds blocklist files

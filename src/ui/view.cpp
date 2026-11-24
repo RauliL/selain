@@ -99,8 +99,8 @@ namespace selain::ui
   static constexpr const char* view_quark = "selain-view";
 
   View::View(
-    const Glib::RefPtr<WebContext>& context,
-    const Glib::RefPtr<WebSettings>& settings
+    const Glib::RefPtr<webkit::Context>& context,
+    const Glib::RefPtr<webkit::Settings>& settings
   )
     : Gtk::Box(Gtk::Orientation::VERTICAL)
     , m_web_view(context->create_web_view())

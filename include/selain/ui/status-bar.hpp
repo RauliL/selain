@@ -27,7 +27,7 @@
 
 #include <gtkmm.h>
 
-#include <selain/mode.hpp>
+#include <selain/core/mode.hpp>
 
 namespace selain::ui
 {

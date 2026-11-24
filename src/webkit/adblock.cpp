@@ -23,39 +23,41 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/adblock.hpp>
-
-#include <selain/adblock/easylist.hpp>
-
-#include <algorithm>
-#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <iostream>
+
+#if 0
+#include <algorithm>
+#include <chrono>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+#endif
 
 #include <glibmm.h>
 
-namespace selain::adblock
+#include <selain/adblock/easylist.hpp>
+#include <selain/webkit/adblock.hpp>
+
+namespace selain::webkit::adblock
 {
+  struct LoadJob
+  {
+    WebKitUserContentFilterStore* store{nullptr};
+    GBytes* bytes{nullptr};
+    std::string identifier;
+    std::filesystem::path source_path;
+    std::filesystem::path meta_path;
+    std::string fingerprint;
+  };
+
   namespace
   {
-    struct LoadJob
-    {
-      ::WebKitUserContentFilterStore* store{nullptr};
-      ::GBytes* bytes{nullptr};
-      std::string identifier;
-      std::filesystem::path source_path;
-      std::filesystem::path meta_path;
-      std::string fingerprint;
-    };
-
-    ::WebKitUserContentManager* g_manager{nullptr};
-    ::WebKitUserContentFilterStore* g_store{nullptr};
-    std::vector<::WebKitUserContentFilter*> g_filters;
+    WebKitUserContentManager* g_manager{nullptr};
+    WebKitUserContentFilterStore* g_store{nullptr};
+    std::vector<WebKitUserContentFilter*> g_filters;
     bool g_enabled{true};
 
     [[nodiscard]] std::filesystem::path
@@ -149,6 +151,7 @@ namespace selain::adblock
       try
       {
         std::ifstream input(job->source_path, std::ios::binary);
+
         if (!input)
         {
           throw std::runtime_error("unable to open file");
@@ -172,13 +175,11 @@ namespace selain::adblock
       std::string json;
       try
       {
-        if (looks_like_content_blocker_json(source))
+        if (selain::adblock::looks_like_content_blocker_json(source))
         {
           json = std::move(source);
-        }
-        else
-        {
-          json = easylist_to_content_blocker_json(source);
+        } else {
+          json = selain::adblock::easylist_to_content_blocker_json(source);
         }
       }
       catch (const std::exception& ex)

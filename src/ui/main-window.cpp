@@ -35,8 +35,8 @@ namespace selain::ui
 
   MainWindow::MainWindow(const Glib::RefPtr<Gtk::Application>& application)
     : Gtk::ApplicationWindow(application)
-    , m_web_context(WebContext::create())
-    , m_web_settings(WebSettings::create())
+    , m_web_context(webkit::Context::create())
+    , m_web_settings(webkit::Settings::create())
     , m_mode(Mode::NORMAL)
     , m_box(Gtk::Orientation::VERTICAL)
     , m_command_entry_key_controller(Gtk::EventControllerKey::create())
@@ -140,7 +140,7 @@ namespace selain::ui
       case Mode::HINT_NEW_TAB:
         if (tab)
         {
-          tab->set_hint_context(HintContext::create(
+          tab->set_hint_context(webkit::HintContext::create(
             m_mode == Mode::HINT_NEW_TAB
           ));
         }

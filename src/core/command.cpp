@@ -33,8 +33,8 @@
 #include <selain/config.hpp>
 
 #include <selain/core/command.hpp>
+#include <selain/core/keyboard.hpp>
 #include <selain/core/setting.hpp>
-#include <selain/keyboard.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/tab.hpp>
 #include <selain/utils/string.hpp>

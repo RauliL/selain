@@ -25,7 +25,6 @@
  */
 #include <selain/config.hpp>
 
-#include <selain/adblock.hpp>
 #if defined(SELAIN_ENABLE_FINGER)
 # include <selain/protocol/finger/scheme.hpp>
 #endif
@@ -35,20 +34,21 @@
 #if defined(SELAIN_ENABLE_GOPHER)
 # include <selain/protocol/gopher/scheme.hpp>
 #endif
-#include <selain/web-context.hpp>
+#include <selain/webkit/adblock.hpp>
+#include <selain/webkit/context.hpp>
 
-namespace selain
+namespace selain::webkit
 {
   static WebKitNetworkSession* create_network_session();
 
-  Glib::RefPtr<WebContext>
-  WebContext::create()
+  Glib::RefPtr<Context>
+  Context::create()
   {
-    return Glib::make_refptr_for_instance<WebContext>(new WebContext());
+    return Glib::make_refptr_for_instance<Context>(new Context());
   }
 
-  WebContext::WebContext()
-    : Glib::ObjectBase(typeid(WebContext))
+  Context::Context()
+    : Glib::ObjectBase(typeid(Context))
     , m_context(webkit_web_context_new())
     , m_session(create_network_session())
     , m_user_content_manager(webkit_user_content_manager_new())
@@ -65,7 +65,7 @@ namespace selain
     adblock::initialize(m_user_content_manager);
   }
 
-  WebContext::~WebContext()
+  Context::~Context()
   {
     adblock::shutdown();
     g_clear_object(&m_session);
@@ -74,7 +74,7 @@ namespace selain
   }
 
   WebKitWebView*
-  WebContext::create_web_view()
+  Context::create_web_view()
   {
     return WEBKIT_WEB_VIEW(g_object_new(
       WEBKIT_TYPE_WEB_VIEW,

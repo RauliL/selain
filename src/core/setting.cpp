@@ -25,8 +25,8 @@
  */
 #include <glibmm/ustring_hash.h>
 
-#include <selain/adblock.hpp>
 #include <selain/core/setting.hpp>
+#include <selain/webkit/adblock.hpp>
 
 static inline bool
 is_true(const Glib::ustring& value)
@@ -233,7 +233,10 @@ namespace selain::setting
   {
     {
       "adblock",
-      std::make_shared<BoolSetting>(adblock::is_enabled, adblock::set_enabled)
+      std::make_shared<BoolSetting>(
+        webkit::adblock::is_enabled,
+        webkit::adblock::set_enabled
+      )
     },
     {
       "hint-chars",

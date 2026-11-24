@@ -26,7 +26,7 @@
 #include <chrono>
 #include <vector>
 
-#include <selain/keyboard.hpp>
+#include <selain/core/keyboard.hpp>
 #include <selain/ui/main-window.hpp>
 
 namespace selain::keyboard

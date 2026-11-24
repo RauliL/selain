@@ -51,8 +51,8 @@ CMRC_ADD_RESOURCE_LIBRARY(
   NAMESPACE
     selain::rc
   src/document.html
-  src/hint-mode.js
   src/theme.css
+  src/webkit/hint-mode.js
 )
 
 ADD_LIBRARY(
@@ -102,27 +102,27 @@ TARGET_LINK_LIBRARIES(
 
 SET(
   SELAIN_SOURCES
-  src/adblock.cpp
   src/adblock/easylist.cpp
   src/core/command.cpp
+  src/core/keyboard.cpp
+  src/core/mode.cpp
   src/core/setting.cpp
   src/core/theme.cpp
   src/format/gemtext.cpp
-  src/hint-context.cpp
-  src/keyboard.cpp
   src/main.cpp
-  src/mode.cpp
-  src/tab-completion.cpp
   src/ui/command-entry.cpp
+  src/ui/list-dialog.cpp
   src/ui/main-window.cpp
   src/ui/status-bar.cpp
+  src/ui/tab-completion.cpp
   src/ui/tab-label.cpp
   src/ui/tab.cpp
-  src/ui/list-dialog.cpp
   src/ui/view-list-dialog.cpp
   src/ui/view.cpp
-  src/web-context.cpp
-  src/web-settings.cpp
+  src/webkit/adblock.cpp
+  src/webkit/context.cpp
+  src/webkit/hint-context.cpp
+  src/webkit/settings.cpp
 )
 
 IF(SELAIN_ENABLE_FINGER)

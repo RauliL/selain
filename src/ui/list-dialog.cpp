@@ -25,7 +25,7 @@
  */
 #include <algorithm>
 
-#include <selain/gtk-compat.hpp>
+#include <selain/ui/gtk-compat.hpp>
 #include <selain/ui/list-dialog.hpp>
 #include <selain/utils/string.hpp>
 

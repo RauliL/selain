@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2026, Rauli Laine
+ * Copyright (c) 2019, Rauli Laine
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,36 +23,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
-
-#include <glibmm.h>
-#include <webkit/webkit.h>
+#include <selain/core/mode.hpp>
 
 namespace selain
 {
-  /**
-   * Owns the shared WebKitWebContext and WebKitNetworkSession used by views.
-   */
-  class WebContext : public Glib::Object
+  const char*
+  get_mode_text(Mode mode)
   {
-  public:
-    /**
-     * Constructs new web context instance.
-     */
-    static Glib::RefPtr<WebContext> create();
+    switch (mode)
+    {
+      case Mode::NORMAL:
+        return "NORMAL";
 
-    /**
-     * Creates new web view using the wrapped web context and network session.
-     */
-    WebKitWebView* create_web_view();
+      case Mode::INSERT:
+        return "INSERT";
 
-  private:
-    explicit WebContext();
-    ~WebContext() override;
+      case Mode::COMMAND:
+        return "COMMAND";
 
-  private:
-    WebKitWebContext* m_context;
-    WebKitNetworkSession* m_session;
-    WebKitUserContentManager* m_user_content_manager;
-  };
+      case Mode::HINT:
+        return "HINT";
+
+      case Mode::HINT_NEW_TAB:
+        return "HINT (NEW TAB)";
+
+      case Mode::PROMPT:
+        return "INPUT";
+    }
+
+    return "UNKNOWN";
+  }
 }

@@ -27,11 +27,11 @@
 
 #include <selain/core/command.hpp>
 #include <selain/core/setting.hpp>
-#include <selain/tab-completion.hpp>
 #include <selain/ui/main-window.hpp>
+#include <selain/ui/tab-completion.hpp>
 #include <selain/utils/string.hpp>
 
-namespace selain
+namespace selain::ui
 {
   static Glib::ustring
   longest_common_prefix(const std::vector<Glib::ustring>& matches)

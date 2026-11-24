@@ -25,7 +25,7 @@
  */
 #include <limits>
 
-#include <selain/gtk-compat.hpp>
+#include <selain/ui/gtk-compat.hpp>
 #include <selain/ui/main-window.hpp>
 
 namespace selain::ui
@@ -134,8 +134,8 @@ namespace selain::ui
   }
 
   Tab::Tab(
-    const Glib::RefPtr<WebContext>& context,
-    const Glib::RefPtr<WebSettings>& settings
+    const Glib::RefPtr<webkit::Context>& context,
+    const Glib::RefPtr<webkit::Settings>& settings
   )
     : Gtk::Box(Gtk::Orientation::VERTICAL)
     , m_web_context(context)
@@ -187,7 +187,7 @@ namespace selain::ui
   }
 
   void
-  Tab::set_hint_context(const Glib::RefPtr<HintContext>& hint_context)
+  Tab::set_hint_context(const Glib::RefPtr<webkit::HintContext>& hint_context)
   {
     if (m_hint_context)
     {

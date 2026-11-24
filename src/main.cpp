@@ -30,9 +30,9 @@
 #include <iostream>
 
 #include <selain/core/command.hpp>
+#include <selain/core/keyboard.hpp>
 #include <selain/core/setting.hpp>
 #include <selain/core/theme.hpp>
-#include <selain/keyboard.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/version.hpp>
 
@@ -166,7 +166,7 @@ main(int argc, char** argv)
 {
   for (int i = 1; i < argc; ++i)
   {
-    if (std::strcmp(argv[i], "--version") == 0)
+    if (!std::strcmp(argv[i], "--version"))
     {
       std::cout << SELAIN_VERSION << std::endl;
 

@@ -23,34 +23,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <selain/mode.hpp>
+#pragma once
 
-namespace selain
+#include <glibmm.h>
+
+namespace selain::ui
 {
-  const char*
-  get_mode_text(Mode mode)
+  struct Notification
   {
-    switch (mode)
+    enum class Type
     {
-      case Mode::NORMAL:
-        return "NORMAL";
+      INFO,
+      ERROR,
+    };
 
-      case Mode::INSERT:
-        return "INSERT";
-
-      case Mode::COMMAND:
-        return "COMMAND";
-
-      case Mode::HINT:
-        return "HINT";
-
-      case Mode::HINT_NEW_TAB:
-        return "HINT (NEW TAB)";
-
-      case Mode::PROMPT:
-        return "INPUT";
-    }
-
-    return "UNKNOWN";
-  }
+    Glib::ustring text;
+    Type type;
+    unsigned int timeout;
+  };
 }

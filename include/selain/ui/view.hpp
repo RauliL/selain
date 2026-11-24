@@ -27,9 +27,8 @@
 
 #include <gtkmm.h>
 
-#include <selain/hint-context.hpp>
-#include <selain/web-context.hpp>
-#include <selain/web-settings.hpp>
+#include <selain/webkit/context.hpp>
+#include <selain/webkit/settings.hpp>
 
 namespace selain::ui
 {
@@ -45,8 +44,8 @@ namespace selain::ui
     using prompt_callback_type = std::function<void(const Glib::ustring&)>;
 
     explicit View(
-      const Glib::RefPtr<WebContext>& context,
-      const Glib::RefPtr<WebSettings>& settings
+      const Glib::RefPtr<webkit::Context>& context,
+      const Glib::RefPtr<webkit::Settings>& settings
     );
     ~View() override;
 
@@ -152,7 +151,7 @@ namespace selain::ui
     Glib::RefPtr<Gdk::Paintable> get_favicon() const;
 
   private:
-    ::WebKitWebView* m_web_view;
+    WebKitWebView* m_web_view;
     Glib::ustring m_status;
     Glib::ustring m_permanent_status;
     int m_gemini_redirect_hops = 0;

@@ -32,14 +32,14 @@
 #include <inja/inja.hpp>
 
 #include <selain/core/setting.hpp>
-#include <selain/hint-context.hpp>
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view.hpp>
 #include <selain/utils/string.hpp>
+#include <selain/webkit/hint-context.hpp>
 
 CMRC_DECLARE(selain::rc);
 
-namespace selain
+namespace selain::webkit
 {
   using selain::ui::Tab;
 
@@ -85,49 +85,49 @@ namespace selain
     if (m_reply)
     {
       reply_with_json(m_reply, R"({"action":"uninstall"})");
-      ::webkit_script_message_reply_unref(m_reply);
+      webkit_script_message_reply_unref(m_reply);
       m_reply = nullptr;
     }
     clear_js_context();
   }
 
   void
-  HintContext::ensure_message_handler(::WebKitUserContentManager* manager)
+  HintContext::ensure_message_handler(WebKitUserContentManager* manager)
   {
     static std::once_flag once_flag;
 
     std::call_once(once_flag, [manager]()
     {
-      ::g_signal_connect(
+      g_signal_connect(
         manager,
         "script-message-with-reply-received::hintMode",
         G_CALLBACK(on_script_message_with_reply),
         nullptr
       );
-      if (!::webkit_user_content_manager_register_script_message_handler_with_reply(
-            manager,
-            hint_handler_name,
-            hint_script_world
-          ))
+      if (!webkit_user_content_manager_register_script_message_handler_with_reply(
+        manager,
+        hint_handler_name,
+        hint_script_world
+      ))
       {
-        ::g_warning("Failed to register hint mode script message handler.");
+        g_warning("Failed to register hint mode script message handler.");
       }
     });
   }
 
-  ::gboolean
+  gboolean
   HintContext::on_script_message_with_reply(
-    ::WebKitUserContentManager*,
-    ::JSCValue* value,
-    ::WebKitScriptMessageReply* reply,
-    ::gpointer
+    WebKitUserContentManager*,
+    JSCValue* value,
+    WebKitScriptMessageReply* reply,
+    gpointer
   )
   {
-    g_autofree gchar* json = ::jsc_value_to_json(value, 0);
+    g_autofree gchar* json = jsc_value_to_json(value, 0);
 
     if (!json)
     {
-      ::webkit_script_message_reply_return_error_message(
+      webkit_script_message_reply_return_error_message(
         reply,
         "Invalid hint mode message."
       );
@@ -136,9 +136,13 @@ namespace selain
 
     const auto message = inja::json::parse(json, nullptr, false);
 
-    if (message.is_discarded() || !message.contains("id") || !message["id"].is_string())
+    if (
+      message.is_discarded() ||
+      !message.contains("id") ||
+      !message["id"].is_string()
+    )
     {
-      ::webkit_script_message_reply_return_error_message(
+      webkit_script_message_reply_return_error_message(
         reply,
         "Invalid hint mode message."
       );
@@ -150,13 +154,13 @@ namespace selain
 
     if (it == std::end(active_contexts()))
     {
-      ::webkit_script_message_reply_return_error_message(
+      webkit_script_message_reply_return_error_message(
         reply,
         "Unknown hint mode session."
       );
+
       return TRUE;
     }
-
     it->second->handle_script_message(value, reply);
 
     return TRUE;
@@ -164,40 +168,40 @@ namespace selain
 
   void
   HintContext::reply_with_json(
-    ::WebKitScriptMessageReply* reply,
+    WebKitScriptMessageReply* reply,
     const std::string& json
   )
   {
     if (!m_js_context)
     {
-      ::webkit_script_message_reply_return_error_message(
+      webkit_script_message_reply_return_error_message(
         reply,
         "Missing JavaScript context for hint mode reply."
       );
       return;
     }
 
-    auto* value = ::jsc_value_new_from_json(m_js_context, json.c_str());
+    auto* value = jsc_value_new_from_json(m_js_context, json.c_str());
 
     if (!value)
     {
-      ::webkit_script_message_reply_return_error_message(
+      webkit_script_message_reply_return_error_message(
         reply,
         "Failed to encode hint mode command."
       );
       return;
     }
-    ::webkit_script_message_reply_return_value(reply, value);
-    ::g_object_unref(value);
+    webkit_script_message_reply_return_value(reply, value);
+    g_object_unref(value);
   }
 
   void
   HintContext::handle_script_message(
-    ::JSCValue* value,
-    ::WebKitScriptMessageReply* reply
+    JSCValue* value,
+    WebKitScriptMessageReply* reply
   )
   {
-    g_autofree gchar* json = ::jsc_value_to_json(value, 0);
+    g_autofree gchar* json = jsc_value_to_json(value, 0);
     const auto message = json
       ? inja::json::parse(json, nullptr, false)
       : inja::json();
@@ -218,17 +222,17 @@ namespace selain
 
     // Replies must be created in the same JSCContext as the incoming message;
     // values from a fresh jsc_context_new() serialize as empty objects.
-    if (auto* context = ::jsc_value_get_context(value))
+    if (auto* context = jsc_value_get_context(value))
     {
       if (m_js_context != context)
       {
         clear_js_context();
-        m_js_context = static_cast<::JSCContext*>(g_object_ref(context));
+        m_js_context = static_cast<JSCContext*>(g_object_ref(context));
       }
     }
 
     clear_reply();
-    m_reply = ::webkit_script_message_reply_ref(reply);
+    m_reply = webkit_script_message_reply_ref(reply);
 
     if (mode == "normal" || mode == "insert")
     {
@@ -236,7 +240,7 @@ namespace selain
       // may destroy this HintContext, so do not touch members afterward.
       m_commands = {};
       reply_with_json(m_reply, R"({"action":"uninstall"})");
-      ::webkit_script_message_reply_unref(m_reply);
+      webkit_script_message_reply_unref(m_reply);
       m_reply = nullptr;
       m_active = false;
       active_contexts().erase(m_id);
@@ -278,7 +282,7 @@ namespace selain
   {
     if (m_reply)
     {
-      ::webkit_script_message_reply_unref(m_reply);
+      webkit_script_message_reply_unref(m_reply);
       m_reply = nullptr;
     }
   }
@@ -288,7 +292,7 @@ namespace selain
   {
     if (m_js_context)
     {
-      ::g_object_unref(m_js_context);
+      g_object_unref(m_js_context);
       m_js_context = nullptr;
     }
   }
@@ -316,7 +320,7 @@ namespace selain
 
     m_commands.pop();
     reply_with_json(m_reply, command);
-    ::webkit_script_message_reply_unref(m_reply);
+    webkit_script_message_reply_unref(m_reply);
     m_reply = nullptr;
   }
 
@@ -340,7 +344,7 @@ namespace selain
     ensure_message_handler(manager);
 
     auto fs = cmrc::selain::rc::get_filesystem();
-    auto script = fs.open("src/hint-mode.js");
+    auto script = fs.open("src/webkit/hint-mode.js");
     inja::json data;
 
     data["id"] = m_id;
@@ -384,7 +388,7 @@ namespace selain
     if (m_reply)
     {
       reply_with_json(m_reply, R"({"action":"uninstall"})");
-      ::webkit_script_message_reply_unref(m_reply);
+      webkit_script_message_reply_unref(m_reply);
       m_reply = nullptr;
       active_contexts().erase(m_id);
       clear_js_context();

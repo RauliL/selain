@@ -25,11 +25,9 @@
  */
 #pragma once
 
-#include <selain/hint-context.hpp>
 #include <selain/ui/tab-label.hpp>
 #include <selain/ui/view.hpp>
-#include <selain/web-context.hpp>
-#include <selain/web-settings.hpp>
+#include <selain/webkit/hint-context.hpp>
 
 namespace selain::ui
 {
@@ -47,22 +45,22 @@ namespace selain::ui
     >;
 
     explicit Tab(
-      const Glib::RefPtr<WebContext>& context,
-      const Glib::RefPtr<WebSettings>& settings
+      const Glib::RefPtr<webkit::Context>& context,
+      const Glib::RefPtr<webkit::Settings>& settings
     );
     ~Tab() override;
 
-    inline Glib::RefPtr<HintContext>& get_hint_context()
+    inline Glib::RefPtr<webkit::HintContext>& get_hint_context()
     {
       return m_hint_context;
     }
 
-    inline Glib::RefPtr<const HintContext> get_hint_context() const
+    inline Glib::RefPtr<const webkit::HintContext> get_hint_context() const
     {
       return m_hint_context;
     }
 
-    void set_hint_context(const Glib::RefPtr<HintContext>& hint_context);
+    void set_hint_context(const Glib::RefPtr<webkit::HintContext>& hint_context);
 
     /**
      * Returns pointer to the main window where this tab is being displayed, or
@@ -237,9 +235,9 @@ namespace selain::ui
     void on_close_button_clicked();
 
   private:
-    Glib::RefPtr<WebContext> m_web_context;
-    Glib::RefPtr<WebSettings> m_web_settings;
-    Glib::RefPtr<HintContext> m_hint_context;
+    Glib::RefPtr<webkit::Context> m_web_context;
+    Glib::RefPtr<webkit::Settings> m_web_settings;
+    Glib::RefPtr<webkit::HintContext> m_hint_context;
     TabLabel m_tab_label;
     std::vector<Glib::RefPtr<View>> m_views;
     View* m_active_view;

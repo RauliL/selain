@@ -6,6 +6,7 @@ Selain currently supports following commands:
 |--------------|--------|---------------------------------------|
 |`:back`       |`:b`    |Goes back in browsing history.         |
 |`:bind`       |        |Add keyboard binding.                  |
+|`:buku`       |        |Opens or adds Buku bookmarks.          |
 |`:command`    |`:c`    |Switches to command mode.              |
 |`:execute`    |`:ex`   |Evaluates JS; runs result as a command.|
 |`:forward`    |`:f`    |Goes forward in browsing history.      |
@@ -49,6 +50,12 @@ resulting string as a browser command. Example:
 
 `:js` takes a JavaScript expression or statement as argument and shows the
 result (or an error) as a notification. Example: `:js document.title`.
+
+`:buku` opens bookmarks from the [Buku](https://github.com/jarun/buku) manager
+in a fuzzy picker. With no arguments it lists all bookmarks; otherwise it
+searches by keyword. Use `:buku -t` / `:buku --tab` to open the selection in a
+new tab, or `:buku -a [tags…]` to bookmark the current page (optional
+comma-separated tags). Default binding: `zb`.
 
 `:pass` looks up the current page host in the [pass](https://www.passwordstore.org/)
 store, decrypts a matching entry, and fills the login form. With one match it

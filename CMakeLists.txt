@@ -12,6 +12,11 @@ OPTION(
   "Enable pass password manager integration"
   OFF
 )
+OPTION(
+  SELAIN_ENABLE_BUKU_INTEGRATION
+  "Enable Buku bookmark manager integration"
+  OFF
+)
 
 OPTION(SELAIN_BUILD_TESTS "Build unit tests" ON)
 
@@ -159,6 +164,15 @@ IF(SELAIN_ENABLE_PASS_INTEGRATION)
     SELAIN_SOURCES
     src/integration/pass/command.cpp
     src/integration/pass/storage.cpp
+  )
+ENDIF()
+
+IF(SELAIN_ENABLE_BUKU_INTEGRATION)
+  LIST(
+    APPEND
+    SELAIN_SOURCES
+    src/integration/buku/command.cpp
+    src/integration/buku/storage.cpp
   )
 ENDIF()
 

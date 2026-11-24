@@ -18,6 +18,7 @@ uses [WebKit] as it's engine.
 ### Optional features
 
 - Integration with [pass](https://www.passwordstore.org/) password manager.
+- Integration with [Buku](https://github.com/jarun/buku) bookmark manager.
 
 ## How to compile
 

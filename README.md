@@ -9,9 +9,15 @@ uses [WebKit] as it's engine.
 - Vim style splitted views.
 - Ad blocking via WebKit content filters (EasyList and other lists in
   `~/.config/selain/blocklists/`; see [doc/adblock.md](doc/adblock.md)).
-- [Finger](https://datatracker.ietf.org/doc/html/rfc1288) protocol support (`finger://`).
+- [Finger](https://datatracker.ietf.org/doc/html/rfc1288) protocol support
+  (`finger://`).
 - [Gemini](https://geminiprotocol.net/) protocol support (`gemini://`).
-- [Gopher](https://datatracker.ietf.org/doc/html/rfc1436) protocol support (`gopher://` and `gophers://`).
+- [Gopher](https://datatracker.ietf.org/doc/html/rfc1436) protocol support
+  (`gopher://` and `gophers://`).
+
+### Optional features
+
+- Integration with [pass](https://www.passwordstore.org/) password manager.
 
 ## How to compile
 

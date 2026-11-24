@@ -30,6 +30,8 @@
 
 #include <glibmm/ustring_hash.h>
 
+#include <selain/config.hpp>
+
 #include <selain/core/command.hpp>
 #include <selain/core/setting.hpp>
 #include <selain/keyboard.hpp>
@@ -76,6 +78,15 @@ static bool cmd_scroll(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring)
 static bool cmd_split_focus(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_yank(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
 static bool cmd_zoom(selain::ui::MainWindow&, selain::ui::Tab&, Glib::ustring);
+
+#if defined(SELAIN_ENABLE_PASS_INTEGRATION)
+namespace selain::integration::pass
+{
+  bool command(ui::MainWindow&, ui::Tab&, Glib::ustring);
+}
+#else
+static bool disabled_command(selain::ui::MainWindow&, Glib::ustring);
+#endif
 
 namespace selain::command
 {
@@ -161,6 +172,15 @@ namespace selain::command
       "open-tab", { "ot" },
       "Opens URI given as argument in new tab.",
       cmd_open_tab
+    },
+    {
+      "pass", {},
+      "Fills login form from the pass password store.",
+      #if defined(SELAIN_ENABLE_PASS_INTEGRATION)
+      require_tab(selain::integration::pass::command)
+      #else
+      disabled_command
+      #endif
     },
     {
       "paste", { "p" },
@@ -1121,3 +1141,13 @@ cmd_zoom(
 
   return true;
 }
+
+#if !defined(SELAIN_ENABLE_PASS_INTEGRATION)
+static bool
+disabled_command(selain::ui::MainWindow& window, Glib::ustring)
+{
+  window.show_error("This feature is not enabled.");
+
+  return false;
+}
+#endif

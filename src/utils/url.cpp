@@ -126,6 +126,33 @@ namespace selain::utils::url
   }
 
   std::optional<Glib::ustring>
+  get_host(const Glib::ustring& uri)
+  {
+    if (uri.empty())
+    {
+      return std::nullopt;
+    }
+
+    auto* parsed = parse_uri(uri);
+
+    if (!parsed)
+    {
+      return std::nullopt;
+    }
+
+    const char* host = g_uri_get_host(parsed);
+    std::optional<Glib::ustring> result;
+
+    if (host && *host)
+    {
+      result = host;
+    }
+    g_uri_unref(parsed);
+
+    return result;
+  }
+
+  std::optional<Glib::ustring>
   get_parent(const Glib::ustring& uri)
   {
     if (uri.empty())

@@ -57,7 +57,8 @@ namespace selain::ui
      * Creates and presents a list dialog. The dialog destroys itself when
      * closed. @p on_activate receives the index into the original @p entries
      * vector. When the filter is empty, @p preferred_index is selected;
-     * otherwise the top-ranked match is selected.
+     * otherwise the top-ranked match is selected. @p initial_filter pre-fills
+     * the filter entry when non-empty.
      */
     static void show(
       Gtk::Window& parent,
@@ -65,7 +66,8 @@ namespace selain::ui
       const Glib::ustring& filter_placeholder,
       std::vector<ListDialogEntry> entries,
       std::function<void(std::size_t index)> on_activate,
-      int preferred_index = 0
+      int preferred_index = 0,
+      const Glib::ustring& initial_filter = {}
     );
 
   private:
@@ -77,7 +79,8 @@ namespace selain::ui
       const Glib::ustring& filter_placeholder,
       std::vector<ListDialogEntry> entries,
       std::function<void(std::size_t index)> on_activate,
-      int preferred_index
+      int preferred_index,
+      const Glib::ustring& initial_filter
     );
     ~ListDialog() override;
 

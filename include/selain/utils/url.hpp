@@ -30,6 +30,12 @@
 namespace selain::utils::url
 {
   /**
+   * Returns the host component of @p uri. Returns `std::nullopt` when the URI
+   * is empty, invalid, or has no host.
+   */
+  std::optional<Glib::ustring> get_host(const Glib::ustring& uri);
+
+  /**
    * Returns the URI one path level above @p uri, with query and fragment
    * removed. Returns `std::nullopt` when the URI is empty, invalid, or already
    * at the hierarchy root.

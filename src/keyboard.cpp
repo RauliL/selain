@@ -174,6 +174,7 @@ namespace selain::keyboard
     bind("u", "scroll page-up");
     bind("<Page_Up>", "scroll page-up");
     bind("yy", "yank");
+    bind("zl", "pass");
 
     // Zoom.
     bind("+", "zoom +10");

@@ -31,18 +31,15 @@
 
 namespace selain::ui
 {
-  namespace
+  static Glib::ustring
+  default_haystack(const ListDialogEntry& entry)
   {
-    Glib::ustring
-    default_haystack(const ListDialogEntry& entry)
+    if (!entry.filter_text.empty())
     {
-      if (!entry.filter_text.empty())
-      {
-        return entry.filter_text;
-      }
-
-      return entry.title + ' ' + entry.secondary;
+      return entry.filter_text;
     }
+
+    return entry.title + ' ' + entry.secondary;
   }
 
   class ListDialog::Row : public Gtk::ListBoxRow
@@ -116,7 +113,8 @@ namespace selain::ui
     const Glib::ustring& filter_placeholder,
     std::vector<ListDialogEntry> entries,
     std::function<void(std::size_t index)> on_activate,
-    int preferred_index
+    int preferred_index,
+    const Glib::ustring& initial_filter
   )
   {
     auto* dialog = new ListDialog(
@@ -125,7 +123,8 @@ namespace selain::ui
       filter_placeholder,
       std::move(entries),
       std::move(on_activate),
-      preferred_index
+      preferred_index,
+      initial_filter
     );
 
     dialog->present();
@@ -138,7 +137,8 @@ namespace selain::ui
     const Glib::ustring& filter_placeholder,
     std::vector<ListDialogEntry> entries,
     std::function<void(std::size_t index)> on_activate,
-    int preferred_index
+    int preferred_index,
+    const Glib::ustring& initial_filter
   )
     : m_box(Gtk::Orientation::VERTICAL)
     , m_key_controller(Gtk::EventControllerKey::create())
@@ -167,6 +167,10 @@ namespace selain::ui
     m_filter.set_margin_end(8);
     m_filter.set_margin_top(8);
     m_filter.set_margin_bottom(4);
+    if (!initial_filter.empty())
+    {
+      m_filter.set_text(initial_filter);
+    }
 
     m_list.add_css_class("entry-list");
     m_list.set_selection_mode(Gtk::SelectionMode::SINGLE);

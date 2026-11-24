@@ -20,6 +20,7 @@ Selain currently supports following commands:
 |`:only`       |`:on`   |Closes all splits except the current.  |
 |`:open`       |`:o`    |Opens URI, domain, or search query.    |
 |`:open-tab`   |`:ot`   |Same as `:open`, in a new tab.         |
+|`:pass`       |        |Fills login form from `pass` store.    |
 |`:paste`      |`:p`    |Opens clipboard text as URI/search.    |
 |`:paste-tab`  |`:pt`   |Same as `:paste`, in a new tab.        |
 |`:quit`       |`:q`    |Closes current split, or tab if alone. |
@@ -48,6 +49,12 @@ resulting string as a browser command. Example:
 
 `:js` takes a JavaScript expression or statement as argument and shows the
 result (or an error) as a notification. Example: `:js document.title`.
+
+`:pass` looks up the current page host in the [pass](https://www.passwordstore.org/)
+store, decrypts a matching entry, and fills the login form. With one match it
+fills immediately; with several it opens a fuzzy picker (filter seeded with the
+host). Use `:pass -u` / `:pass -p` to fill only the username or password.
+Default binding: `zl`.
 
 `:split` and `:vsplit` accept an optional URI argument. Without one, the new
 split loads the same URI as the current view.

@@ -84,7 +84,17 @@ namespace selain::integration::pass
 {
   bool command(ui::MainWindow&, ui::Tab&, Glib::ustring);
 }
-#else
+#endif
+
+#if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
+namespace selain::integration::buku
+{
+  bool command(ui::MainWindow&, ui::Tab&, Glib::ustring);
+}
+#endif
+
+#if !defined(SELAIN_ENABLE_PASS_INTEGRATION) || \
+    !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
 static bool disabled_command(selain::ui::MainWindow&, Glib::ustring);
 #endif
 
@@ -101,6 +111,15 @@ namespace selain::command
       "bind", {},
       "Add keyboard binding.",
       cmd_bind
+    },
+    {
+      "buku", {},
+      "Opens or adds bookmarks via the Buku bookmark manager.",
+      #if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
+      require_tab(selain::integration::buku::command)
+      #else
+      disabled_command
+      #endif
     },
     {
       "command", { "c" },
@@ -1142,7 +1161,8 @@ cmd_zoom(
   return true;
 }
 
-#if !defined(SELAIN_ENABLE_PASS_INTEGRATION)
+#if !defined(SELAIN_ENABLE_PASS_INTEGRATION) || \
+    !defined(SELAIN_ENABLE_BUKU_INTEGRATION)
 static bool
 disabled_command(selain::ui::MainWindow& window, Glib::ustring)
 {

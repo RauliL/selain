@@ -89,8 +89,9 @@ namespace selain::ui
 
   private:
     void show_notification(const Notification& notification);
+    void clear_notifications();
     void on_activate();
-    void on_notification_timeout();
+    bool on_notification_timeout();
 
   private:
     Gtk::Entry m_entry;
@@ -98,6 +99,7 @@ namespace selain::ui
     Gtk::Label m_error_label;
     std::queue<Notification> m_notification_queue;
     std::mutex m_notification_queue_mutex;
+    sigc::connection m_notification_timeout;
     signal_command_received_type m_signal_command_received;
   };
 }

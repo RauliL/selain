@@ -68,7 +68,7 @@ namespace selain::ui
     {
       return;
     }
-    Glib::signal_timeout().connect_once(
+    m_notification_timeout = Glib::signal_timeout().connect(
       sigc::mem_fun(*this, &CommandEntry::on_notification_timeout),
       timeout * 1000
     );
@@ -90,6 +90,15 @@ namespace selain::ui
         m_error_label.set_text(notification.text);
         break;
     }
+  }
+
+  void
+  CommandEntry::clear_notifications()
+  {
+    std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
+
+    m_notification_timeout.disconnect();
+    m_notification_queue = {};
   }
 
   void
@@ -116,6 +125,10 @@ namespace selain::ui
   void
   CommandEntry::grab_focus()
   {
+    // Focusing the entry dismisses any visible notification. Clear the queue
+    // and cancel the timeout so a later notification is not stuck waiting on a
+    // notification the user can no longer see.
+    clear_notifications();
     set_visible_child(m_entry);
     m_entry.grab_focus_without_selecting();
     m_entry.set_position(static_cast<int>(m_entry.get_text().length()));
@@ -130,14 +143,14 @@ namespace selain::ui
     m_signal_command_received.emit(text);
   }
 
-  void
+  bool
   CommandEntry::on_notification_timeout()
   {
     std::lock_guard<std::mutex> guard(m_notification_queue_mutex);
 
     if (m_notification_queue.empty())
     {
-      return;
+      return false;
     }
     m_notification_queue.pop();
     if (m_notification_queue.empty())
@@ -147,10 +160,13 @@ namespace selain::ui
       const auto& next_notification = m_notification_queue.front();
 
       show_notification(next_notification);
-      Glib::signal_timeout().connect_once(
+      m_notification_timeout = Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &CommandEntry::on_notification_timeout),
         next_notification.timeout * 1000
       );
     }
+
+    // One-shot: the next notification (if any) schedules its own timeout.
+    return false;
   }
 }

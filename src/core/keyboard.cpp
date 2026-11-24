@@ -376,7 +376,17 @@ namespace selain::keyboard
 
     if (!entry->second->command.empty())
     {
-      window.run_command(entry->second->command, false);
+      window.run_command(
+        entry->second->command,
+        false,
+        [&window](const std::optional<Glib::ustring>& error)
+        {
+          if (error)
+          {
+            window.show_error(*error);
+          }
+        }
+      );
       last_mapping.reset();
     }
     else if (has_child_mappings(*entry->second))

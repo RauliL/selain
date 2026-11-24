@@ -34,7 +34,23 @@ namespace selain::ui
 
 namespace selain::command
 {
-  using callback_type = std::function<bool(ui::MainWindow&, Glib::ustring)>;
+  /**
+   * Called when command execution finishes. Receives `std::nullopt` on success,
+   * or an error message when execution failed.
+   */
+  using result_callback_type = std::function<void(
+    const std::optional<Glib::ustring>& error
+  )>;
+
+  /**
+   * Builtin command handler. Must invoke @p callback exactly once when the
+   * command has finished (including any asynchronous work it starts).
+   */
+  using callback_type = std::function<void(
+    ui::MainWindow& window,
+    Glib::ustring args,
+    result_callback_type callback
+  )>;
 
   struct Info
   {

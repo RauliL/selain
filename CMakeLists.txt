@@ -58,6 +58,7 @@ CMRC_ADD_RESOURCE_LIBRARY(
   src/document.html
   src/theme.css
   src/webkit/hint-mode.js
+  src/webkit/scroll-helper.js
 )
 
 ADD_LIBRARY(

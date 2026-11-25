@@ -27,6 +27,7 @@
 #include <cmath>
 #include <format>
 #include <type_traits>
+#include <unordered_set>
 
 #include <glibmm/ustring_hash.h>
 
@@ -1720,66 +1721,42 @@ cmd_scroll(
 {
   // TODO: Allow finer control by accepting direction _and_ amount as
   // arguments.
+  static const std::unordered_set<Glib::ustring> actions = {
+    "top",
+    "bottom",
+    "left",
+    "right",
+    "up",
+    "down",
+    "page-up",
+    "page-down"
+  };
   const auto arg = selain::utils::string::trim(args);
-  Glib::ustring method = "scrollBy";
-  Glib::ustring direction;
-  Glib::ustring value;
 
   if (arg.empty())
   {
     finish(callback, "Missing direction/amount.");
     return;
   }
-  else if (arg == "top")
+  if (!actions.contains(arg))
   {
-    method = "scrollTo";
-    direction = "top";
-    value = "0";
-  }
-  else if (arg == "bottom")
-  {
-    method = "scrollTo";
-    direction = "top";
-    value = "document.body.scrollHeight";
-  }
-  else if (arg == "left")
-  {
-    direction = "left";
-    value = "-100";
-  }
-  else if (arg == "right")
-  {
-    direction = "left";
-    value = "100";
-  }
-  else if (arg == "up")
-  {
-    direction = "top";
-    value = "-100";
-  }
-  else if (arg == "down")
-  {
-    direction = "top";
-    value = "100";
-  }
-  else if (arg == "page-up")
-  {
-    direction = "top";
-    value = "-(window.innerHeight / 2)";
-  }
-  else if (arg == "page-down")
-  {
-    direction = "top";
-    value = "window.innerHeight / 2";
-  } else {
     finish(callback, "Unrecognized direction.");
     return;
   }
+
+  // Scroll via the injected helper (all frames). window.scrollBy only affects
+  // the main frame; WebKit's PDF.js viewer lives in a cross-origin iframe.
   tab.execute_script(std::format(
-    "window.{}({{ {}: {} }});",
-    method.raw(),
-    direction.raw(),
-    value.raw()
+    R"((() => {{
+  const payload = {{ type: "selain-scroll", action: "{}" }};
+  window.postMessage(payload, "*");
+  for (const iframe of document.querySelectorAll("iframe")) {{
+    try {{
+      iframe.contentWindow.postMessage(payload, "*");
+    }} catch (e) {{}}
+  }}
+}})())",
+    arg.raw()
   ));
   finish(callback);
 }

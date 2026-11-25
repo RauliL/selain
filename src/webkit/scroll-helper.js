@@ -9,33 +9,57 @@
   }
   window.__selainScrollInstalled = true;
 
+  function isVerticallyScrollable(el) {
+    return !!el && el.scrollHeight > el.clientHeight + 1;
+  }
+
+  function isOverflowScrollable(el) {
+    if (!isVerticallyScrollable(el)) {
+      return false;
+    }
+
+    const style = getComputedStyle(el);
+    const overflowY = style.overflowY;
+
+    return overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+  }
+
   function scrollTarget() {
+    // PDF.js (WebKit viewer) scrolls #viewerContainer, not the document.
     const viewer = document.getElementById("viewerContainer");
 
-    if (viewer && viewer.scrollHeight > viewer.clientHeight) {
+    if (isVerticallyScrollable(viewer)) {
       return viewer;
     }
 
+    // Prefer the document whenever it can scroll. Nested overflow panels
+    // (TOCs, sidebars, menus) are common on long articles and must not steal
+    // vim-style page scrolling the way window.scrollBy used to behave.
+    const scrolling = document.scrollingElement || document.documentElement;
+
+    if (isVerticallyScrollable(scrolling)) {
+      return scrolling;
+    }
+
+    // Document is locked (typical SPA / overflow:hidden body): pick the
+    // largest nested scrollport instead.
     let best = null;
     let bestScore = 0;
 
     for (const el of document.querySelectorAll("body *")) {
-      const style = getComputedStyle(el);
+      if (!isOverflowScrollable(el)) {
+        continue;
+      }
 
-      if (
-        (style.overflowY === "auto" || style.overflowY === "scroll") &&
-        el.scrollHeight > el.clientHeight + 1
-      ) {
-        const score = el.scrollHeight * el.clientWidth;
+      const score = el.clientHeight * el.clientWidth;
 
-        if (score > bestScore) {
-          best = el;
-          bestScore = score;
-        }
+      if (score > bestScore) {
+        best = el;
+        bestScore = score;
       }
     }
 
-    return best || document.scrollingElement || document.documentElement;
+    return best || scrolling;
   }
 
   function scroll(action) {

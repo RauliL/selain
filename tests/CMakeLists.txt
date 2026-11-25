@@ -14,6 +14,7 @@ LIST(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
 ADD_EXECUTABLE(
   selain-tests
+  userscript_metadata_test.cpp
   utils_test.cpp
 )
 

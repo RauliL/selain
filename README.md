@@ -8,6 +8,8 @@ uses [WebKit] as it's engine.
 - Vim style modes and keyboard bindings.
 - Vim style splitted views.
 - Persistent, searchable visit history (`:history`, `:history-clear`).
+- GreaseMonkey-style userscripts from `~/.config/selain/scripts/` (metadata
+  injection only; see [doc/userscripts.md](doc/userscripts.md)).
 - Ad blocking via WebKit content filters (EasyList and other lists in
   `~/.config/selain/blocklists/`; see [doc/adblock.md](doc/adblock.md)).
 - [Finger](https://datatracker.ietf.org/doc/html/rfc1288) protocol support

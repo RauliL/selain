@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <fstream>
 #include <type_traits>
 #include <unordered_set>
 
@@ -455,7 +456,7 @@ namespace selain::ui
   MainWindow::run_command(
     const Glib::ustring& command,
     bool interactive,
-    command::result_callback_type callback
+    const command::result_callback_type& callback
   )
   {
     Glib::ustring name;
@@ -519,6 +520,68 @@ namespace selain::ui
     }
 
     entry->second(*this, args, std::move(callback));
+  }
+
+  static void
+  run_script_line(
+    MainWindow* window,
+    const std::vector<Glib::ustring>& lines,
+    std::vector<Glib::ustring>::size_type index,
+    const command::result_callback_type& callback
+  )
+  {
+    if (index >= lines.size())
+    {
+      finish(callback);
+      return;
+    }
+    window->run_command(
+      lines[index],
+      false,
+      [
+        window,
+        lines,
+        index,
+        callback
+      ](const std::optional<Glib::ustring>& error)
+      {
+        if (error)
+        {
+          finish(
+            callback,
+            std::format("Line {}: {}", index + 1, error->raw())
+          );
+        } else {
+          run_script_line(window, lines, index + 1, callback);
+        }
+      }
+    );
+  }
+
+  void
+  MainWindow::run_script(
+    const std::filesystem::path& path,
+    const command::result_callback_type& callback
+  )
+  {
+    std::ifstream is(path);
+    std::string line;
+    std::vector<Glib::ustring> lines;
+
+    if (!is)
+    {
+      finish(
+        callback,
+        std::format("Unable to open {} for reading.", path.string())
+      );
+      return;
+    }
+    while (std::getline(is, line))
+    {
+      lines.emplace_back(line);
+    }
+    is.close();
+    run_script_line(this, lines, 0, callback);
   }
 }
 

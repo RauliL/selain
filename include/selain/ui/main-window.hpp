@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#include <filesystem>
+
 #include <selain/core/bookmark-manager.hpp>
 #include <selain/core/command.hpp>
 #include <selain/core/password-manager.hpp>
@@ -61,7 +63,15 @@ namespace selain::ui
     void run_command(
       const Glib::ustring& command,
       bool interactive,
-      command::result_callback_type callback
+      const command::result_callback_type& callback
+    );
+
+    /**
+     * Executes an script read from a file.
+     */
+    void run_script(
+      const std::filesystem::path& path,
+      const command::result_callback_type& callback
     );
 
     /**

@@ -29,6 +29,7 @@
 
 #include <selain/core/setting.hpp>
 #include <selain/webkit/adblock.hpp>
+#include <selain/webkit/userscript.hpp>
 
 namespace selain::setting
 {
@@ -327,6 +328,13 @@ namespace selain::setting
     {
       "search-engine",
       std::make_shared<StringSetting>("https://search.brave.com/search?q=%s")
+    },
+    {
+      "userscripts",
+      std::make_shared<BoolSetting>(
+        webkit::userscript::is_enabled,
+        webkit::userscript::set_enabled
+      )
     },
 
     // WebKit boolean settings.

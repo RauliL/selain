@@ -65,6 +65,7 @@ CMRC_ADD_RESOURCE_LIBRARY(
 ADD_LIBRARY(
   selain-utils
   STATIC
+  src/userscript/metadata.cpp
   src/utils/string.cpp
   src/utils/url.cpp
 )
@@ -131,6 +132,7 @@ SET(
   src/webkit/context.cpp
   src/webkit/hint-context.cpp
   src/webkit/settings.cpp
+  src/webkit/userscript.cpp
 )
 
 IF(SELAIN_ENABLE_FINGER)

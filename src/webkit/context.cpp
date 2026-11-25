@@ -39,6 +39,7 @@
 #include <selain/core/theme.hpp>
 #include <selain/webkit/adblock.hpp>
 #include <selain/webkit/context.hpp>
+#include <selain/webkit/userscript.hpp>
 
 CMRC_DECLARE(selain::rc);
 
@@ -74,10 +75,12 @@ namespace selain::webkit
     install_theme_stylesheet(m_user_content_manager);
     install_scroll_helper(m_user_content_manager);
     adblock::initialize(m_user_content_manager);
+    userscript::initialize(m_user_content_manager);
   }
 
   Context::~Context()
   {
+    userscript::shutdown();
     adblock::shutdown();
     g_clear_object(&m_session);
     g_clear_object(&m_context);

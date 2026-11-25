@@ -42,6 +42,7 @@
 #include <selain/ui/tab.hpp>
 #include <selain/utils/string.hpp>
 #include <selain/utils/url.hpp>
+#include <selain/webkit/userscript.hpp>
 
 using tab_callback_type = std::function<void(
   selain::ui::MainWindow&,
@@ -126,6 +127,11 @@ static void cmd_tab(
   selain::command::result_callback_type
 );
 static void cmd_unbind(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_userscripts_reload(
   selain::ui::MainWindow&,
   Glib::ustring,
   selain::command::result_callback_type
@@ -404,6 +410,11 @@ namespace selain::command
       "unbind", {},
       "Remove keyboard binding.",
       cmd_unbind
+    },
+    {
+      "userscripts-reload", { "usr" },
+      "Reloads GreaseMonkey-style userscripts from disk.",
+      cmd_userscripts_reload
     },
     {
       "view-list", { "vl" },
@@ -1050,6 +1061,24 @@ cmd_unbind(
     return;
   }
   finish(callback, "No such binding.");
+}
+
+static void
+cmd_userscripts_reload(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
+{
+  if (!selain::utils::string::trim(args).empty())
+  {
+    finish(callback, "Usage: :userscripts-reload");
+    return;
+  }
+
+  selain::webkit::userscript::reload(nullptr);
+  window.show_info("Userscripts reloaded.");
+  finish(callback);
 }
 
 // Commands that require tab.

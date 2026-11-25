@@ -42,6 +42,7 @@ Selain currently supports following commands:
 |`:tab-next`   |`:tn`   |Switches to next tab.                  |
 |`:tab-prev`   |`:tp`   |Switches to previous tab.              |
 |`:unbind`     |        |Remove keyboard binding.               |
+|`:userscripts-reload`|`:usr`|Reloads userscripts from disk.      |
 |`:view-list`  |`:vl`   |Opens a searchable list of all views.  |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |
@@ -67,6 +68,9 @@ History is stored in `~/.local/share/selain/history.sqlite`. Disable recording
 with `:set history=false`. Default binding: `zh`.
 
 `:history-clear` deletes all stored visits.
+
+`:userscripts-reload` re-reads GreaseMonkey-style scripts from
+`~/.config/selain/scripts/` and reinstalls them. See [userscripts.md](userscripts.md).
 
 `:login` looks up the current page host in the [pass](https://www.passwordstore.org/)
 store, decrypts a matching entry, and fills the login form. With one match it

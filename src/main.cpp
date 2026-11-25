@@ -23,15 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <cstdlib>
 #include <cstring>
-#include <filesystem>
 #include <format>
-#include <fstream>
 #include <iostream>
-#include <memory>
-#include <utility>
-#include <vector>
 
 #include <selain/core/command.hpp>
 #include <selain/core/keyboard.hpp>
@@ -85,35 +79,22 @@ get_or_create_window(const Glib::RefPtr<Gtk::Application>& app)
 }
 
 static void
-show_init_errors(
+show_init_error(
   selain::ui::MainWindow* window,
   const Glib::ustring& path,
-  const std::vector<Glib::ustring>& errors
+  const Glib::ustring& error
 )
 {
-  if (!window || errors.empty())
+  if (!window)
   {
     return;
   }
 
-  Glib::ustring detail;
-
-  for (std::size_t i = 0; i < errors.size(); ++i)
-  {
-    if (i > 0)
-    {
-      detail += '\n';
-    }
-    detail += errors[i];
-  }
-
   const auto dialog = Gtk::AlertDialog::create(
-    errors.size() == 1
-      ? std::format("Error in {}", path.raw())
-      : std::format("Errors in {}", path.raw())
+    std::format("Error in {}", path.raw())
   );
 
-  dialog->set_detail(detail);
+  dialog->set_detail(error);
   dialog->set_modal(true);
   dialog->choose(
     *window,
@@ -129,51 +110,6 @@ show_init_errors(
 }
 
 static void
-run_init_lines(
-  selain::ui::MainWindow* window,
-  const Glib::ustring& path,
-  std::shared_ptr<std::vector<std::pair<std::size_t, Glib::ustring>>> lines,
-  std::shared_ptr<std::vector<Glib::ustring>> errors,
-  std::size_t index
-)
-{
-  if (!window || !lines || !errors)
-  {
-    return;
-  }
-
-  if (index >= lines->size())
-  {
-    show_init_errors(window, path, *errors);
-    return;
-  }
-
-  const auto line_number = (*lines)[index].first;
-  const auto& command = (*lines)[index].second;
-
-  window->run_command(
-    command,
-    false,
-    [window, path, lines, errors, index, line_number](
-      const std::optional<Glib::ustring>& error
-    )
-    {
-      if (error)
-      {
-        errors->push_back(
-          std::format("Line {}: {}", line_number, error->raw())
-        );
-        // Stop further init script execution on the first error.
-        show_init_errors(window, path, *errors);
-        return;
-      }
-
-      run_init_lines(window, path, lines, errors, index + 1);
-    }
-  );
-}
-
-static void
 run_init(selain::ui::MainWindow* window)
 {
   const auto path = Glib::build_filename(
@@ -182,24 +118,19 @@ run_init(selain::ui::MainWindow* window)
     "init.selain"
   );
 
-  if (!std::filesystem::exists(path))
+  if (std::filesystem::exists(path))
   {
-    return;
+    window->run_script(
+      path,
+      [window, path](const std::optional<Glib::ustring>& error)
+      {
+        if (error)
+        {
+          show_init_error(window, path, *error);
+        }
+      }
+    );
   }
-
-  std::ifstream is(path);
-  auto lines = std::make_shared<std::vector<std::pair<std::size_t, Glib::ustring>>>();
-  auto errors = std::make_shared<std::vector<Glib::ustring>>();
-  std::string line;
-  std::size_t line_number = 0;
-
-  while (std::getline(is, line))
-  {
-    ++line_number;
-    lines->emplace_back(line_number, Glib::ustring(line));
-  }
-
-  run_init_lines(window, path, std::move(lines), std::move(errors), 0);
 }
 
 static int

@@ -105,6 +105,11 @@ static void cmd_set(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_source(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_tab(
   selain::ui::MainWindow&,
   Glib::ustring,
@@ -341,6 +346,11 @@ namespace selain::command
       cmd_set
     },
     {
+      "source", { "so" },
+      "Execute script.",
+      cmd_source
+    },
+    {
       "split", { "sp" },
       "Splits the current view horizontally.",
       tab_split(Gtk::Orientation::HORIZONTAL)
@@ -558,6 +568,8 @@ namespace selain::ui
     );
   }
 
+  // TODO: Add possibility to run JavaScript. Detect this either by filename
+  // extension or some other hackery.
   void
   MainWindow::run_script(
     const std::filesystem::path& path,
@@ -960,6 +972,21 @@ cmd_set(
     return;
   }
   finish(callback, "Missing setting name.");
+}
+
+static void
+cmd_source(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
+{
+  args = selain::utils::string::trim(args);
+  if (!args.empty())
+  {
+    // TODO: Expand tilde in the path.
+    window.run_script(args.raw(), callback);
+  }
 }
 
 static void

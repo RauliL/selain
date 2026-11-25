@@ -11,7 +11,8 @@ block is parsed at startup and injected through WebKit’s user-content manager
 (URL allow/block lists). Hidden files (names starting with `.`) are ignored.
 
 This is **metadata + injection only**: there is no GreaseMonkey `GM_*` API,
-`@grant`, `@require`, `@resource`, or `unsafeWindow` support.
+`@grant`, `@require`, `@resource`, or `unsafeWindow` support. Planned work is
+tracked in [../todo/gm-api.md](../todo/gm-api.md).
 
 Disable with `:set userscripts=false` (or in `~/.config/selain/init.selain`).
 Reload from disk without restarting with `:userscripts-reload` (`:usr`).

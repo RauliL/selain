@@ -154,9 +154,13 @@ namespace selain::keyboard
     bind("d", "scroll page-down");
     bind("<Page_Down>", "scroll page-down");
     bind("h", "scroll left");
+    bind("<Left>", "scroll left");
     bind("j", "scroll down");
+    bind("<Down>", "scroll down");
     bind("k", "scroll up");
+    bind("<Up>", "scroll up");
     bind("l", "scroll right");
+    bind("<Right>", "scroll right");
     bind("gg", "scroll top");
     bind("<Home>", "scroll top");
     bind("gu", "go-up");

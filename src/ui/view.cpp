@@ -132,6 +132,13 @@ namespace selain::ui
       G_CALLBACK(keyboard::on_view_key_pressed),
       static_cast<::gpointer>(this)
     );
+    // Capture phase is required so shortcuts still work when focus moves to
+    // WebKit's internal GtkTextView (e.g. PDF.js). Bubble-phase handlers on
+    // the web view never see those key events.
+    ::gtk_event_controller_set_propagation_phase(
+      key_controller,
+      GTK_PHASE_CAPTURE
+    );
     ::gtk_widget_add_controller(
       GTK_WIDGET(m_web_view),
       key_controller

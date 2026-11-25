@@ -29,6 +29,7 @@ FIND_PACKAGE(PkgConfig)
 
 PKG_CHECK_MODULES(GTKMM gtkmm-4.0 REQUIRED)
 PKG_CHECK_MODULES(WEBKITGTK webkitgtk-6.0 REQUIRED)
+PKG_CHECK_MODULES(SQLITE3 sqlite3 REQUIRED)
 
 INCLUDE(FetchContent)
 INCLUDE(cmake/CMakeRC.cmake)
@@ -110,6 +111,7 @@ SET(
   SELAIN_SOURCES
   src/adblock/easylist.cpp
   src/core/command.cpp
+  src/core/history-manager.cpp
   src/core/keyboard.cpp
   src/core/mode.cpp
   src/core/setting.cpp
@@ -183,11 +185,24 @@ TARGET_COMPILE_FEATURES(
     cxx_std_20
 )
 
+TARGET_INCLUDE_DIRECTORIES(
+  selain
+  PRIVATE
+    ${SQLITE3_INCLUDE_DIRS}
+)
+
 TARGET_COMPILE_OPTIONS(
   selain
   PRIVATE
+    ${SQLITE3_CFLAGS_OTHER}
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Werror>
     $<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>
+)
+
+TARGET_LINK_DIRECTORIES(
+  selain
+  PRIVATE
+    ${SQLITE3_LIBRARY_DIRS}
 )
 
 TARGET_LINK_LIBRARIES(
@@ -196,6 +211,7 @@ TARGET_LINK_LIBRARIES(
     selain-utils
     inja
     selain::rc
+    ${SQLITE3_LIBRARIES}
 )
 
 INSTALL(

@@ -175,6 +175,7 @@ namespace selain::keyboard
     bind("<Page_Up>", "scroll page-up");
     bind("yy", "yank");
     bind("zb", "bookmark");
+    bind("zh", "history");
     bind("zl", "login");
 
     // Zoom.

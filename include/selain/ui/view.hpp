@@ -156,6 +156,16 @@ namespace selain::ui
 
     Glib::RefPtr<Gdk::Paintable> get_favicon() const;
 
+    /**
+     * Records the current URI in persistent visit history, if appropriate.
+     */
+    void record_history_visit();
+
+    /**
+     * Updates the stored title for the current URI in visit history.
+     */
+    void update_history_title();
+
   protected:
     bool on_key_pressed(guint keyval, guint keycode, Gdk::ModifierType state);
 
@@ -164,6 +174,7 @@ namespace selain::ui
     WebKitWebView* m_web_view;
     Glib::ustring m_status;
     Glib::ustring m_permanent_status;
+    Glib::ustring m_last_history_uri;
     int m_gemini_redirect_hops = 0;
   };
 }

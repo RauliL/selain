@@ -66,10 +66,11 @@ These bindings follow Vim's `Ctrl-W` window commands.
 
 ## Navigating history
 
-|Key|                      |
-|---|----------------------|
-|`H`|Go back in history.   |
-|`L`|Go forward in history.|
+|Key|                                        |
+|---|----------------------------------------|
+|`H` |Go back in session history.            |
+|`L` |Go forward in session history.         |
+|`zh`|Open searchable persistent visit history.|
 
 ## Navigating the URL hierarchy
 

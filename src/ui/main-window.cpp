@@ -55,6 +55,7 @@ namespace selain::ui
 #if defined(SELAIN_ENABLE_PASS_INTEGRATION)
     m_password_manager = integration::pass::PasswordManager::create();
 #endif
+    m_history_manager = HistoryManager::create();
 
     set_title("Selain");
     set_icon_name("selain");
@@ -451,6 +452,12 @@ namespace selain::ui
       {
         tab->collect_history_uris(uris);
       }
+    }
+    if (m_history_manager)
+    {
+      const auto persisted = m_history_manager->list_uris();
+
+      uris.insert(std::end(uris), std::begin(persisted), std::end(persisted));
     }
 
     std::sort(std::begin(uris), std::end(uris));

@@ -7,6 +7,7 @@ uses [WebKit] as it's engine.
 
 - Vim style modes and keyboard bindings.
 - Vim style splitted views.
+- Persistent, searchable visit history (`:history`, `:history-clear`).
 - Ad blocking via WebKit content filters (EasyList and other lists in
   `~/.config/selain/blocklists/`; see [doc/adblock.md](doc/adblock.md)).
 - [Finger](https://datatracker.ietf.org/doc/html/rfc1288) protocol support
@@ -22,16 +23,17 @@ uses [WebKit] as it's engine.
 
 ## How to compile
 
-Selain requires these two libraries to be installed:
+Selain requires these libraries to be installed:
 
 - [GTKmm]
 - [WebKitGTK]
+- SQLite3
 
 You also need [CMake] to compile this application. On Ubuntu, all of these can
 be installed with following command:
 
 ```shell
-sudo apt install libgtkmm-4.0-dev libwebkitgtk-6.0-dev cmake build-essential
+sudo apt install libgtkmm-4.0-dev libwebkitgtk-6.0-dev libsqlite3-dev cmake build-essential
 ```
 
 After dependencies have been installed, you can compile the application like

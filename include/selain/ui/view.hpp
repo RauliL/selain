@@ -156,7 +156,11 @@ namespace selain::ui
 
     Glib::RefPtr<Gdk::Paintable> get_favicon() const;
 
+  protected:
+    bool on_key_pressed(guint keyval, guint keycode, Gdk::ModifierType state);
+
   private:
+    Glib::RefPtr<Gtk::EventControllerKey> m_key_controller;
     WebKitWebView* m_web_view;
     Glib::ustring m_status;
     Glib::ustring m_permanent_status;

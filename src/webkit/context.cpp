@@ -23,6 +23,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <cmrc/cmrc.hpp>
+
 #include <selain/config.hpp>
 
 #if defined(SELAIN_ENABLE_FINGER)
@@ -38,10 +40,13 @@
 #include <selain/webkit/adblock.hpp>
 #include <selain/webkit/context.hpp>
 
+CMRC_DECLARE(selain::rc);
+
 namespace selain::webkit
 {
   static WebKitNetworkSession* create_network_session();
   static void install_theme_stylesheet(WebKitUserContentManager* manager);
+  static void install_scroll_helper(WebKitUserContentManager* manager);
 
   Glib::RefPtr<Context>
   Context::create()
@@ -67,6 +72,7 @@ namespace selain::webkit
     // Theme CSS must be loaded before colors are resolved for the sheet.
     theme::initialize();
     install_theme_stylesheet(m_user_content_manager);
+    install_scroll_helper(m_user_content_manager);
     adblock::initialize(m_user_content_manager);
   }
 
@@ -107,6 +113,27 @@ namespace selain::webkit
 
     webkit_user_content_manager_add_style_sheet(manager, sheet);
     webkit_user_style_sheet_unref(sheet);
+  }
+
+  static void
+  install_scroll_helper(WebKitUserContentManager* manager)
+  {
+    // Document-start + all frames: PDF.js lives in a cross-origin iframe
+    // (webkit-pdfjs-viewer://) that page scripts cannot touch, and document-end
+    // scripts do not run on WebKit's PDF wrapper document.
+    auto fs = cmrc::selain::rc::get_filesystem();
+    auto file = fs.open("src/webkit/scroll-helper.js");
+    const std::string source(std::begin(file), std::end(file));
+    auto* script = webkit_user_script_new(
+      source.c_str(),
+      WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES,
+      WEBKIT_USER_SCRIPT_INJECT_AT_DOCUMENT_START,
+      nullptr,
+      nullptr
+    );
+
+    webkit_user_content_manager_add_script(manager, script);
+    webkit_user_script_unref(script);
   }
 
   static WebKitNetworkSession*

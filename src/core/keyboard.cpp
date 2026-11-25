@@ -328,11 +328,11 @@ namespace selain::keyboard
     return true;
   }
 
-  static ::gboolean
+  static bool
   key_event_normal_mode(
     MainWindow& window,
-    ::guint keyval,
-    ::GdkModifierType state
+    guint keyval,
+    Gdk::ModifierType state
   )
   {
     using namespace std::chrono;
@@ -340,8 +340,11 @@ namespace selain::keyboard
     static std::shared_ptr<Mapping> last_mapping;
     static time_point<system_clock> last_keypress;
 
-    const bool is_control = state & GDK_CONTROL_MASK;
-    const bool is_alt = (state & GDK_ALT_MASK) && !is_control;
+    const bool is_control =
+      static_cast<bool>(state & Gdk::ModifierType::CONTROL_MASK);
+    const bool is_alt =
+      static_cast<bool>(state & Gdk::ModifierType::ALT_MASK) &&
+      !is_control;
     const auto modifier = is_control
       ? Modifier::CONTROL
       : (is_alt ? Modifier::ALT : Modifier::NONE);
@@ -371,7 +374,7 @@ namespace selain::keyboard
     entry = map.find(keyval);
     if (entry == std::end(map))
     {
-      return TRUE;
+      return true;
     }
 
     if (!entry->second->command.empty())
@@ -394,28 +397,28 @@ namespace selain::keyboard
       last_mapping = entry->second;
     }
 
-    return TRUE;
+    return true;
   }
 
-  static ::gboolean
-  key_event_insert_mode(MainWindow& window, ::guint keyval)
+  static bool
+  key_event_insert_mode(MainWindow& window, guint keyval)
   {
     if (keyval == GDK_KEY_Escape)
     {
       window.set_mode(Mode::NORMAL);
 
-      return TRUE;
+      return true;
     }
 
-    return FALSE;
+    return false;
   }
 
-  static ::gboolean
+  static bool
   key_event_hint_mode(
     MainWindow& window,
     Tab& tab,
-    ::guint keyval,
-    ::GdkModifierType state
+    guint keyval,
+    Gdk::ModifierType state
   )
   {
     const auto& context = tab.get_hint_context();
@@ -442,7 +445,7 @@ namespace selain::keyboard
         context->activate_current_match(tab);
       }
     }
-    else if (!(state & GDK_CONTROL_MASK))
+    else if (!static_cast<bool>(state & Gdk::ModifierType::CONTROL_MASK))
     {
       const auto c = ::gdk_keyval_to_unicode(keyval);
 
@@ -452,15 +455,13 @@ namespace selain::keyboard
       }
     }
 
-    return TRUE;
+    return true;
   }
 
-  ::gboolean
+  bool
   on_tab_key_pressed(
-    ::GtkEventControllerKey*,
-    ::guint keyval,
-    ::guint,
-    ::GdkModifierType state,
+    guint keyval,
+    Gdk::ModifierType state,
     Tab* tab
   )
   {
@@ -468,7 +469,7 @@ namespace selain::keyboard
 
     if (!window)
     {
-      return FALSE;
+      return false;
     }
     switch (window->get_mode())
     {
@@ -483,7 +484,7 @@ namespace selain::keyboard
         return key_event_hint_mode(*window, *tab, keyval, state);
 
       default:
-        return FALSE;
+        return false;
     }
   }
 }

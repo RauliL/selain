@@ -32,33 +32,11 @@
 
 namespace selain::keyboard
 {
-  ::gboolean on_tab_key_pressed(
-    ::GtkEventControllerKey*,
-    ::guint keyval,
-    ::guint keycode,
-    ::GdkModifierType state,
-    ui::Tab*
+  bool on_tab_key_pressed(
+    guint keyval,
+    Gdk::ModifierType state,
+    ui::Tab* tab
   );
-
-  static ::gboolean
-  on_view_key_pressed(
-    ::GtkEventControllerKey* controller,
-    ::guint keyval,
-    ::guint keycode,
-    ::GdkModifierType state,
-    ui::View* view
-  )
-  {
-    const auto tab = view->get_tab();
-
-    if (!tab)
-    {
-      return FALSE;
-    }
-    tab->set_active_view(*view);
-
-    return on_tab_key_pressed(controller, keyval, keycode, state, tab);
-  }
 }
 
 namespace selain::ui
@@ -103,10 +81,9 @@ namespace selain::ui
     const Glib::RefPtr<webkit::Settings>& settings
   )
     : Gtk::Box(Gtk::Orientation::VERTICAL)
+    , m_key_controller(Gtk::EventControllerKey::create())
     , m_web_view(context->create_web_view())
   {
-    const auto key_controller = ::gtk_event_controller_key_new();
-
     ::g_object_set_data(G_OBJECT(m_web_view), view_quark, this);
     ::g_signal_connect(
       G_OBJECT(m_web_view),
@@ -126,15 +103,17 @@ namespace selain::ui
       G_CALLBACK(on_mouse_target_changed),
       static_cast<::gpointer>(this)
     );
-    ::g_signal_connect(
-      G_OBJECT(key_controller),
-      "key-pressed",
-      G_CALLBACK(keyboard::on_view_key_pressed),
-      static_cast<::gpointer>(this)
+    m_key_controller->signal_key_pressed().connect(
+      sigc::mem_fun(*this, &View::on_key_pressed),
+      false
     );
-    ::gtk_widget_add_controller(
+    // Capture phase is required so shortcuts still work when focus moves to
+    // WebKit's internal GtkTextView (e.g. PDF.js). Bubble-phase handlers on
+    // the web view never see those key events.
+    m_key_controller->set_propagation_phase(Gtk::PropagationPhase::CAPTURE);
+    gtk_widget_add_controller(
       GTK_WIDGET(m_web_view),
-      key_controller
+      GTK_EVENT_CONTROLLER(m_key_controller->gobj())
     );
     ::g_signal_connect(
       G_OBJECT(m_web_view),
@@ -631,6 +610,19 @@ namespace selain::ui
     }
 
     return Glib::wrap(texture, true);
+  }
+
+  bool
+  View::on_key_pressed(guint keyval, guint, Gdk::ModifierType state)
+  {
+    if (const auto tab = get_tab())
+    {
+      tab->set_active_view(*this);
+
+      return keyboard::on_tab_key_pressed(keyval, state, tab);
+    }
+
+    return false;
   }
 
   static void

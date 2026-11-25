@@ -168,7 +168,9 @@ namespace selain::keyboard
     bind("G", "scroll bottom");
     bind("<End>", "scroll bottom");
     bind("H", "back");
+    bind("~<Left>", "back");
     bind("L", "forward");
+    bind("~<Right>", "forward");
     bind("o", "command :open ");
     bind("O", "command :open-tab ");
     bind("ge", "execute \"command :open \" + window.location.href");

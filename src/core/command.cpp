@@ -80,6 +80,16 @@ static void cmd_echo(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_history(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_history_clear(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_open(
   selain::ui::MainWindow&,
   Glib::ustring,
@@ -253,6 +263,16 @@ namespace selain::command
       "hint-tab", { "ht" },
       "Switches to open new tab hint mode.",
       switch_mode(selain::Mode::HINT_NEW_TAB)
+    },
+    {
+      "history", { "hist" },
+      "Opens searchable visit history.",
+      cmd_history
+    },
+    {
+      "history-clear", { "histc" },
+      "Clears persistent visit history.",
+      cmd_history_clear
     },
     {
       "insert", { "i" },
@@ -1132,6 +1152,194 @@ parse_bookmark_options(Glib::ustring& args)
   }
 
   return options;
+}
+
+static void
+show_history(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab* tab,
+  bool new_tab,
+  const std::vector<selain::HistoryManager::Entry>& entries,
+  const Glib::ustring& initial_filter,
+  selain::command::result_callback_type callback
+)
+{
+  if (entries.empty())
+  {
+    finish(callback, "No history entries found.");
+    return;
+  }
+
+  std::vector<selain::ui::ListDialogEntry> dialog_entries;
+
+  dialog_entries.reserve(entries.size());
+  for (const auto& visit : entries)
+  {
+    selain::ui::ListDialogEntry entry;
+
+    entry.title = visit.title.empty() ? visit.uri : visit.title;
+    entry.secondary = visit.uri;
+    entry.filter_text = visit.title + ' ' + visit.uri;
+    entry.icon_name = "document-open-recent";
+    dialog_entries.push_back(std::move(entry));
+  }
+
+  selain::ui::ListDialog::show(
+    window,
+    "History",
+    "Filter history…",
+    std::move(dialog_entries),
+    [&window, tab, new_tab, entries](std::size_t index)
+    {
+      if (index >= entries.size())
+      {
+        return;
+      }
+
+      const auto& uri = entries[index].uri;
+
+      if (new_tab)
+      {
+        window.open_tab(uri);
+
+        return;
+      }
+      if (tab_still_open(window, tab))
+      {
+        tab->load_uri(uri);
+      } else {
+        window.open_tab(uri);
+      }
+    },
+    0,
+    initial_filter
+  );
+  finish(callback);
+}
+
+static void
+cmd_history(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
+{
+  const auto history = window.history_manager();
+
+  if (!history)
+  {
+    finish(callback, "History manager is not available.");
+    return;
+  }
+
+  bool new_tab = false;
+  auto tokens = split_args(args);
+
+  if (!tokens.empty() && (tokens.front() == "-t" || tokens.front() == "--tab"))
+  {
+    new_tab = true;
+    tokens.erase(tokens.begin());
+  }
+  else if (!tokens.empty() &&
+           tokens.front().size() > 1 &&
+           tokens.front()[0] == '-')
+  {
+    finish(callback, "Usage: :history [-t|--tab] [query…]");
+    return;
+  }
+
+  Glib::ustring filter;
+
+  for (std::size_t i = 0; i < tokens.size(); ++i)
+  {
+    if (i > 0)
+    {
+      filter += ' ';
+    }
+    filter += tokens[i];
+  }
+
+  auto* tab = window.get_current_tab();
+  auto on_result = [
+    &window,
+    tab,
+    new_tab,
+    filter,
+    callback = std::move(callback)
+  ](
+    std::vector<selain::HistoryManager::Entry> entries,
+    Glib::ustring error
+  )
+  {
+    if (!error.empty())
+    {
+      finish(callback, error);
+      return;
+    }
+    show_history(
+      window,
+      tab,
+      new_tab,
+      std::move(entries),
+      filter,
+      callback
+    );
+  };
+
+  if (filter.empty())
+  {
+    history->list_recent(
+      selain::HistoryManager::default_limit,
+      std::move(on_result)
+    );
+  } else {
+    history->search(
+      filter,
+      selain::HistoryManager::default_limit,
+      std::move(on_result)
+    );
+  }
+}
+
+static void
+cmd_history_clear(
+  selain::ui::MainWindow& window,
+  Glib::ustring args,
+  selain::command::result_callback_type callback
+)
+{
+  if (!selain::utils::string::trim(args).empty())
+  {
+    finish(callback, "Usage: :history-clear");
+    return;
+  }
+
+  const auto history = window.history_manager();
+
+  if (!history)
+  {
+    finish(callback, "History manager is not available.");
+    return;
+  }
+
+  history->clear(
+    [&window, callback = std::move(callback)](
+      bool ok,
+      const std::optional<Glib::ustring>& error
+    )
+    {
+      if (!ok)
+      {
+        finish(
+          callback,
+          !error || error->empty() ? "Failed to clear history." : *error
+        );
+        return;
+      }
+      window.show_info("History cleared.");
+      finish(callback);
+    }
+  );
 }
 
 static void

@@ -123,6 +123,43 @@ namespace selain::setting
     }
   };
 
+  struct HistoryEnabledSetting : Setting
+  {
+    Glib::ustring get(ui::MainWindow& window) const override
+    {
+      const auto history = window.history_manager();
+
+      return history && history->is_enabled() ? "true" : "false";
+    }
+
+    set_result_type set(
+      ui::MainWindow& window,
+      const Glib::ustring& new_value
+    ) override
+    {
+      const auto history = window.history_manager();
+
+      if (!history)
+      {
+        return Glib::ustring("History manager is not available.");
+      }
+      if (is_true(new_value))
+      {
+        history->set_enabled(true);
+
+        return std::nullopt;
+      }
+      if (is_false(new_value))
+      {
+        history->set_enabled(false);
+
+        return std::nullopt;
+      }
+
+      return std::format("{} is not valid boolean value.", new_value.raw());
+    }
+  };
+
   struct WebKitSetting : Setting
   {
     const Glib::ustring name;
@@ -278,6 +315,10 @@ namespace selain::setting
     {
       "hint-chars",
       std::make_shared<StringSetting>("sadfjklewc")
+    },
+    {
+      "history",
+      std::make_shared<HistoryEnabledSetting>()
     },
     {
       "homepage",

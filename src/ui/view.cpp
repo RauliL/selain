@@ -311,6 +311,51 @@ namespace selain::ui
   }
 
   void
+  View::record_history_visit()
+  {
+    const auto tab = get_tab();
+    const auto window = tab ? tab->get_main_window() : nullptr;
+    const auto history = window ? window->history_manager() : nullptr;
+    const auto uri = get_uri();
+
+    if (!history || !uri)
+    {
+      return;
+    }
+    if (*uri == m_last_history_uri)
+    {
+      return;
+    }
+
+    Glib::ustring title;
+
+    if (const auto page_title = get_title())
+    {
+      title = *page_title;
+    }
+
+    history->record(*uri, title);
+    m_last_history_uri = *uri;
+  }
+
+  void
+  View::update_history_title()
+  {
+    const auto tab = get_tab();
+    const auto window = tab ? tab->get_main_window() : nullptr;
+    const auto history = window ? window->history_manager() : nullptr;
+    const auto uri = get_uri();
+    const auto title = get_title();
+
+    if (!history || !uri || !title || title->empty())
+    {
+      return;
+    }
+
+    history->update_title(*uri, *title);
+  }
+
+  void
   View::collect_history_uris(std::vector<Glib::ustring>& uris) const
   {
     const auto append_item = [&uris](::WebKitBackForwardListItem* item) {
@@ -664,6 +709,7 @@ namespace selain::ui
         {
           view->set_status(uri, true);
         }
+        view->record_history_visit();
         break;
 
       case WEBKIT_LOAD_FINISHED:
@@ -773,6 +819,7 @@ namespace selain::ui
   static void
   on_notify_title(::WebKitWebView*, ::GParamSpec*, View* view)
   {
+    view->update_history_title();
     if (const auto tab = view->get_tab())
     {
       tab->on_view_title_changed(*view);

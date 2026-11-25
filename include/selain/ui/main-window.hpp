@@ -29,6 +29,7 @@
 
 #include <selain/core/bookmark-manager.hpp>
 #include <selain/core/command.hpp>
+#include <selain/core/history-manager.hpp>
 #include <selain/core/password-manager.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
@@ -120,6 +121,22 @@ namespace selain::ui
     inline Glib::RefPtr<const PasswordManager> password_manager() const
     {
       return m_password_manager;
+    }
+
+    /**
+     * Returns visit history manager used by the browser.
+     */
+    inline const Glib::RefPtr<HistoryManager>& history_manager()
+    {
+      return m_history_manager;
+    }
+
+    /**
+     * Returns visit history manager used by the browser.
+     */
+    inline Glib::RefPtr<const HistoryManager> history_manager() const
+    {
+      return m_history_manager;
     }
 
     /**
@@ -260,8 +277,8 @@ namespace selain::ui
     }
 
     /**
-     * Unique URIs from the back/forward history of every tab and split,
-     * sorted alphabetically.
+     * Unique URIs from session back/forward lists plus persistent visit
+     * history, sorted alphabetically.
      */
     std::vector<Glib::ustring> get_history_uris() const;
 
@@ -312,6 +329,7 @@ namespace selain::ui
     Glib::RefPtr<webkit::Settings> m_web_settings;
     Glib::RefPtr<BookmarkManager> m_bookmark_manager;
     Glib::RefPtr<PasswordManager> m_password_manager;
+    Glib::RefPtr<HistoryManager> m_history_manager;
     Mode m_mode;
     Gtk::Box m_box;
     Gtk::Notebook m_notebook;

@@ -15,6 +15,8 @@ Selain currently supports following commands:
 |`:go-up`      |`:gu`   |Goes up one level in the URL hierarchy.|
 |`:hint`       |`:h`    |Switches to hint mode.                 |
 |`:hint-tab`   |`:ht`   |Switches to open new tab hint mode.    |
+|`:history`    |`:hist` |Opens searchable visit history.        |
+|`:history-clear`|`:histc`|Clears persistent visit history.     |
 |`:insert`     |`:i`    |Switches to insert mode.               |
 |`:insert-input`|`:ii`  |Focuses first input/textarea; insert mode.|
 |`:inspector`  |`:insp` |Toggles developer tools.               |
@@ -57,6 +59,14 @@ in a fuzzy picker. With no arguments it lists all bookmarks; otherwise it
 searches by keyword. Use `:bookmark -t` / `:bookmark --tab` to open the
 selection in a new tab, or `:bookmark -a [tags…]` to bookmark the current page
 (optional comma-separated tags). Default binding: `zb`.
+
+`:history` opens persistent visit history in a fuzzy picker (newest first).
+With no arguments it lists recent visits; otherwise it searches URI and title.
+Use `:history -t` / `:history --tab` to open the selection in a new tab.
+History is stored in `~/.local/share/selain/history.sqlite`. Disable recording
+with `:set history=false`. Default binding: `zh`.
+
+`:history-clear` deletes all stored visits.
 
 `:login` looks up the current page host in the [pass](https://www.passwordstore.org/)
 store, decrypts a matching entry, and fills the login form. With one match it

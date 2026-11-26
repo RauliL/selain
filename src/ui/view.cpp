@@ -734,18 +734,18 @@ namespace selain::ui
         break;
 
       case WEBKIT_LOAD_REDIRECTED:
-        if (tab && tab->get_active_view() == view)
+        if (const auto uri = webkit_web_view_get_uri(web_view))
         {
-          tab->get_tab_label().set_text("Redirecting…");
-        }
-        if (auto uri = webkit_web_view_get_uri(web_view))
-        {
+          if (is_active_view)
+          {
+            tab->get_tab_label().set_text(uri);
+          }
           view->set_status(std::format("Redirecting to {}…", uri));
         }
         break;
 
       case WEBKIT_LOAD_COMMITTED:
-        if (auto uri = webkit_web_view_get_uri(web_view))
+        if (const auto uri = webkit_web_view_get_uri(web_view))
         {
           view->set_status(uri, true);
         }

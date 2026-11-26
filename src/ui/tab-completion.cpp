@@ -30,6 +30,7 @@
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/tab-completion.hpp>
 #include <selain/utils/string.hpp>
+#include <selain/utils/url.hpp>
 
 namespace selain::ui
 {
@@ -63,19 +64,6 @@ namespace selain::ui
     return prefix;
   }
 
-  static bool
-  has_uri_scheme(const Glib::ustring& token)
-  {
-    if (auto* scheme = ::g_uri_parse_scheme(token.c_str()))
-    {
-      g_free(scheme);
-
-      return true;
-    }
-
-    return false;
-  }
-
   static std::vector<Glib::ustring>
   filter_prefix(
     const std::vector<Glib::ustring>& candidates,
@@ -105,7 +93,7 @@ namespace selain::ui
     const Glib::ustring& prefix
   )
   {
-    if (prefix.empty() || has_uri_scheme(prefix))
+    if (prefix.empty() || utils::url::has_uri_scheme(prefix))
     {
       return filter_prefix(candidates, prefix);
     }
@@ -144,7 +132,7 @@ namespace selain::ui
     {
       return true;
     }
-    if (!uri_completion || has_uri_scheme(token))
+    if (!uri_completion || utils::url::has_uri_scheme(token))
     {
       return false;
     }

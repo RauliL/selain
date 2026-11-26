@@ -25,10 +25,19 @@
  */
 #pragma once
 
+#include "glibmm/uriutils.h"
 #include <glibmm.h>
 
 namespace selain::utils::url
 {
+  /**
+   * Tests whether given input string has URI scheme in it or not.
+   */
+  inline bool has_uri_scheme(const Glib::ustring& input)
+  {
+    return !Glib::uri_parse_scheme(input).empty();
+  }
+
   /**
    * Tests whether given string looks like an IP address.
    */

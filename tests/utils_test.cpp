@@ -152,6 +152,16 @@ TEST_CASE("resolve_navigation_uri", "[utils::url]")
   }
 }
 
+TEST_CASE("has_uri_scheme", "[utils::url]")
+{
+  using selain::utils::url::has_uri_scheme;
+
+  REQUIRE(!has_uri_scheme(""));
+  REQUIRE(!has_uri_scheme("localhost"));
+  REQUIRE(has_uri_scheme("https://example.com"));
+  REQUIRE(has_uri_scheme("gemini://example.com"));
+}
+
 TEST_CASE("looks_like_ip", "[utils::url]")
 {
   using selain::utils::url::looks_like_ip;

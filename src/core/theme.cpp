@@ -42,100 +42,97 @@ CMRC_DECLARE(selain::rc);
 
 namespace selain::theme
 {
-  namespace
+  static const std::array color_names =
   {
-    const std::array color_names =
-    {
-      "window-background",
-      "window-foreground",
-      "status-bar-background",
-      "status-bar-foreground",
-      "status-bar-error-background",
-      "status-bar-error-foreground",
-      "mode-bar-normal-background",
-      "mode-bar-normal-foreground",
-      "mode-bar-insert-background",
-      "mode-bar-insert-foreground",
-    };
+    "window-background",
+    "window-foreground",
+    "status-bar-background",
+    "status-bar-foreground",
+    "status-bar-error-background",
+    "status-bar-error-foreground",
+    "mode-bar-normal-background",
+    "mode-bar-normal-foreground",
+    "mode-bar-insert-background",
+    "mode-bar-insert-foreground",
+  };
 
-    std::vector<std::pair<std::string_view, std::string>>
-    resolve_theme_colors()
-    {
-      static Gtk::Label probe;
-      const auto context = probe.get_style_context();
-      std::vector<std::pair<std::string_view, std::string>> colors;
+  static std::vector<std::pair<std::string_view, std::string>>
+  resolve_theme_colors()
+  {
+    static Gtk::Label probe;
+    const auto context = probe.get_style_context();
+    std::vector<std::pair<std::string_view, std::string>> colors;
 
-      colors.reserve(color_names.size());
-      for (const auto& name : color_names)
+    colors.reserve(color_names.size());
+    for (const auto& name : color_names)
+    {
+      Gdk::RGBA color;
+
+      if (context->lookup_color(std::format("selain-{}", name), color))
       {
-        Gdk::RGBA color;
-
-        if (context->lookup_color(std::format("selain-{}", name), color))
-        {
-          colors.emplace_back(name, color.to_string());
-        }
-        else
-        {
-          colors.emplace_back(name, "");
-        }
+        colors.emplace_back(name, color.to_string());
       }
-
-      return colors;
-    }
-
-    void
-    add_theme_colors(inja::json& data)
-    {
-      for (const auto& [name, value] : resolve_theme_colors())
+      else
       {
-        data[std::string(name)] = value;
+        colors.emplace_back(name, "");
       }
     }
 
-    void
-    load_default_css()
+    return colors;
+  }
+
+  static void
+  add_theme_colors(inja::json& data)
+  {
+    for (const auto& [name, value] : resolve_theme_colors())
+    {
+      data[std::string(name)] = value;
+    }
+  }
+
+  static void
+  load_default_css()
+  {
+    auto provider = Gtk::CssProvider::create();
+    auto fs = cmrc::selain::rc::get_filesystem();
+    auto stylesheet = fs.open("src/theme.css");
+    const auto css = std::string(
+      std::begin(stylesheet),
+      std::end(stylesheet)
+    );
+
+    // load_from_string() requires gtkmm 4.12+; Ubuntu 24.04 ships 4.10.
+#if GTKMM_CHECK_VERSION(4, 12, 0)
+    provider->load_from_string(css);
+#else
+    provider->load_from_data(css);
+#endif
+    Gtk::StyleProvider::add_provider_for_display(
+      Gdk::Display::get_default(),
+      provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
+  }
+
+  static void
+  load_custom_css()
+  {
+    const auto path = Glib::build_filename(
+      Glib::get_user_config_dir(),
+      "selain",
+      "style.css"
+    );
+
+    if (std::filesystem::exists(path))
     {
       auto provider = Gtk::CssProvider::create();
-      auto fs = cmrc::selain::rc::get_filesystem();
-      auto stylesheet = fs.open("src/theme.css");
-      const auto css = std::string(
-        std::begin(stylesheet),
-        std::end(stylesheet)
-      );
 
-      // load_from_string() requires gtkmm 4.12+; Ubuntu 24.04 ships 4.10.
-#if GTKMM_CHECK_VERSION(4, 12, 0)
-      provider->load_from_string(css);
-#else
-      provider->load_from_data(css);
-#endif
+      provider->load_from_path(path);
       Gtk::StyleProvider::add_provider_for_display(
         Gdk::Display::get_default(),
         provider,
-        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+        GTK_STYLE_PROVIDER_PRIORITY_USER
       );
-    }
-
-    void
-    load_custom_css()
-    {
-      const auto path = Glib::build_filename(
-        Glib::get_user_config_dir(),
-        "selain",
-        "style.css"
-      );
-
-      if (std::filesystem::exists(path))
-      {
-        auto provider = Gtk::CssProvider::create();
-
-        provider->load_from_path(path);
-        Gtk::StyleProvider::add_provider_for_display(
-          Gdk::Display::get_default(),
-          provider,
-          GTK_STYLE_PROVIDER_PRIORITY_USER
-        );
-      }
     }
   }
 

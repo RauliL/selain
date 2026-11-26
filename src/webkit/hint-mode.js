@@ -12,8 +12,7 @@
   let openToNewTab = {{ open-to-new-tab }};
   const hintStyle =
     "z-index:100000;position:absolute;padding:0.2em;border:none;" +
-    "background-color:#fabd2f;color:#282828;font-family:monospace;" +
-
+    "background-color:var(--selain-mode-bar-insert-background);color:var(--selain-mode-bar-insert-foreground);font-family:monospace;" +
     "font-size:1em;line-height:1;font-weight:bold;white-space:nowrap;" +
     "text-shadow:none;pointer-events:none;";
 

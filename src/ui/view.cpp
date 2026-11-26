@@ -23,6 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "selain/core/theme.hpp"
+#include "selain/utils/string.hpp"
+#include "selain/webkit/context.hpp"
 #include <cstring>
 #include <format>
 
@@ -42,35 +45,42 @@ namespace selain::keyboard
 namespace selain::ui
 {
   static void on_load_changed(
-    ::WebKitWebView*,
-    ::WebKitLoadEvent,
+    WebKitWebView*,
+    WebKitLoadEvent,
     View*
   );
-  static ::gboolean on_decide_policy(
-    ::WebKitWebView*,
-    ::WebKitPolicyDecision*,
-    ::WebKitPolicyDecisionType,
+  static gboolean on_load_failed(
+    WebKitWebView*,
+    WebKitLoadEvent,
+    gchar*,
+    GError*,
+    View*
+  );
+  static gboolean on_decide_policy(
+    WebKitWebView*,
+    WebKitPolicyDecision*,
+    WebKitPolicyDecisionType,
     View*
   );
   static void on_mouse_target_changed(
-    ::WebKitWebView*,
-    ::WebKitHitTestResult*,
-    ::guint,
+    WebKitWebView*,
+    WebKitHitTestResult*,
+    guint,
     View*
   );
   static void on_notify_title(
-    ::WebKitWebView*,
-    ::GParamSpec*,
+    WebKitWebView*,
+    GParamSpec*,
     View*
   );
   static void on_notify_favicon(
-    ::WebKitWebView*,
-    ::GParamSpec*,
+    WebKitWebView*,
+    GParamSpec*,
     View*
   );
-  static ::gboolean on_web_process_terminated(
-    ::WebKitWebView*,
-    ::WebKitWebProcessTerminationReason,
+  static gboolean on_web_process_terminated(
+    WebKitWebView*,
+    WebKitWebProcessTerminationReason,
     View*
   );
 
@@ -84,24 +94,31 @@ namespace selain::ui
     , m_key_controller(Gtk::EventControllerKey::create())
     , m_web_view(context->create_web_view())
   {
-    ::g_object_set_data(G_OBJECT(m_web_view), view_quark, this);
-    ::g_signal_connect(
+    g_object_set_data(G_OBJECT(m_web_view), view_quark, this);
+    g_signal_connect(
       G_OBJECT(m_web_view),
       "load-changed",
       G_CALLBACK(on_load_changed),
-      static_cast<::gpointer>(this)
+      static_cast<gpointer>(this)
     );
-    ::g_signal_connect(
+    g_signal_connect(
+      G_OBJECT(m_web_view),
+      "load-failed",
+      G_CALLBACK(on_load_failed),
+      static_cast<gpointer>(this)
+    );
+    // TODO: Override "load-failed-with-tls-errors".
+    g_signal_connect(
       G_OBJECT(m_web_view),
       "decide-policy",
       G_CALLBACK(on_decide_policy),
-      static_cast<::gpointer>(this)
+      static_cast<gpointer>(this)
     );
-    ::g_signal_connect(
+    g_signal_connect(
       G_OBJECT(m_web_view),
       "mouse-target-changed",
       G_CALLBACK(on_mouse_target_changed),
-      static_cast<::gpointer>(this)
+      static_cast<gpointer>(this)
     );
     m_key_controller->signal_key_pressed().connect(
       sigc::mem_fun(*this, &View::on_key_pressed),
@@ -115,23 +132,23 @@ namespace selain::ui
       GTK_WIDGET(m_web_view),
       GTK_EVENT_CONTROLLER(m_key_controller->gobj())
     );
-    ::g_signal_connect(
+    g_signal_connect(
       G_OBJECT(m_web_view),
       "notify::title",
       G_CALLBACK(on_notify_title),
-      static_cast<::gpointer>(this)
+      static_cast<gpointer>(this)
     );
-    ::g_signal_connect(
+    g_signal_connect(
       G_OBJECT(m_web_view),
       "notify::favicon",
       G_CALLBACK(on_notify_favicon),
-      static_cast<::gpointer>(this)
+      static_cast<gpointer>(this)
     );
-    ::g_signal_connect(
+    g_signal_connect(
       G_OBJECT(m_web_view),
       "web-process-terminated",
       G_CALLBACK(on_web_process_terminated),
-      static_cast<::gpointer>(this)
+      static_cast<gpointer>(this)
     );
 
     // append() sinks the floating ref from create_web_view(); the box owns it.
@@ -672,8 +689,8 @@ namespace selain::ui
 
   static void
   on_load_changed(
-    ::WebKitWebView* web_view,
-    ::WebKitLoadEvent load_event,
+    WebKitWebView* web_view,
+    WebKitLoadEvent load_event,
     View* view
   )
   {
@@ -718,15 +735,42 @@ namespace selain::ui
     }
   }
 
-  static ::gboolean
-  open_uri_from_action(
-    MainWindow* window,
-    ::WebKitPolicyDecision* decision,
-    ::WebKitNavigationAction* action
+  static gboolean
+  on_load_failed(
+    WebKitWebView* web_view,
+    WebKitLoadEvent load_event,
+    gchar* failing_uri,
+    GError* error,
+    View* view
   )
   {
-    const auto uri = ::webkit_uri_request_get_uri(
-      ::webkit_navigation_action_get_request(action)
+    const auto html = theme::render_document(
+      "Error",
+      std::format(
+        "<h1>Error</h1><p>{}</p>",
+        selain::utils::string::html_escape(error->message)
+      )
+    );
+
+    webkit_web_view_load_alternate_html(
+      web_view,
+      html.c_str(),
+      failing_uri,
+      nullptr
+    );
+
+    return TRUE;
+  }
+
+  static gboolean
+  open_uri_from_action(
+    MainWindow* window,
+    WebKitPolicyDecision* decision,
+    WebKitNavigationAction* action
+  )
+  {
+    const auto uri = webkit_uri_request_get_uri(
+      webkit_navigation_action_get_request(action)
     );
     // Copy before ignore(): the request (and this pointer) may be released
     // once the policy decision is completed.
@@ -734,7 +778,7 @@ namespace selain::ui
 
     // Resolve the policy before creating another view; loading from inside
     // this callback can deadlock the web process.
-    ::webkit_policy_decision_ignore(decision);
+    webkit_policy_decision_ignore(decision);
 
     if (window && !open_uri.empty())
     {
@@ -746,11 +790,11 @@ namespace selain::ui
     return TRUE;
   }
 
-  static ::gboolean
+  static gboolean
   on_decide_policy(
-    ::WebKitWebView*,
-    ::WebKitPolicyDecision* decision,
-    ::WebKitPolicyDecisionType decision_type,
+    WebKitWebView*,
+    WebKitPolicyDecision* decision,
+    WebKitPolicyDecisionType decision_type,
     View* view
   )
   {
@@ -770,17 +814,19 @@ namespace selain::ui
     }
 
     auto navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
-    auto action = ::webkit_navigation_policy_decision_get_navigation_action(
+    auto action = webkit_navigation_policy_decision_get_navigation_action(
       navigation_decision
     );
-    const auto action_type = ::webkit_navigation_action_get_navigation_type(
+    const auto action_type = webkit_navigation_action_get_navigation_type(
       action
     );
 
     // Middle-click: open in a background tab.
-    if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
-        ::webkit_navigation_action_get_mouse_button(action) == 2 &&
-        action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED)
+    if (
+      decision_type == WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
+      webkit_navigation_action_get_mouse_button(action) == 2 &&
+      action_type == WEBKIT_NAVIGATION_TYPE_LINK_CLICKED
+    )
     {
       return open_uri_from_action(window, decision, action);
     }
@@ -790,8 +836,8 @@ namespace selain::ui
     // via the "create" signal, and ignoring them can break sites like Google.
     if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
     {
-      const auto uri = ::webkit_uri_request_get_uri(
-        ::webkit_navigation_action_get_request(action)
+      const auto uri = webkit_uri_request_get_uri(
+        webkit_navigation_action_get_request(action)
       );
 
       if (uri && *uri && std::strncmp(uri, "about:", 6) != 0)
@@ -805,9 +851,9 @@ namespace selain::ui
 
   static void
   on_mouse_target_changed(
-    ::WebKitWebView*,
-    ::WebKitHitTestResult* hit_test_result,
-    ::guint,
+    WebKitWebView*,
+    WebKitHitTestResult* hit_test_result,
+    guint,
     View* view
   )
   {
@@ -817,7 +863,7 @@ namespace selain::ui
   }
 
   static void
-  on_notify_title(::WebKitWebView*, ::GParamSpec*, View* view)
+  on_notify_title(WebKitWebView*, GParamSpec*, View* view)
   {
     view->update_history_title();
     if (const auto tab = view->get_tab())
@@ -827,7 +873,7 @@ namespace selain::ui
   }
 
   static void
-  on_notify_favicon(::WebKitWebView*, ::GParamSpec*, View* view)
+  on_notify_favicon(WebKitWebView*, GParamSpec*, View* view)
   {
     if (const auto tab = view->get_tab())
     {
@@ -835,10 +881,10 @@ namespace selain::ui
     }
   }
 
-  static ::gboolean
+  static gboolean
   on_web_process_terminated(
-    ::WebKitWebView*,
-    ::WebKitWebProcessTerminationReason,
+    WebKitWebView*,
+    WebKitWebProcessTerminationReason,
     View* view
   )
   {

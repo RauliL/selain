@@ -30,6 +30,11 @@
 namespace selain::utils::url
 {
   /**
+   * Tests whether given string looks like an IP address.
+   */
+  bool looks_like_ip(const Glib::ustring& input);
+
+  /**
    * Returns the host component of @p uri. Returns `std::nullopt` when the URI
    * is empty, invalid, or has no host.
    */

@@ -125,6 +125,33 @@ namespace selain::utils::url
     return path.substr(0, slash);
   }
 
+  bool
+  looks_like_ip(const Glib::ustring& input)
+  {
+    // Empty string is not an IP address.
+    if (input.empty())
+    {
+      return false;
+    }
+
+    // IPv6 addresses inside URI/URL are enclosed with brackets.
+    if (input[0] == '[')
+    {
+      return true;
+    }
+
+    // Otherwise check if the input looks like IPv4 address.
+    for (const auto c : input)
+    {
+      if (!std::isdigit(c) && c != '.')
+      {
+        return false;
+      }
+    }
+
+    return input.find('.') != Glib::ustring::npos;
+  }
+
   std::optional<Glib::ustring>
   get_host(const Glib::ustring& uri)
   {

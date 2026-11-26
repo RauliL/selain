@@ -152,6 +152,18 @@ TEST_CASE("resolve_navigation_uri", "[utils::url]")
   }
 }
 
+TEST_CASE("looks_like_ip", "[utils::url]")
+{
+  using selain::utils::url::looks_like_ip;
+
+  REQUIRE(!looks_like_ip(""));
+  REQUIRE(!looks_like_ip("not an IP address"));
+  REQUIRE(!looks_like_ip("https://example.com"));
+  REQUIRE(looks_like_ip("127.0.0.1"));
+  REQUIRE(looks_like_ip("[2001:db8::1]"));
+  REQUIRE(looks_like_ip("[::1]"));
+}
+
 TEST_CASE("get_host", "[utils::url]")
 {
   REQUIRE(!get_host(""));

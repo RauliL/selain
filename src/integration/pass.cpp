@@ -28,6 +28,7 @@
 #include <giomm.h>
 
 #include <selain/integration/pass.hpp>
+#include <selain/utils/url.hpp>
 
 namespace selain::integration::pass
 {
@@ -94,28 +95,6 @@ namespace selain::integration::pass
     return entries;
   }
 
-  static bool
-  looks_like_ip(const Glib::ustring& host)
-  {
-    if (host.empty())
-    {
-      return false;
-    }
-    if (host[0] == '[')
-    {
-      return true;
-    }
-    for (const auto c : host)
-    {
-      if (!std::isdigit(c) && c != '.')
-      {
-        return false;
-      }
-    }
-
-    return host.find('.') != Glib::ustring::npos;
-  }
-
   static std::vector<Glib::ustring>
   domain_candidates(const Glib::ustring& host)
   {
@@ -123,7 +102,7 @@ namespace selain::integration::pass
     const Glib::ustring lowered = host.lowercase();
 
     // Keep private / IP hosts as-is; do not strip labels.
-    if (looks_like_ip(lowered))
+    if (selain::utils::url::looks_like_ip(lowered))
     {
       domains.push_back(lowered);
 

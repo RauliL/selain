@@ -381,22 +381,6 @@ namespace selain::ui
   }
 
   void
-  View::update_history_title()
-  {
-    const auto window = get_main_window();
-    const auto history = window ? window->history_manager() : nullptr;
-    const auto uri = get_uri();
-    const auto title = get_title();
-
-    if (!history || !uri || !title || title->empty())
-    {
-      return;
-    }
-
-    history->update_title(*uri, *title);
-  }
-
-  void
   View::collect_history_uris(std::vector<Glib::ustring>& uris) const
   {
     const auto append_item = [&uris](::WebKitBackForwardListItem* item) {
@@ -738,12 +722,12 @@ namespace selain::ui
     switch (load_event)
     {
       case WEBKIT_LOAD_STARTED:
-        if (is_active_view)
+        if (const auto uri = webkit_web_view_get_uri(web_view))
         {
-          tab->get_tab_label().set_text("Loading\xe2\x80\xa6");
-        }
-        if (auto uri = webkit_web_view_get_uri(web_view))
-        {
+          if (is_active_view)
+          {
+            tab->get_tab_label().set_text(uri);
+          }
           view->set_status(uri, true);
           view->set_status(std::format("Loading {}…", uri));
         }
@@ -752,7 +736,7 @@ namespace selain::ui
       case WEBKIT_LOAD_REDIRECTED:
         if (tab && tab->get_active_view() == view)
         {
-          tab->get_tab_label().set_text("Redirecting\xe2\x80\xa6");
+          tab->get_tab_label().set_text("Redirecting…");
         }
         if (auto uri = webkit_web_view_get_uri(web_view))
         {
@@ -837,16 +821,17 @@ namespace selain::ui
     View* view
   )
   {
-    const auto tab = view->get_tab();
-    const auto window = tab ? tab->get_main_window() : nullptr;
+    const auto window = view->get_main_window();
 
     if (!window)
     {
       return FALSE;
     }
 
-    if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
-        decision_type != WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
+    if (
+      decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
+      decision_type != WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION
+    )
     {
       // RESPONSE etc.: let WebKit's default MIME / download handling run.
       return FALSE;
@@ -922,8 +907,21 @@ namespace selain::ui
   static void
   on_notify_title(WebKitWebView*, GParamSpec*, View* view)
   {
-    view->update_history_title();
-    if (const auto tab = view->get_tab())
+    const auto tab = view->get_tab();
+    const auto window = tab->get_main_window();
+
+    if (window)
+    {
+      const auto history = window->history_manager();
+      const auto uri = view->get_uri();
+      const auto title = view->get_title();
+
+      if (history && uri && title && !title->empty())
+      {
+        history->update_title(*uri, *title);
+      }
+    }
+    if (tab)
     {
       tab->on_view_title_changed(*view);
     }
@@ -946,12 +944,9 @@ namespace selain::ui
   )
   {
     view->set_status("Web process crashed", true);
-    if (const auto tab = view->get_tab())
+    if (const auto window = view->get_main_window())
     {
-      if (const auto window = tab->get_main_window())
-      {
-        window->show_error("Web process crashed.");
-      }
+      window->show_error("Web process crashed.");
     }
 
     return FALSE;

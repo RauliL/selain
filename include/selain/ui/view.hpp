@@ -175,11 +175,6 @@ namespace selain::ui
      */
     void record_history_visit();
 
-    /**
-     * Updates the stored title for the current URI in visit history.
-     */
-    void update_history_title();
-
   protected:
     bool on_key_pressed(guint keyval, guint keycode, Gdk::ModifierType state);
 

@@ -139,6 +139,25 @@ namespace selain::ui
       clear_prompt_ui();
       m_prompt.reset();
     }
+    // Leaving insert mode: blur any focused page control (input, textarea,
+    // contenteditable, etc.) so normal-mode keys are not typed into it.
+    if (m_mode == Mode::INSERT && mode != Mode::INSERT && tab)
+    {
+      tab->execute_script(
+        R"JS(
+          (() => {
+            const el = document.activeElement;
+            if (
+              el &&
+              el !== document.body &&
+              el !== document.documentElement
+            ) {
+              el.blur();
+            }
+          })()
+        )JS"
+      );
+    }
     m_status_bar.set_mode(mode);
     switch (m_mode = mode)
     {

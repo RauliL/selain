@@ -757,8 +757,7 @@ do_paste(
       {
         const auto uri = clipboard->read_text_finish(result);
 
-        // TODO: Do not even attempt if it doesn't look like an URI.
-        if (!uri.empty())
+        if (!selain::utils::string::is_blank(uri))
         {
           on_uri(uri);
         }

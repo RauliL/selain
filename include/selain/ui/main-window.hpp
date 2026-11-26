@@ -26,6 +26,7 @@
 #pragma once
 
 #include <filesystem>
+#include <unordered_set>
 
 #include <selain/core/bookmark-manager.hpp>
 #include <selain/core/command.hpp>
@@ -233,6 +234,12 @@ namespace selain::ui
     void close_tab(const Glib::RefPtr<Tab>& tab);
 
     /**
+     * Opens a new tab and restores the last closed tab layout. Returns false
+     * if there is no stored layout with at least one URI.
+     */
+    bool restore_last_closed_tab();
+
+    /**
      * Returns pointer to view that is currently active in this window, or
      * `nullptr` if this window does not have active view at the moment.
      */
@@ -350,5 +357,7 @@ namespace selain::ui
     Glib::RefPtr<Gtk::EventControllerKey> m_command_entry_key_controller;
     TabCompletion m_tab_completion;
     std::optional<PromptRequest> m_prompt;
+    std::optional<LayoutSnapshot> m_last_closed_tab;
+    std::unordered_set<Tab*> m_tabs_closing;
   };
 }

@@ -26,6 +26,7 @@ Selain currently supports following commands:
 |`:only`       |`:on`   |Closes all splits except the current.  |
 |`:open`       |`:o`    |Opens URI, domain, or search query.    |
 |`:open-tab`   |`:ot`   |Same as `:open`, in a new tab.         |
+|`:open-closed-tab`|`:oct`|Reopens the last closed tab layout.  |
 |`:paste`      |`:p`    |Opens clipboard text as URI/search.    |
 |`:paste-tab`  |`:pt`   |Same as `:paste`, in a new tab.        |
 |`:quit`       |`:q`    |Closes current split, or tab if alone. |

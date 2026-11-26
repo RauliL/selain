@@ -104,6 +104,11 @@ static void cmd_open_tab(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_open_closed_tab(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_paste_tab(
   selain::ui::MainWindow&,
   Glib::ustring,
@@ -345,6 +350,11 @@ namespace selain::command
       "open-tab", { "ot" },
       "Opens URI given as argument in new tab.",
       cmd_open_tab
+    },
+    {
+      "open-closed-tab", { "oct" },
+      "Reopens the last closed tab layout.",
+      cmd_open_closed_tab
     },
     {
       "paste", { "p" },
@@ -968,6 +978,20 @@ cmd_open_tab(
 )
 {
   window.open_tab(args);
+  finish(callback);
+}
+
+static void
+cmd_open_closed_tab(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
+{
+  if (!window.restore_last_closed_tab())
+  {
+    window.show_info("No closed tab to reopen.");
+  }
   finish(callback);
 }
 

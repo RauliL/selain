@@ -131,6 +131,79 @@ namespace selain::ui
 
       return std::numeric_limits<double>::max();
     }
+
+    bool
+    layout_node_has_uri(const LayoutNode& node)
+    {
+      if (node.kind == LayoutNode::Kind::Leaf)
+      {
+        return node.uri && !node.uri->empty();
+      }
+      return (
+        (node.start && layout_node_has_uri(*node.start)) ||
+        (node.end && layout_node_has_uri(*node.end))
+      );
+    }
+
+    std::unique_ptr<LayoutNode>
+    capture_layout_widget(
+      const Gtk::Widget& widget,
+      const View* active,
+      int& leaf_counter,
+      int& active_index
+    )
+    {
+      if (const auto* view = dynamic_cast<const View*>(&widget))
+      {
+        auto node = std::make_unique<LayoutNode>();
+
+        node->kind = LayoutNode::Kind::Leaf;
+        node->uri = view->get_uri();
+        if (view == active)
+        {
+          active_index = leaf_counter;
+        }
+        ++leaf_counter;
+
+        return node;
+      }
+
+      if (const auto* paned = dynamic_cast<const Gtk::Paned*>(&widget))
+      {
+        auto node = std::make_unique<LayoutNode>();
+
+        node->kind = LayoutNode::Kind::Split;
+        node->orientation = paned->get_orientation();
+        if (const auto* start = paned->get_start_child())
+        {
+          node->start = capture_layout_widget(
+            *start,
+            active,
+            leaf_counter,
+            active_index
+          );
+        }
+        if (const auto* end = paned->get_end_child())
+        {
+          node->end = capture_layout_widget(
+            *end,
+            active,
+            leaf_counter,
+            active_index
+          );
+        }
+
+        return node;
+      }
+
+      return nullptr;
+    }
+  }
+
+  bool
+  LayoutSnapshot::has_any_uri() const
+  {
+    return root && layout_node_has_uri(*root);
   }
 
   Tab::Tab(
@@ -302,6 +375,24 @@ namespace selain::ui
     if (!sibling)
     {
       return;
+    }
+
+    Glib::RefPtr<View> closing_ref;
+
+    for (const auto& view : m_views)
+    {
+      if (view.get() == closing)
+      {
+        closing_ref = view;
+        break;
+      }
+    }
+
+    // Disconnect WebKit signals before unparenting so async notify::title
+    // handlers do not run against a view that no longer has a Tab parent.
+    if (closing_ref)
+    {
+      closing_ref->prepare_close();
     }
 
     gtk_compat::unset_start_child(*parent);
@@ -648,24 +739,16 @@ namespace selain::ui
     Gtk::Orientation orientation
   )
   {
-    auto* paned = Gtk::make_managed<Gtk::Paned>(orientation);
+    auto& paned = create_paned(orientation);
     auto* parent = current.get_parent();
-
-    paned->set_hexpand(true);
-    paned->set_vexpand(true);
-    paned->set_wide_handle(true);
-    paned->set_resize_start_child(true);
-    paned->set_resize_end_child(true);
-    paned->set_shrink_start_child(true);
-    paned->set_shrink_end_child(true);
 
     if (parent == this)
     {
       remove(current);
       // Vim default: new split appears above / to the left of the current one.
-      paned->set_start_child(next);
-      paned->set_end_child(current);
-      append(*paned);
+      paned.set_start_child(next);
+      paned.set_end_child(current);
+      append(paned);
     }
     else if (auto* parent_paned = dynamic_cast<Gtk::Paned*>(parent))
     {
@@ -677,13 +760,13 @@ namespace selain::ui
       } else {
         gtk_compat::unset_end_child(*parent_paned);
       }
-      paned->set_start_child(next);
-      paned->set_end_child(current);
+      paned.set_start_child(next);
+      paned.set_end_child(current);
       if (is_start)
       {
-        parent_paned->set_start_child(*paned);
+        parent_paned->set_start_child(paned);
       } else {
-        parent_paned->set_end_child(*paned);
+        parent_paned->set_end_child(paned);
       }
     }
   }
@@ -730,6 +813,126 @@ namespace selain::ui
         output.push_back(view.get());
       }
     }
+  }
+
+  LayoutSnapshot
+  Tab::capture_layout() const
+  {
+    LayoutSnapshot snapshot;
+    int leaf_counter = 0;
+
+    snapshot.active_leaf_index = 0;
+    if (const auto* root = get_first_child())
+    {
+      snapshot.root = capture_layout_widget(
+        *root,
+        m_active_view,
+        leaf_counter,
+        snapshot.active_leaf_index
+      );
+    }
+
+    return snapshot;
+  }
+
+  void
+  Tab::restore_layout(const LayoutSnapshot& snapshot)
+  {
+    if (!snapshot.root)
+    {
+      return;
+    }
+
+    m_active_view = nullptr;
+    for (auto& view : m_views)
+    {
+      if (view)
+      {
+        view->prepare_close();
+      }
+    }
+    while (auto* child = get_first_child())
+    {
+      remove(*child);
+    }
+    m_views.clear();
+
+    std::vector<View*> leaves;
+    auto& root = build_layout_node(*snapshot.root, leaves);
+
+    append(root);
+
+    View* active = nullptr;
+
+    if (
+      snapshot.active_leaf_index >= 0 &&
+      snapshot.active_leaf_index < static_cast<int>(leaves.size())
+    )
+    {
+      active = leaves[static_cast<std::size_t>(snapshot.active_leaf_index)];
+    }
+    else if (!leaves.empty())
+    {
+      active = leaves.front();
+    }
+
+    if (active)
+    {
+      // set_active_view no-ops when m_active_view is already the target, but
+      // after rebuild m_active_view is null and CSS may be missing.
+      m_active_view = nullptr;
+      set_active_view(*active);
+      active->grab_focus();
+    }
+  }
+
+  Gtk::Paned&
+  Tab::create_paned(Gtk::Orientation orientation)
+  {
+    auto* paned = Gtk::make_managed<Gtk::Paned>(orientation);
+
+    paned->set_hexpand(true);
+    paned->set_vexpand(true);
+    paned->set_wide_handle(true);
+    paned->set_resize_start_child(true);
+    paned->set_resize_end_child(true);
+    paned->set_shrink_start_child(true);
+    paned->set_shrink_end_child(true);
+
+    return *paned;
+  }
+
+  Gtk::Widget&
+  Tab::build_layout_node(
+    const LayoutNode& node,
+    std::vector<View*>& leaves
+  )
+  {
+    if (node.kind == LayoutNode::Kind::Leaf)
+    {
+      const auto view = create_view();
+
+      if (node.uri && !node.uri->empty())
+      {
+        view->load_uri(*node.uri);
+      }
+      leaves.push_back(view.get());
+
+      return *view.get();
+    }
+
+    auto& paned = create_paned(node.orientation);
+
+    if (node.start)
+    {
+      paned.set_start_child(build_layout_node(*node.start, leaves));
+    }
+    if (node.end)
+    {
+      paned.set_end_child(build_layout_node(*node.end, leaves));
+    }
+
+    return paned;
   }
 
   void

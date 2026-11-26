@@ -123,6 +123,7 @@ namespace selain::keyboard
     bind("t", "open-tab");
     bind("T", "view-list");
     bind("x", "quit");
+    bind("X", "open-closed-tab");
     bind("J", "tab-prev");
     bind("K", "tab-next");
     bind("~1", "tab 1");

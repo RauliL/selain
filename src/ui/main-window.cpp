@@ -377,19 +377,63 @@ namespace selain::ui
     {
       return;
     }
+    // Already scheduled for teardown (e.g. repeated x before idle runs).
+    if (!m_tabs_closing.insert(&tab).second)
+    {
+      return;
+    }
+
+    auto snapshot = tab.capture_layout();
+
+    if (snapshot.has_any_uri())
+    {
+      m_last_closed_tab = std::move(snapshot);
+    }
+
     // Last tab: defer window close so we do not destroy MainWindow while still
     // inside a command/signal handler (e.g. :q).
     if (m_notebook.get_n_pages() <= 1)
     {
+      m_tabs_closing.erase(&tab);
       schedule_close();
       return;
     }
-    tab.prepare_close();
-    m_notebook.remove_page(index);
-    if (const auto current = get_current_tab())
+
+    // Defer teardown so we do not destroy Tab/View/WebKit widgets while still
+    // inside a key or tab-label click handler (use-after-free).
+    auto* pending = &tab;
+
+    Glib::signal_idle().connect_once([this, pending]() {
+      m_tabs_closing.erase(pending);
+
+      const auto page = m_notebook.page_num(*pending);
+
+      if (page < 0)
+      {
+        return;
+      }
+      pending->prepare_close();
+      m_notebook.remove_page(page);
+      if (const auto current = get_current_tab())
+      {
+        current->grab_focus();
+      }
+    });
+  }
+
+  bool
+  MainWindow::restore_last_closed_tab()
+  {
+    if (!m_last_closed_tab || !m_last_closed_tab->has_any_uri())
     {
-      current->grab_focus();
+      return false;
     }
+
+    const auto tab = open_tab();
+
+    tab->restore_layout(*m_last_closed_tab);
+
+    return true;
   }
 
   void

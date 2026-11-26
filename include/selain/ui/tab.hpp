@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <selain/ui/tab-label.hpp>
 #include <selain/ui/view.hpp>
 #include <selain/webkit/hint-context.hpp>
@@ -32,6 +34,40 @@
 namespace selain::ui
 {
   class MainWindow;
+
+  /**
+   * Node in a closed-tab layout tree: either a view leaf or a binary paned
+   * split.
+   */
+  struct LayoutNode
+  {
+    enum class Kind
+    {
+      Leaf,
+      Split
+    };
+
+    Kind kind = Kind::Leaf;
+    std::optional<Glib::ustring> uri;
+    Gtk::Orientation orientation = Gtk::Orientation::HORIZONTAL;
+    std::unique_ptr<LayoutNode> start;
+    std::unique_ptr<LayoutNode> end;
+  };
+
+  /**
+   * Snapshot of a tab's split layout and focused view, used to reopen the last
+   * closed tab.
+   */
+  struct LayoutSnapshot
+  {
+    std::unique_ptr<LayoutNode> root;
+    int active_leaf_index = 0;
+
+    /**
+     * Returns true if any leaf has a non-empty URI.
+     */
+    bool has_any_uri() const;
+  };
 
   /**
    * GTK widget for a browser tab page (Vim "tab"), which may contain one or
@@ -140,6 +176,16 @@ namespace selain::ui
     void collect_views(std::vector<View*>& output) const;
 
     /**
+     * Captures the current paned split tree, view URIs, and focused leaf.
+     */
+    LayoutSnapshot capture_layout() const;
+
+    /**
+     * Replaces the current layout with the given snapshot (views and splits).
+     */
+    void restore_layout(const LayoutSnapshot& snapshot);
+
+    /**
      * Returns URI that currently active view is displaying or `std::nullopt`
      * if there is no active view or it's not displaying anything.
      */
@@ -239,6 +285,11 @@ namespace selain::ui
 
   private:
     Glib::RefPtr<View> create_view();
+    Gtk::Paned& create_paned(Gtk::Orientation orientation);
+    Gtk::Widget& build_layout_node(
+      const LayoutNode& node,
+      std::vector<View*>& leaves
+    );
     void replace_view_with_paned(
       View& current,
       View& next,

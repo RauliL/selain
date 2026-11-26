@@ -178,7 +178,21 @@ on_command_line(
 
   for (int i = 1; i < argc; ++i)
   {
-    window->open_tab(argv[i]);
+    // Local files are resolved only for CLI arguments. In-app :open still
+    // treats bare names as URLs/searches via resolve_navigation_uri.
+    Glib::ustring target = argv[i];
+
+    if (target.find("://") == Glib::ustring::npos)
+    {
+      const auto file = command_line->create_file_for_arg(target);
+
+      if (file && file->query_exists())
+      {
+        target = file->get_uri();
+      }
+    }
+
+    window->open_tab(target);
   }
 
   if (argc == 1 && !window->get_current_tab())

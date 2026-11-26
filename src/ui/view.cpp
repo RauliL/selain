@@ -725,11 +725,20 @@ namespace selain::ui
   )
   {
     const auto tab = view->get_tab();
+    const auto window = view->get_main_window();
+    bool is_active_view = tab && tab->get_active_view() == view;
+
+    // Change away from insert mode to normal mode on page load, as long as the
+    // view is currently active view.
+    if (window && is_active_view && window->get_mode() == Mode::INSERT)
+    {
+      window->set_mode(Mode::NORMAL);
+    }
 
     switch (load_event)
     {
       case WEBKIT_LOAD_STARTED:
-        if (tab && tab->get_active_view() == view)
+        if (is_active_view)
         {
           tab->get_tab_label().set_text("Loading\xe2\x80\xa6");
         }

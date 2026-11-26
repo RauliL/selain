@@ -113,6 +113,7 @@ namespace selain::keyboard
     bind(":", "command :");
     bind("i", "insert");
     bind("gi", "insert-input");
+    bind("gs", "insert-search");
     bind("f", "hint");
     bind("F", "hint-tab");
 

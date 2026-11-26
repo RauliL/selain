@@ -19,6 +19,7 @@ Selain currently supports following commands:
 |`:history-clear`|`:histc`|Clears persistent visit history.     |
 |`:insert`     |`:i`    |Switches to insert mode.               |
 |`:insert-input`|`:ii`  |Focuses first input/textarea; insert mode.|
+|`:insert-search`|`:is`  |Focuses first search input; insert mode.|
 |`:inspector`  |`:insp` |Toggles developer tools.               |
 |`:js`         |`:j`    |Runs JavaScript in the current tab.    |
 |`:login`      |`:l`    |Fills login form.                      |

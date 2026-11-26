@@ -30,6 +30,7 @@
 #include <type_traits>
 #include <unordered_set>
 
+#include <cmrc/cmrc.hpp>
 #include <glibmm/ustring_hash.h>
 
 #include <selain/config.hpp>
@@ -43,6 +44,8 @@
 #include <selain/utils/string.hpp>
 #include <selain/utils/url.hpp>
 #include <selain/webkit/userscript.hpp>
+
+CMRC_DECLARE(selain::rc);
 
 using tab_callback_type = std::function<void(
   selain::ui::MainWindow&,
@@ -173,6 +176,12 @@ static void cmd_insert_input(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_insert_search(
+  selain::ui::MainWindow&,
+  selain::ui::Tab&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_js(
   selain::ui::MainWindow&,
   selain::ui::Tab&,
@@ -294,6 +303,11 @@ namespace selain::command
       "insert-input", { "ii" },
       "Focuses the first input or textarea and enters insert mode.",
       require_tab(cmd_insert_input)
+    },
+    {
+      "insert-search", { "is" },
+      "Focuses the first search input and enters insert mode.",
+      require_tab(cmd_insert_search)
     },
     {
       "inspector", { "insp" },
@@ -1715,6 +1729,37 @@ cmd_insert_input(
         return;
       }
       finish(callback, "No input found.");
+    }
+  );
+}
+
+static void
+cmd_insert_search(
+  selain::ui::MainWindow& window,
+  selain::ui::Tab& tab,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
+{
+  auto fs = cmrc::selain::rc::get_filesystem();
+  auto script = fs.open("src/webkit/find-search-input.js");
+
+  tab.execute_script(
+    Glib::ustring(std::begin(script), std::end(script)),
+    [&window, callback = std::move(callback)](JSCValue* value, GError* error)
+    {
+      if (error)
+      {
+        finish(callback, error->message);
+        return;
+      }
+      if (value && jsc_value_to_boolean(value))
+      {
+        window.set_mode(selain::Mode::INSERT);
+        finish(callback);
+        return;
+      }
+      finish(callback, "No search found.");
     }
   );
 }

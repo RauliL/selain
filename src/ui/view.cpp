@@ -354,14 +354,17 @@ namespace selain::ui
   std::optional<Glib::ustring>
   View::get_title() const
   {
-    const auto title = webkit_web_view_get_title(m_web_view);
-
-    if (!title || !*title)
+    if (m_web_view)
     {
-      return std::nullopt;
+      const auto title = webkit_web_view_get_title(m_web_view);
+
+      if (title && *title)
+      {
+        return title;
+      }
     }
 
-    return title;
+    return std::nullopt;
   }
 
   void

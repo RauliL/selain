@@ -1049,12 +1049,13 @@ cmd_unbind(
   selain::command::result_callback_type callback
 )
 {
-  if (selain::utils::string::is_blank(args))
+  args = selain::utils::string::trim(args);
+  if (args.empty())
   {
     finish(callback, "Missing sequence.");
     return;
   }
-  if (selain::keyboard::unbind(selain::utils::string::trim(args)))
+  if (selain::keyboard::unbind(args))
   {
     finish(callback);
     return;

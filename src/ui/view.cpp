@@ -327,14 +327,17 @@ namespace selain::ui
   std::optional<Glib::ustring>
   View::get_uri() const
   {
-    const auto uri = webkit_web_view_get_uri(m_web_view);
-
-    if (!uri || !*uri)
+    if (m_web_view)
     {
-      return std::nullopt;
+      const auto uri = webkit_web_view_get_uri(m_web_view);
+
+      if (uri && *uri)
+      {
+        return uri;
+      }
     }
 
-    return uri;
+    return std::nullopt;
   }
 
   std::optional<Glib::ustring>
@@ -1037,7 +1040,7 @@ namespace selain::ui
   on_notify_title(WebKitWebView*, GParamSpec*, View* view)
   {
     const auto tab = view->get_tab();
-    const auto window = tab->get_main_window();
+    const auto window = view->get_main_window();
 
     if (window)
     {

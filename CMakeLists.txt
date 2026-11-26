@@ -1,5 +1,11 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
-PROJECT(selain C CXX)
+PROJECT(
+  selain
+  VERSION
+    0.8
+  LANGUAGES
+    C CXX
+)
 
 # Additional protocol support.
 OPTION(SELAIN_ENABLE_FINGER "Enable finger:// protocol" ON)
@@ -23,6 +29,11 @@ OPTION(SELAIN_BUILD_TESTS "Build unit tests" ON)
 CONFIGURE_FILE(
   "${CMAKE_CURRENT_SOURCE_DIR}/include/selain/config.hpp.in"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/selain/config.hpp"
+)
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/selain.desktop.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/selain.desktop"
+  @ONLY
 )
 
 FIND_PACKAGE(PkgConfig)

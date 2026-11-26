@@ -27,12 +27,13 @@
 #include <format>
 #include <iostream>
 
+#include <selain/config.hpp>
+
 #include <selain/core/command.hpp>
 #include <selain/core/keyboard.hpp>
 #include <selain/core/setting.hpp>
 #include <selain/core/theme.hpp>
 #include <selain/ui/main-window.hpp>
-#include <selain/version.hpp>
 
 /**
  * WebKitGTK on NVIDIA proprietary drivers SIGSEGVs in

@@ -25,6 +25,8 @@
  */
 #pragma once
 
+#define SELAIN_VERSION "@PROJECT_VERSION@"
+
 #define SELAIN_DEFAULT_HOMEPAGE "https://besthomepageever.com"
 #define SELAIN_DEFAULT_SEARCH_ENGINE "https://search.brave.com/search?q=%s"
 

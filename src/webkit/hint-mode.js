@@ -238,7 +238,7 @@
 
         matchingPart.textContent = currentSequence;
         nonMatchingPart.textContent = sequence.slice(currentSequence.length);
-        matchingPart.style.color = "color-mix(in srgb, var(--selain-mode-bar-insert-foreground), white 30%)";
+        matchingPart.style.color = "color-mix(in srgb, var(--selain-mode-bar-insert-background), black 50%)";
 
         span.appendChild(matchingPart);
         span.appendChild(nonMatchingPart);

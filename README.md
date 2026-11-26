@@ -1,6 +1,6 @@
 # selain
 
-Modal Web browser with [Vim] like user interfaces that uses [WebKit] as it's
+Modal Web browser with [Vim] like user interface that uses [WebKit] as it's
 engine. I originally started building it out of frustration after [Firefox
 removed support for XUL addons] and I could no longer use the excellent [VimFx]
 addon that provided similar user interface to Firefox.

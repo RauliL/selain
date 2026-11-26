@@ -135,7 +135,8 @@ namespace selain::ui
       const char* world_name = nullptr
     );
 
-    ::WebKitUserContentManager* get_user_content_manager() const;
+    WebKitUserContentManager* get_user_content_manager() const;
+    WebKitFindController* get_find_controller() const;
 
     void go_back();
     void go_forward();

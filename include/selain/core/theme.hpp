@@ -25,10 +25,12 @@
  */
 #pragma once
 
-#include <string>
+#include <inja/inja.hpp>
 
 namespace selain::theme
 {
+  void add_theme_colors(inja::json& data);
+
   /**
    * Initializes CSS used for the application. Must be called during the
    * application startup before the UI is being shown. Safe to call more than

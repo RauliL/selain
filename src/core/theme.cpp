@@ -71,9 +71,7 @@ namespace selain::theme
       if (context->lookup_color(std::format("selain-{}", name), color))
       {
         colors.emplace_back(name, color.to_string());
-      }
-      else
-      {
+      } else {
         colors.emplace_back(name, "");
       }
     }
@@ -81,7 +79,7 @@ namespace selain::theme
     return colors;
   }
 
-  static void
+  void
   add_theme_colors(inja::json& data)
   {
     for (const auto& [name, value] : resolve_theme_colors())

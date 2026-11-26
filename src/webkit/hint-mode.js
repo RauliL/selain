@@ -12,7 +12,7 @@
   let openToNewTab = {{ open-to-new-tab }};
   const hintStyle =
     "z-index:100000;position:absolute;padding:0.2em;border:none;" +
-    "background-color:var(--selain-mode-bar-insert-background);color:var(--selain-mode-bar-insert-foreground);font-family:monospace;" +
+    "background-color:{{ mode-bar-insert-background }};color:{{ mode-bar-insert-foreground }};font-family:monospace;" +
     "font-size:1em;line-height:1;font-weight:bold;white-space:nowrap;" +
     "text-shadow:none;pointer-events:none;";
 
@@ -238,7 +238,7 @@
 
         matchingPart.textContent = currentSequence;
         nonMatchingPart.textContent = sequence.slice(currentSequence.length);
-        matchingPart.style.color = "color-mix(in srgb, var(--selain-mode-bar-insert-background), black 50%)";
+        matchingPart.style.color = "color-mix(in srgb, {{ mode-bar-insert-background }}, black 50%)";
 
         span.appendChild(matchingPart);
         span.appendChild(nonMatchingPart);

@@ -23,6 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "selain/core/theme.hpp"
 #include <atomic>
 #include <cctype>
 #include <mutex>
@@ -357,6 +358,7 @@ namespace selain::webkit
     } else {
       data["hint-chars"] = "";
     }
+    theme::add_theme_colors(data);
 
     m_tab = &tab;
     m_active = true;

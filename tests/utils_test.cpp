@@ -37,6 +37,7 @@ using selain::utils::string::js_string_escape;
 using selain::utils::string::starts_with;
 using selain::utils::string::trim;
 using selain::utils::string::trim_start;
+using selain::utils::url::build_search_uri;
 using selain::utils::url::get_host;
 using selain::utils::url::get_parent;
 using selain::utils::url::get_root;
@@ -150,6 +151,25 @@ TEST_CASE("resolve_navigation_uri", "[utils::url]")
       == "https://example.com/search?q=hello"
     );
   }
+}
+
+TEST_CASE("build_search_uri", "[utils::url]")
+{
+  const Glib::ustring engine = "https://example.com/search?q=%s";
+
+  REQUIRE(
+    build_search_uri(engine, "hello world")
+    == "https://example.com/search?q=hello%20world"
+  );
+  // Domain-like text must still be searched, not treated as a URL.
+  REQUIRE(
+    build_search_uri(engine, "example.com")
+    == "https://example.com/search?q=example.com"
+  );
+  REQUIRE(
+    build_search_uri("https://example.com/search?q=", "hello")
+    == "https://example.com/search?q=hello"
+  );
 }
 
 TEST_CASE("has_uri_scheme", "[utils::url]")

@@ -25,7 +25,7 @@ accept one of the values listed for that setting.
 | `hint-chars`    | Characters to use for typing hints in hit-a-hint mode. |
 | `history`       | Record visits in persistent history (default `true`). Stored under `~/.local/share/selain/history.sqlite`. |
 | `homepage`      | URL that is opened when the browser starts.            |
-| `search-engine` | Search URL used when `:open` text is not a URI or domain. `%s` is replaced with the URL-encoded query (default Brave search). |
+| `search-engine` | Search URL used when `:open` text is not a URI or domain, and for searching selected text from the context menu / `:search-selection`. `%s` is replaced with the URL-encoded query (default Brave search). |
 | `userscripts`   | Enable GreaseMonkey-style userscripts from `~/.config/selain/scripts` (default `true`). See [userscripts.md](userscripts.md). |
 
 ## WebKit (boolean)

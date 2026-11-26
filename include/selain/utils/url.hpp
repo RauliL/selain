@@ -64,13 +64,23 @@ namespace selain::utils::url
   std::optional<Glib::ustring> get_root(const Glib::ustring& uri);
 
   /**
+   * Builds a search URL from @p search_engine_template and @p query.
+   *
+   * `%s` in the template is replaced with the URL-encoded query. If the
+   * template has no `%s`, the encoded query is appended.
+   */
+  Glib::ustring build_search_uri(
+    const Glib::ustring& search_engine_template,
+    const Glib::ustring& query
+  );
+
+  /**
    * Resolves user-entered navigation text to a loadable URI.
    *
    * - Absolute URIs (with a scheme) are returned unchanged.
    * - Domain-like hosts (e.g. `example.com`, `localhost`) get an `https://`
    *   prefix.
-   * - Anything else becomes a search URL: `%s` in
-   *   @p search_engine_template is replaced with the URL-encoded query.
+   * - Anything else becomes a search URL via build_search_uri().
    */
   std::optional<Glib::ustring> resolve_navigation_uri(
     const Glib::ustring& input,

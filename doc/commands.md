@@ -35,6 +35,7 @@ Selain currently supports following commands:
 |`:scroll`     |`:sc`   |Scrolls the current tab.               |
 |`:search-next`|`:sen`  |Goes to next search result.            |
 |`:search-prev`|`:sep`  |Goes to previous search result.        |
+|`:search-selection`|`:ssel`|Searches selected text in a new tab.    |
 |`:set`        |`:se`   |Views/changes an setting.              |
 |`:split`      |`:sp`   |Splits the current view horizontally.  |
 |`:split-focus`|`:spf`  |Changes focus of splitted view.        |

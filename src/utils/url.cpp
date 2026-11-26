@@ -309,7 +309,7 @@ namespace selain::utils::url
     return host.find('.') != Glib::ustring::npos;
   }
 
-  static Glib::ustring
+  Glib::ustring
   build_search_uri(
     const Glib::ustring& search_engine_template,
     const Glib::ustring& query

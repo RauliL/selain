@@ -43,6 +43,7 @@ Selain currently supports following commands:
 |`:tab-prev`   |`:tp`   |Switches to previous tab.              |
 |`:unbind`     |        |Remove keyboard binding.               |
 |`:userscripts-reload`|`:usr`|Reloads userscripts from disk.      |
+|`:version`    |`:ve`   |Displays version number of the browser.|
 |`:view-list`  |`:vl`   |Opens a searchable list of all views.  |
 |`:vsplit`     |`:vs`   |Splits the current view vertically.    |
 |`:yank`       |`:y`    |Copies current URI to clipboard.       |

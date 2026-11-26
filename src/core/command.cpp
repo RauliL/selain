@@ -136,6 +136,11 @@ static void cmd_userscripts_reload(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_version(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 
 // Commands that require tab.
 static void cmd_bookmark(
@@ -415,6 +420,11 @@ namespace selain::command
       "userscripts-reload", { "usr" },
       "Reloads GreaseMonkey-style userscripts from disk.",
       cmd_userscripts_reload
+    },
+    {
+      "version", { "ve" },
+      "Displays version number of the browser.",
+      cmd_version
     },
     {
       "view-list", { "vl" },
@@ -1078,6 +1088,17 @@ cmd_userscripts_reload(
 
   selain::webkit::userscript::reload(nullptr);
   window.show_info("Userscripts reloaded.");
+  finish(callback);
+}
+
+static void
+cmd_version(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
+{
+  window.show_info(std::format("v{}", SELAIN_VERSION));
   finish(callback);
 }
 

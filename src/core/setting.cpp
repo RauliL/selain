@@ -27,6 +27,8 @@
 
 #include <glibmm/ustring_hash.h>
 
+#include <selain/config.hpp>
+
 #include <selain/core/setting.hpp>
 #include <selain/webkit/adblock.hpp>
 #include <selain/webkit/userscript.hpp>
@@ -323,11 +325,11 @@ namespace selain::setting
     },
     {
       "homepage",
-      std::make_shared<StringSetting>("https://besthomepageever.com")
+      std::make_shared<StringSetting>(SELAIN_DEFAULT_HOMEPAGE)
     },
     {
       "search-engine",
-      std::make_shared<StringSetting>("https://search.brave.com/search?q=%s")
+      std::make_shared<StringSetting>(SELAIN_DEFAULT_SEARCH_ENGINE)
     },
     {
       "userscripts",

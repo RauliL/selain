@@ -25,10 +25,12 @@
  */
 #pragma once
 
+#define SELAIN_DEFAULT_HOMEPAGE "https://besthomepageever.com"
+#define SELAIN_DEFAULT_SEARCH_ENGINE "https://search.brave.com/search?q=%s"
+
 #cmakedefine SELAIN_ENABLE_FINGER
 #cmakedefine SELAIN_ENABLE_GEMINI
 #cmakedefine SELAIN_ENABLE_GOPHER
 
 #cmakedefine SELAIN_ENABLE_PASS_INTEGRATION
 #cmakedefine SELAIN_ENABLE_BUKU_INTEGRATION
-

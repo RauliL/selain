@@ -23,14 +23,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "selain/core/theme.hpp"
-#include "selain/utils/string.hpp"
-#include "selain/webkit/context.hpp"
 #include <cstring>
 #include <format>
 
+#include <selain/config.hpp>
+
 #include <selain/core/setting.hpp>
+#include <selain/core/theme.hpp>
 #include <selain/ui/main-window.hpp>
+#include <selain/utils/string.hpp>
 #include <selain/utils/url.hpp>
 
 namespace selain::keyboard
@@ -442,19 +443,19 @@ namespace selain::ui
   void
   View::load_uri(const Glib::ustring& uri)
   {
-    if (uri.empty())
+    if (utils::string::is_blank(uri))
     {
       return;
     }
 
-    constexpr const char* default_search_engine = "https://duckduckgo.com/?q=%s";
-    Glib::ustring search_engine = default_search_engine;
+    Glib::ustring search_engine = SELAIN_DEFAULT_SEARCH_ENGINE;
 
     if (const auto window = get_main_window())
     {
-      search_engine = setting::get(*window, "search-engine").value_or(
-        default_search_engine
-      );
+      if (const auto setting = setting::get(*window, "search-engine"))
+      {
+        search_engine = *setting;
+      }
     }
 
     const auto resolved = utils::url::resolve_navigation_uri(

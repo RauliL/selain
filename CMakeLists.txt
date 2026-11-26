@@ -3,6 +3,10 @@ PROJECT(
   selain
   VERSION
     0.8
+  DESCRIPTION
+    "Modal Web browser."
+  HOMEPAGE_URL
+    "https://github.com/RauliL/selain"
   LANGUAGES
     C CXX
 )

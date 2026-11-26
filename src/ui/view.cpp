@@ -172,15 +172,6 @@ namespace selain::ui
     set_vexpand(true);
     add_css_class("selain-view");
 
-    Gdk::RGBA background;
-
-    // Resolve the theme color from GTK CSS (@define-color) so the WebKit
-    // blank/loading background stays in sync with user style.css overrides.
-    if (get_style_context()->lookup_color("selain-window-background", background))
-    {
-      webkit_web_view_set_background_color(m_web_view, background.gobj());
-    }
-
     settings->install(m_web_view);
   }
 

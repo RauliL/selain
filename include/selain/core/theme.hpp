@@ -36,13 +36,6 @@ namespace selain::theme
    */
   void initialize();
 
-  /**
-   * Returns CSS that exposes resolved theme colors as custom properties and
-   * sets a matching default document background/foreground. Intended for a
-   * WebKit author-level user style sheet. Requires initialize() first.
-   */
-  std::string webkit_stylesheet_source();
-
   std::string render_document(
     const std::string& title,
     const std::string& body

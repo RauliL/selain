@@ -152,26 +152,6 @@ namespace selain::theme
   }
 
   std::string
-  webkit_stylesheet_source()
-  {
-    std::ostringstream css;
-
-    css << ":root {\n";
-    for (const auto& [name, value] : resolve_theme_colors())
-    {
-      css << "  --selain-" << name << ": " << value << ";\n";
-    }
-    css
-      << "}\n"
-      << "html, body {\n"
-      << "  background: var(--selain-window-background);\n"
-      << "  color: var(--selain-window-foreground);\n"
-      << "}\n";
-
-    return css.str();
-  }
-
-  std::string
   render_document(const std::string& title, const std::string& body)
   {
     auto fs = cmrc::selain::rc::get_filesystem();

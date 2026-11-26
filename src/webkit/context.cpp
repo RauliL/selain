@@ -46,7 +46,6 @@ CMRC_DECLARE(selain::rc);
 namespace selain::webkit
 {
   static WebKitNetworkSession* create_network_session();
-  static void install_theme_stylesheet(WebKitUserContentManager* manager);
   static void install_scroll_helper(WebKitUserContentManager* manager);
 
   Glib::RefPtr<Context>
@@ -72,7 +71,6 @@ namespace selain::webkit
 #endif
     // Theme CSS must be loaded before colors are resolved for the sheet.
     theme::initialize();
-    install_theme_stylesheet(m_user_content_manager);
     install_scroll_helper(m_user_content_manager);
     adblock::initialize(m_user_content_manager);
     userscript::initialize(m_user_content_manager);
@@ -100,22 +98,6 @@ namespace selain::webkit
       m_user_content_manager,
       nullptr
     ));
-  }
-
-  static void
-  install_theme_stylesheet(WebKitUserContentManager* manager)
-  {
-    const auto source = theme::webkit_stylesheet_source();
-    auto* sheet = webkit_user_style_sheet_new(
-      source.c_str(),
-      WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES,
-      WEBKIT_USER_STYLE_LEVEL_AUTHOR,
-      nullptr,
-      nullptr
-    );
-
-    webkit_user_content_manager_add_style_sheet(manager, sheet);
-    webkit_user_style_sheet_unref(sheet);
   }
 
   static void

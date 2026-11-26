@@ -47,17 +47,15 @@ namespace selain::integration::buku
       return;
     }
 
-    gchar* buku_path = g_find_program_in_path("buku");
+    const auto buku_path = Glib::find_program_in_path("buku");
 
-    if (!buku_path)
+    if (buku_path.empty())
     {
       callback(false, {}, {}, "buku executable not found in PATH.");
-
       return;
     }
 
     argv.insert(argv.begin(), buku_path);
-    g_free(buku_path);
 
     try
     {

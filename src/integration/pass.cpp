@@ -317,9 +317,9 @@ namespace selain::integration::pass
       return;
     }
 
-    auto* pass_path = g_find_program_in_path("pass");
+    const auto pass_path = Glib::find_program_in_path("pass");
 
-    if (!pass_path)
+    if (pass_path.empty())
     {
       callback(std::nullopt, "pass executable not found in PATH.");
 
@@ -331,8 +331,6 @@ namespace selain::integration::pass
       "show",
       entry.raw(),
     };
-
-    g_free(pass_path);
 
     try
     {

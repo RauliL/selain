@@ -32,6 +32,7 @@
 
 namespace selain::ui
 {
+  class MainWindow;
   class Tab;
 
   /**
@@ -60,6 +61,18 @@ namespace selain::ui
      * no tab is associated with the view for some reason.
      */
     const Tab* get_tab() const;
+
+    /**
+     * Returns pointer to the main window that this view is associated with, or
+     * `nullptr` if this view is not visible on any window.
+     */
+    MainWindow* get_main_window();
+
+    /**
+     * Returns pointer to the main window that this view is associated with, or
+     * `nullptr` if this view is not visible on any window.
+     */
+    const MainWindow* get_main_window() const;
 
     /**
      * Returns the URI that this view is displaying at the moment, or

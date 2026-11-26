@@ -415,6 +415,28 @@ namespace selain::ui
     return m_notebook.get_n_pages();
   }
 
+  View*
+  MainWindow::get_active_view()
+  {
+    if (const auto tab = get_current_tab())
+    {
+      return tab->get_active_view();
+    }
+
+    return nullptr;
+  }
+
+  const View*
+  MainWindow::get_active_view() const
+  {
+    if (const auto tab = get_current_tab())
+    {
+      return tab->get_active_view();
+    }
+
+    return nullptr;
+  }
+
   void
   MainWindow::focus_view(View& view)
   {

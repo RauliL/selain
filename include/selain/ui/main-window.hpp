@@ -204,6 +204,14 @@ namespace selain::ui
      */
     const Tab* get_current_tab() const;
 
+    void set_current_tab(const Glib::RefPtr<Tab>& tab);
+
+    /**
+      * Switches to the tab at the given zero-based index. Does nothing if the
+      * index is out of range.
+      */
+    void set_current_tab(int index);
+
     /**
      * Returns pointer to tab from given index, or null pointer if given index
      * is out of bounds.
@@ -225,18 +233,22 @@ namespace selain::ui
     void close_tab(const Glib::RefPtr<Tab>& tab);
 
     /**
+     * Returns pointer to view that is currently active in this window, or
+     * `nullptr` if this window does not have active view at the moment.
+     */
+    View* get_active_view();
+
+    /**
+     * Returns pointer to view that is currently active in this window, or
+     * `nullptr` if this window does not have active view at the moment.
+     */
+    const View* get_active_view() const;
+
+    /**
      * Closes the window on the next main-loop idle. Use this from command /
      * signal handlers so MainWindow is not destroyed mid-callback.
      */
     void schedule_close();
-
-    void set_current_tab(const Glib::RefPtr<Tab>& tab);
-
-    /**
-     * Switches to the tab at the given zero-based index. Does nothing if the
-     * index is out of range.
-     */
-    void set_current_tab(int index);
 
     void next_tab();
     void prev_tab();

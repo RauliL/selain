@@ -68,6 +68,11 @@ namespace selain::ui
     guint,
     View*
   );
+  static void on_submit_form(
+    WebKitWebView*,
+    WebKitFormSubmissionRequest*,
+    View*
+  );
   static void on_notify_title(
     WebKitWebView*,
     GParamSpec*,
@@ -118,6 +123,12 @@ namespace selain::ui
       G_OBJECT(m_web_view),
       "mouse-target-changed",
       G_CALLBACK(on_mouse_target_changed),
+      static_cast<gpointer>(this)
+    );
+    g_signal_connect(
+      G_OBJECT(m_web_view),
+      "submit-form",
+      G_CALLBACK(on_submit_form),
       static_cast<gpointer>(this)
     );
     m_key_controller->signal_key_pressed().connect(
@@ -285,6 +296,28 @@ namespace selain::ui
       {
         return tab;
       }
+    }
+
+    return nullptr;
+  }
+
+  MainWindow*
+  View::get_main_window()
+  {
+    if (const auto tab = get_tab())
+    {
+      return tab->get_main_window();
+    }
+
+    return nullptr;
+  }
+
+  const MainWindow*
+  View::get_main_window() const
+  {
+    if (const auto tab = get_tab())
+    {
+      return tab->get_main_window();
     }
 
     return nullptr;
@@ -860,6 +893,24 @@ namespace selain::ui
     const auto uri = ::webkit_hit_test_result_get_link_uri(hit_test_result);
 
     view->set_status(!uri || !*uri ? Glib::ustring() : uri);
+  }
+
+  static void
+  on_submit_form(WebKitWebView*, WebKitFormSubmissionRequest*, View* view)
+  {
+    const auto window = view->get_main_window();
+
+    // Switch back to normal mode if form is being submitted in currently
+    // active view and the current mode is insert mode. Just a nice usability
+    // improvement and nothing else.
+    if (
+      window &&
+      window->get_active_view() == view &&
+      window->get_mode() == Mode::INSERT
+    )
+    {
+      window->set_mode(Mode::NORMAL);
+    }
   }
 
   static void

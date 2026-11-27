@@ -590,7 +590,7 @@ namespace selain::ui
       "window.getSelection().toString()",
       [callback](JSCValue* value, GError* error)
       {
-        char* text;
+        char* text = nullptr;
 
         if (error || !value || !(text = jsc_value_to_string(value)) || !*text)
         {

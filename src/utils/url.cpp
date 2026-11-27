@@ -23,6 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "glibmm/uriutils.h"
 #include <cstring>
 #include <format>
 
@@ -315,29 +316,25 @@ namespace selain::utils::url
     const Glib::ustring& query
   )
   {
-    auto* escaped = g_uri_escape_string(query.c_str(), nullptr, TRUE);
-    const Glib::ustring encoded = escaped ? escaped : Glib::ustring();
-
-    g_free(escaped);
-
+    const auto encoded = Glib::uri_escape_string(query);
     const auto placeholder = search_engine_template.find("%s");
 
-    if (placeholder == Glib::ustring::npos)
+    if (placeholder != Glib::ustring::npos)
     {
-      return search_engine_template + encoded;
+      auto result = search_engine_template;
+
+      result.replace(placeholder, 2, encoded);
+
+      return result;
     }
 
-    Glib::ustring result = search_engine_template;
-
-    result.replace(placeholder, 2, encoded);
-
-    return result;
+    return search_engine_template + encoded;
   }
 
   std::optional<Glib::ustring>
   resolve_navigation_uri(
     const Glib::ustring& input,
-    const Glib::ustring& search_engine_template
+    const std::optional<Glib::ustring>& search_engine_template
   )
   {
     const auto trimmed = utils::string::trim(input);
@@ -346,10 +343,8 @@ namespace selain::utils::url
     {
       return std::nullopt;
     }
-    if (auto scheme = g_uri_parse_scheme(trimmed.c_str()))
+    if (has_uri_scheme(trimmed))
     {
-      g_free(scheme);
-
       // g_uri_parse_scheme treats host:port (e.g. localhost:8080) as a
       // scheme. Only keep the input unchanged when it is not domain-like.
       if (!looks_like_domain_or_host(trimmed))
@@ -361,7 +356,11 @@ namespace selain::utils::url
     {
       return std::format("https://{}", trimmed.raw());
     }
+    else if (search_engine_template)
+    {
+      return build_search_uri(*search_engine_template, trimmed);
+    }
 
-    return build_search_uri(search_engine_template, trimmed);
+    return std::nullopt;
   }
 }

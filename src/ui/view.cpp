@@ -442,26 +442,18 @@ namespace selain::ui
   void
   View::load_uri(const Glib::ustring& uri)
   {
-    if (utils::string::is_blank(uri))
+    std::optional<Glib::ustring> search_engine;
+    std::optional<Glib::ustring> resolved;
+
+    if (!m_web_view || utils::string::is_blank(uri))
     {
       return;
     }
-
-    Glib::ustring search_engine = SELAIN_DEFAULT_SEARCH_ENGINE;
-
     if (const auto window = get_main_window())
     {
-      if (const auto setting = setting::get(*window, "search-engine"))
-      {
-        search_engine = *setting;
-      }
+      search_engine = setting::get(*window, "search-engine");
     }
-
-    const auto resolved = utils::url::resolve_navigation_uri(
-      uri,
-      search_engine
-    );
-
+    resolved = utils::url::resolve_navigation_uri(uri, search_engine);
     if (resolved && !resolved->empty())
     {
       webkit_web_view_load_uri(m_web_view, resolved->c_str());
@@ -471,6 +463,10 @@ namespace selain::ui
   void
   View::reload(bool bypass_cache)
   {
+    if (!m_web_view)
+    {
+      return;
+    }
     if (bypass_cache)
     {
       webkit_web_view_reload_bypass_cache(m_web_view);
@@ -482,7 +478,10 @@ namespace selain::ui
   void
   View::stop_loading()
   {
-    webkit_web_view_stop_loading(m_web_view);
+    if (m_web_view)
+    {
+      webkit_web_view_stop_loading(m_web_view);
+    }
   }
 
   static void
@@ -524,6 +523,11 @@ namespace selain::ui
     const char* world_name
   ) const
   {
+    if (!m_web_view)
+    {
+      return;
+    }
+
     auto* callback_pointer = callback
       ? new script_callback_type(std::move(callback))
       : nullptr;
@@ -559,13 +563,19 @@ namespace selain::ui
   void
   View::go_back()
   {
-    webkit_web_view_go_back(m_web_view);
+    if (m_web_view)
+    {
+      webkit_web_view_go_back(m_web_view);
+    }
   }
 
   void
   View::go_forward()
   {
-    webkit_web_view_go_forward(m_web_view);
+    if (m_web_view)
+    {
+      webkit_web_view_go_forward(m_web_view);
+    }
   }
 
   double
@@ -609,6 +619,10 @@ namespace selain::ui
   void
   View::toggle_inspector()
   {
+    if (!m_web_view)
+    {
+      return;
+    }
     if (auto* inspector = webkit_web_view_get_inspector(m_web_view))
     {
       if (webkit_web_inspector_is_attached(inspector))

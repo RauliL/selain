@@ -84,6 +84,6 @@ namespace selain::utils::url
    */
   std::optional<Glib::ustring> resolve_navigation_uri(
     const Glib::ustring& input,
-    const Glib::ustring& search_engine_template
+    const std::optional<Glib::ustring>& search_engine_template
   );
 }

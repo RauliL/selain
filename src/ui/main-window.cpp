@@ -97,7 +97,13 @@ namespace selain::ui
     signal_close_request().connect(
       [this]()
       {
-        flush_session_save();
+        // schedule_close() already flushed before prepare_close(); a second
+        // save here would capture empty URIs and delete session.json.
+        if (!m_session_quit_flushed)
+        {
+          flush_session_save();
+          m_session_quit_flushed = true;
+        }
         return false;
       },
       false
@@ -129,7 +135,11 @@ namespace selain::ui
   void
   MainWindow::schedule_close()
   {
-    flush_session_save();
+    if (!m_session_quit_flushed)
+    {
+      flush_session_save();
+      m_session_quit_flushed = true;
+    }
     Glib::signal_idle().connect_once([this]() {
       // Destroy WebKit views while the window is still fully alive; tearing
       // them down from ~MainWindow is too late and trips GObject criticals.

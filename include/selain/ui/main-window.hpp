@@ -402,5 +402,7 @@ namespace selain::ui
     std::unordered_set<Tab*> m_tabs_closing;
     sigc::connection m_session_save_connection;
     bool m_session_restoring = false;
+    /** True after a quit-path flush so close_request does not overwrite with empty tabs. */
+    bool m_session_quit_flushed = false;
   };
 }

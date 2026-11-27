@@ -184,15 +184,25 @@ namespace selain::ui
      */
     void record_history_visit();
 
+    /**
+     * Updates link status text and whether the pointer is over an editable
+     * page control (input, textarea, contenteditable, etc.).
+     */
+    void handle_mouse_target_changed(WebKitHitTestResult* hit_test_result);
+
   protected:
     bool on_key_pressed(guint keyval, guint keycode, Gdk::ModifierType state);
 
   private:
+    void on_click_pressed(int n_press, double x, double y);
+
     Glib::RefPtr<Gtk::EventControllerKey> m_key_controller;
+    Glib::RefPtr<Gtk::GestureClick> m_click_gesture;
     WebKitWebView* m_web_view;
     Glib::ustring m_status;
     Glib::ustring m_permanent_status;
     Glib::ustring m_last_history_uri;
     int m_gemini_redirect_hops = 0;
+    bool m_mouse_over_editable = false;
   };
 }

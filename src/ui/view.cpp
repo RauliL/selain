@@ -110,6 +110,7 @@ namespace selain::ui
   )
     : Gtk::Box(Gtk::Orientation::VERTICAL)
     , m_key_controller(Gtk::EventControllerKey::create())
+    , m_click_gesture(Gtk::GestureClick::create())
     , m_web_view(context->create_web_view())
   {
     g_object_set_data(G_OBJECT(m_web_view), view_quark, this);
@@ -161,6 +162,18 @@ namespace selain::ui
     gtk_widget_add_controller(
       GTK_WIDGET(m_web_view),
       GTK_EVENT_CONTROLLER(m_key_controller->gobj())
+    );
+    // Capture phase so clicks on focused form controls are still seen before
+    // WebKit consumes them. Do not claim the gesture so the page still gets
+    // the click (focus, caret placement, etc.).
+    m_click_gesture->set_button(GDK_BUTTON_PRIMARY);
+    m_click_gesture->set_propagation_phase(Gtk::PropagationPhase::CAPTURE);
+    m_click_gesture->signal_pressed().connect(
+      sigc::mem_fun(*this, &View::on_click_pressed)
+    );
+    gtk_widget_add_controller(
+      GTK_WIDGET(m_web_view),
+      GTK_EVENT_CONTROLLER(m_click_gesture->gobj())
     );
     g_signal_connect(
       G_OBJECT(m_web_view),
@@ -753,6 +766,39 @@ namespace selain::ui
     return false;
   }
 
+  void
+  View::on_click_pressed(int, double, double)
+  {
+    if (!m_mouse_over_editable)
+    {
+      return;
+    }
+
+    if (const auto tab = get_tab())
+    {
+      tab->set_active_view(*this);
+    }
+
+    if (const auto window = get_main_window())
+    {
+      if (window->get_mode() != Mode::INSERT)
+      {
+        window->set_mode(Mode::INSERT);
+      }
+    }
+  }
+
+  void
+  View::handle_mouse_target_changed(WebKitHitTestResult* hit_test_result)
+  {
+    const auto uri = webkit_hit_test_result_get_link_uri(hit_test_result);
+
+    m_mouse_over_editable = webkit_hit_test_result_context_is_editable(
+      hit_test_result
+    );
+    set_status(!uri || !*uri ? Glib::ustring() : uri);
+  }
+
   static void
   on_load_changed(
     WebKitWebView* web_view,
@@ -937,9 +983,7 @@ namespace selain::ui
     View* view
   )
   {
-    const auto uri = webkit_hit_test_result_get_link_uri(hit_test_result);
-
-    view->set_status(!uri || !*uri ? Glib::ustring() : uri);
+    view->handle_mouse_target_changed(hit_test_result);
   }
 
   static void

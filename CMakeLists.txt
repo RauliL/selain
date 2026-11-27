@@ -76,7 +76,8 @@ CMRC_ADD_RESOURCE_LIBRARY(
     selain::rc
   src/document.html
   src/theme.css
-  src/webkit/find-search-input.js
+  src/webkit/find-input.js
+  src/webkit/find-search.js
   src/webkit/hint-mode.js
   src/webkit/scroll-helper.js
 )

@@ -67,6 +67,7 @@ static selain::command::callback_type tab_method(const tab_method_type&);
 static selain::command::callback_type tab_reload(bool);
 static selain::command::callback_type tab_split(Gtk::Orientation);
 static selain::command::callback_type window_method(const window_method_type&);
+static selain::command::callback_type focus_command(const char*);
 
 // Commands that do not require tab.
 static void cmd_bind(
@@ -185,18 +186,6 @@ static void cmd_go_root(
   selain::command::result_callback_type
 );
 static void cmd_go_up(
-  selain::ui::MainWindow&,
-  selain::ui::Tab&,
-  Glib::ustring,
-  selain::command::result_callback_type
-);
-static void cmd_insert_input(
-  selain::ui::MainWindow&,
-  selain::ui::Tab&,
-  Glib::ustring,
-  selain::command::result_callback_type
-);
-static void cmd_insert_search(
   selain::ui::MainWindow&,
   selain::ui::Tab&,
   Glib::ustring,
@@ -322,12 +311,12 @@ namespace selain::command
     {
       "insert-input", { "ii" },
       "Focuses the first input or textarea and enters insert mode.",
-      require_tab(cmd_insert_input)
+      focus_command("input")
     },
     {
       "insert-search", { "is" },
       "Focuses the first search input and enters insert mode.",
-      require_tab(cmd_insert_search)
+      focus_command("search")
     },
     {
       "inspector", { "insp" },
@@ -801,6 +790,47 @@ window_method(const window_method_type& callback)
     callback(&window);
     finish(result_callback);
   };
+}
+
+static selain::command::callback_type
+focus_command(const char* what)
+{
+  return require_tab(
+    [what](
+      selain::ui::MainWindow& window,
+      selain::ui::Tab& tab,
+      Glib::ustring,
+      selain::command::result_callback_type callback
+    )
+    {
+      auto fs = cmrc::selain::rc::get_filesystem();
+      auto script = fs.open(std::format("src/webkit/find-{}.js", what));
+
+      tab.execute_script(
+        Glib::ustring(std::begin(script), std::end(script)),
+        [
+          what,
+          &window,
+          callback = std::move(callback)
+        ](JSCValue* value, GError* error)
+        {
+          if (error)
+          {
+            finish(callback, error->message);
+            return;
+          }
+          if (value && jsc_value_to_boolean(value))
+          {
+            window.set_mode(selain::Mode::INSERT);
+            finish(callback);
+            return;
+          }
+          finish(callback, std::format("No {} found.", what));
+        }
+      );
+    }
+  );
+
 }
 
 static void
@@ -1774,90 +1804,6 @@ cmd_execute(
       } else {
         finish(callback, "Expression did not produce a command.");
       }
-    }
-  );
-}
-
-static void
-cmd_insert_input(
-  selain::ui::MainWindow& window,
-  selain::ui::Tab& tab,
-  Glib::ustring,
-  selain::command::result_callback_type callback
-)
-{
-  tab.execute_script(
-    R"JS(
-      (() => {
-        const nodes = document.querySelectorAll(
-          'input:not([type="hidden"]),textarea'
-        );
-
-        for (const el of nodes) {
-          const type = (el.type || "").toLowerCase();
-
-          if (
-            type === "button" ||
-            type === "submit" ||
-            type === "reset" ||
-            type === "image" ||
-            el.disabled
-          ) {
-            continue;
-          }
-          el.focus();
-
-          return true;
-        }
-
-        return false;
-      })()
-    )JS",
-    [&window, callback = std::move(callback)](JSCValue* value, GError* error)
-    {
-      if (error)
-      {
-        finish(callback, error->message);
-        return;
-      }
-      if (value && jsc_value_to_boolean(value))
-      {
-        window.set_mode(selain::Mode::INSERT);
-        finish(callback);
-        return;
-      }
-      finish(callback, "No input found.");
-    }
-  );
-}
-
-static void
-cmd_insert_search(
-  selain::ui::MainWindow& window,
-  selain::ui::Tab& tab,
-  Glib::ustring,
-  selain::command::result_callback_type callback
-)
-{
-  auto fs = cmrc::selain::rc::get_filesystem();
-  auto script = fs.open("src/webkit/find-search-input.js");
-
-  tab.execute_script(
-    Glib::ustring(std::begin(script), std::end(script)),
-    [&window, callback = std::move(callback)](JSCValue* value, GError* error)
-    {
-      if (error)
-      {
-        finish(callback, error->message);
-        return;
-      }
-      if (value && jsc_value_to_boolean(value))
-      {
-        window.set_mode(selain::Mode::INSERT);
-        finish(callback);
-        return;
-      }
-      finish(callback, "No search found.");
     }
   );
 }

@@ -21,7 +21,9 @@
     const style = getComputedStyle(el);
     const overflowY = style.overflowY;
 
-    return overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+    return (
+      overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay"
+    );
   }
 
   function scrollTarget() {

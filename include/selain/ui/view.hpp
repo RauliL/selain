@@ -112,12 +112,6 @@ namespace selain::ui
     void get_selected_text(const get_selected_text_callback_type& callback) const;
 
     /**
-     * Searches for the current page selection using the configured
-     * search-engine setting, opening the results in a new tab.
-     */
-    void search_selected_text();
-
-    /**
      * Asks the parent window to collect free-form text via the command bar
      * (keyboard only). @p on_submit is called with the typed value on Enter.
      */

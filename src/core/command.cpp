@@ -211,12 +211,6 @@ static void cmd_scroll(
   Glib::ustring,
   selain::command::result_callback_type
 );
-static void cmd_search_selection(
-  selain::ui::MainWindow&,
-  selain::ui::Tab&,
-  Glib::ustring,
-  selain::command::result_callback_type
-);
 static void cmd_split_focus(
   selain::ui::MainWindow&,
   selain::ui::Tab&,
@@ -400,11 +394,6 @@ namespace selain::command
       "search-prev", { "sep" },
       "Goes to previous search result.",
       tab_method(&ui::Tab::search_prev)
-    },
-    {
-      "search-selection", { "ssel" },
-      "Searches for selected text in a new tab.",
-      require_tab(cmd_search_selection)
     },
     {
       "set", { "se" },
@@ -2186,21 +2175,6 @@ cmd_scroll(
 }})())",
     arg.raw()
   ));
-  finish(callback);
-}
-
-static void
-cmd_search_selection(
-  selain::ui::MainWindow&,
-  selain::ui::Tab& tab,
-  Glib::ustring,
-  selain::command::result_callback_type callback
-)
-{
-  if (auto* view = tab.get_active_view())
-  {
-    view->search_selected_text();
-  }
   finish(callback);
 }
 

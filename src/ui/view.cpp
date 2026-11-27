@@ -23,6 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "giomm/simpleaction.h"
 #include <cstring>
 #include <format>
 
@@ -484,62 +485,6 @@ namespace selain::ui
     webkit_web_view_stop_loading(m_web_view);
   }
 
-  void
-  View::search_selected_text()
-  {
-    if (!m_web_view)
-    {
-      return;
-    }
-
-    execute_script(
-      "window.getSelection().toString()",
-      [this](JSCValue* value, GError* error)
-      {
-        if (error || !value || !m_web_view)
-        {
-          return;
-        }
-
-        char* text = jsc_value_to_string(value);
-
-        if (!text)
-        {
-          return;
-        }
-
-        const auto query = utils::string::trim(Glib::ustring(text));
-
-        g_free(text);
-
-        if (query.empty())
-        {
-          return;
-        }
-
-        const auto window = get_main_window();
-
-        if (!window)
-        {
-          return;
-        }
-
-        Glib::ustring search_engine = SELAIN_DEFAULT_SEARCH_ENGINE;
-
-        if (const auto setting = setting::get(*window, "search-engine"))
-        {
-          search_engine = *setting;
-        }
-
-        // Use build_search_uri so domain-like selections are searched, not
-        // navigated to as URLs.
-        window->open_tab(
-          utils::url::build_search_uri(search_engine, query)
-        );
-      }
-    );
-  }
-
   static void
   execute_script_callback(
     GObject* web_view_object,
@@ -986,7 +931,28 @@ namespace selain::ui
     View* view
   )
   {
-    view->search_selected_text();
+    view->get_selected_text(
+      [view](const std::optional<Glib::ustring>& text)
+      {
+        const auto window = view->get_main_window();
+        Glib::ustring query;
+
+        if (
+          !text ||
+          !window ||
+          (query = utils::string::trim(*text)).empty()
+        )
+        {
+          return;
+        }
+        if (const auto setting = setting::get(*window, "search-engine"))
+        {
+          // Use `build_search_uri` so domain-like selections are searched, not
+          // navigated to as URLs.
+          window->open_tab(utils::url::build_search_uri(*setting, query));
+        }
+      }
+    );
   }
 
   static gboolean
@@ -997,30 +963,24 @@ namespace selain::ui
     View* view
   )
   {
+    Glib::ustring label = "Search the web";
+    GSimpleAction* action;
+
     if (!webkit_hit_test_result_context_is_selection(hit_test_result))
     {
       return FALSE;
     }
-
-    Glib::ustring search_engine = SELAIN_DEFAULT_SEARCH_ENGINE;
-
     if (const auto window = view->get_main_window())
     {
       if (const auto setting = setting::get(*window, "search-engine"))
       {
-        search_engine = *setting;
+        if (const auto host = utils::url::get_host(*setting))
+        {
+          label = std::format("Search with {}", host->raw());
+        }
       }
     }
-
-    Glib::ustring label = "Search the web";
-
-    if (const auto host = utils::url::get_host(search_engine))
-    {
-      label = std::format("Search with {}", host->raw());
-    }
-
-    auto* action = g_simple_action_new("selain-search-selection", nullptr);
-
+    action = g_simple_action_new("selain-search-selection", nullptr);
     g_signal_connect(
       action,
       "activate",

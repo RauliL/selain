@@ -43,6 +43,7 @@ namespace selain::ui
   public:
     using script_callback_type = std::function<void(JSCValue*, GError*)>;
     using prompt_callback_type = std::function<void(const Glib::ustring&)>;
+    using get_selected_text_callback_type = std::function<void(const std::optional<Glib::ustring>&)>;
 
     explicit View(
       const Glib::RefPtr<webkit::Context>& context,
@@ -103,6 +104,14 @@ namespace selain::ui
     void stop_loading();
 
     /**
+     * Asynchronously retrieves currently selected text (if any) in the view.
+     *
+     * The method is asynchronous because the selection needs to be retrieved
+     * by executing asynchronous JavaScript.
+     */
+    void get_selected_text(const get_selected_text_callback_type& callback) const;
+
+    /**
      * Searches for the current page selection using the configured
      * search-engine setting, opening the results in a new tab.
      */
@@ -139,7 +148,7 @@ namespace selain::ui
       const script_callback_type& callback = nullptr,
       const Glib::RefPtr<Gio::Cancellable>& cancellable = nullptr,
       const char* world_name = nullptr
-    );
+    ) const;
 
     WebKitUserContentManager* get_user_content_manager() const;
     WebKitFindController* get_find_controller() const;

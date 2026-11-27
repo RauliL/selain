@@ -577,7 +577,7 @@ namespace selain::ui
     const script_callback_type& callback,
     const Glib::RefPtr<Gio::Cancellable>& cancellable,
     const char* world_name
-  )
+  ) const
   {
     auto* callback_pointer = callback
       ? new script_callback_type(std::move(callback))
@@ -636,6 +636,29 @@ namespace selain::ui
     {
       webkit_web_view_set_zoom_level(m_web_view, level);
     }
+  }
+
+  void
+  View::get_selected_text(const get_selected_text_callback_type& callback) const
+  {
+    execute_script(
+      "window.getSelection().toString()",
+      [callback](JSCValue* value, GError* error)
+      {
+        char* text;
+
+        if (error || !value || !(text = jsc_value_to_string(value)) || !*text)
+        {
+          callback(std::nullopt);
+        } else {
+          callback(text);
+        }
+        if (text)
+        {
+          g_free(text);
+        }
+      }
+    );
   }
 
   void

@@ -32,6 +32,7 @@
 #include <selain/core/command.hpp>
 #include <selain/core/history-manager.hpp>
 #include <selain/core/password-manager.hpp>
+#include <selain/core/session.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
 #include <selain/ui/tab-completion.hpp>
@@ -240,6 +241,35 @@ namespace selain::ui
     bool restore_last_closed_tab();
 
     /**
+     * Captures every open tab with at least one URI, plus the active tab
+     * index among those tabs.
+     */
+    Session capture_session() const;
+
+    /**
+     * Opens tabs from @p session without restoring homepage. Returns false
+     * when nothing usable was restored.
+     */
+    bool restore_session(const Session& session);
+
+    /**
+     * Schedules a debounced write of the current session to disk.
+     */
+    void request_session_save();
+
+    /**
+     * Cancels any pending debounced save and writes the session immediately
+     * when session saving is enabled. Pass @p force to write even when the
+     * `session-save` setting is off (e.g. `:session-save`).
+     */
+    void flush_session_save(bool force = false);
+
+    /**
+     * Deletes the on-disk session file.
+     */
+    bool clear_session();
+
+    /**
      * Returns pointer to view that is currently active in this window, or
      * `nullptr` if this window does not have active view at the moment.
      */
@@ -359,5 +389,7 @@ namespace selain::ui
     std::optional<PromptRequest> m_prompt;
     std::optional<LayoutSnapshot> m_last_closed_tab;
     std::unordered_set<Tab*> m_tabs_closing;
+    sigc::connection m_session_save_connection;
+    bool m_session_restoring = false;
   };
 }

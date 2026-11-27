@@ -36,6 +36,8 @@ Selain currently supports following commands:
 |`:scroll`     |`:sc`   |Scrolls the current tab.               |
 |`:search-next`|`:sen`  |Goes to next search result.            |
 |`:search-prev`|`:sep`  |Goes to previous search result.        |
+|`:session-clear`|`:sessc`|Deletes the saved session file.      |
+|`:session-save`|`:sess`|Writes the current session to disk now.|
 |`:set`        |`:se`   |Views/changes an setting.              |
 |`:split`      |`:sp`   |Splits the current view horizontally.  |
 |`:split-focus`|`:spf`  |Changes focus of splitted view.        |
@@ -71,6 +73,12 @@ History is stored in `~/.local/share/selain/history.sqlite`. Disable recording
 with `:set history=false`. Default binding: `zh`.
 
 `:history-clear` deletes all stored visits.
+
+`:session-save` writes open tabs to `~/.local/share/selain/session.json`
+immediately. The same file is updated automatically while browsing and on quit
+when `session-save` is enabled. `:session-clear` deletes that file. On the next
+startup with no CLI URLs, tabs are restored when `session-restore` is enabled
+(both settings default to `true`).
 
 `:userscripts-reload` re-reads GreaseMonkey-style scripts from
 `~/.config/selain/scripts/` and reinstalls them. See [userscripts.md](userscripts.md).

@@ -26,6 +26,8 @@ accept one of the values listed for that setting.
 | `history`       | Record visits in persistent history (default `true`). Stored under `~/.local/share/selain/history.sqlite`. |
 | `homepage`      | URL that is opened when the browser starts.            |
 | `search-engine` | Search URL used when `:open` text is not a URI or domain, and for searching selected text from the context menu / `:search-selection`. `%s` is replaced with the URL-encoded query (default Brave search). |
+| `session-restore` | Restore open tabs from the previous session on startup when no URLs are given on the command line (default `true`). Session file: `~/.local/share/selain/session.json`. |
+| `session-save`  | Persist open tabs while running and on quit (default `true`). |
 | `userscripts`   | Enable GreaseMonkey-style userscripts from `~/.config/selain/scripts` (default `true`). See [userscripts.md](userscripts.md). |
 
 ## WebKit (boolean)

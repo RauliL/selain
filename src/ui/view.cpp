@@ -802,6 +802,10 @@ namespace selain::ui
           view->set_status(uri, true);
         }
         view->record_history_visit();
+        if (const auto window = view->get_main_window())
+        {
+          window->request_session_save();
+        }
         break;
 
       case WEBKIT_LOAD_FINISHED:

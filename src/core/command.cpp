@@ -119,6 +119,16 @@ static void cmd_quit(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_session_clear(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
+static void cmd_session_save(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_set(
   selain::ui::MainWindow&,
   Glib::ustring,
@@ -394,6 +404,16 @@ namespace selain::command
       "search-prev", { "sep" },
       "Goes to previous search result.",
       tab_method(&ui::Tab::search_prev)
+    },
+    {
+      "session-clear", { "sessc" },
+      "Deletes the saved session file.",
+      cmd_session_clear
+    },
+    {
+      "session-save", { "sess" },
+      "Writes the current session to disk now.",
+      cmd_session_save
     },
     {
       "set", { "se" },
@@ -981,6 +1001,34 @@ cmd_open_closed_tab(
   {
     window.show_info("No closed tab to reopen.");
   }
+  finish(callback);
+}
+
+static void
+cmd_session_clear(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
+{
+  if (!window.clear_session())
+  {
+    window.show_error("Failed to clear session file.");
+  } else {
+    window.show_info("Session cleared.");
+  }
+  finish(callback);
+}
+
+static void
+cmd_session_save(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
+{
+  window.flush_session_save(true);
+  window.show_info("Session saved.");
   finish(callback);
 }
 

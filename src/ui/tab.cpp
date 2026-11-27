@@ -312,6 +312,10 @@ namespace selain::ui
     m_active_view->add_css_class("selain-view-active");
     sync_active_chrome();
     m_active_view->grab_focus();
+    if (const auto window = get_main_window())
+    {
+      window->request_session_save();
+    }
   }
 
   void
@@ -461,6 +465,10 @@ namespace selain::ui
     m_active_view->add_css_class("selain-view-active");
     sync_active_chrome();
     m_active_view->grab_focus();
+    if (const auto window = get_main_window())
+    {
+      window->request_session_save();
+    }
   }
 
   void

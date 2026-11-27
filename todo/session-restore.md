@@ -4,7 +4,7 @@ Reuse the existing closed-tab layout snapshot (`LayoutSnapshot` / `LayoutNode`,
 `Tab::capture_layout` / `Tab::restore_layout`) to remember all open tabs across
 browser restarts.
 
-**Status:** planning  
+**Status:** implemented (phases 1–2 + `:session-save` / `:session-clear`)  
 **Depends on:** last-closed-tab restore (`X` / `:open-closed-tab`) already in tree
 
 Related code today:

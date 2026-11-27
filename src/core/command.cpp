@@ -124,6 +124,11 @@ static void cmd_session_clear(
   Glib::ustring,
   selain::command::result_callback_type
 );
+static void cmd_session_restore(
+  selain::ui::MainWindow&,
+  Glib::ustring,
+  selain::command::result_callback_type
+);
 static void cmd_session_save(
   selain::ui::MainWindow&,
   Glib::ustring,
@@ -409,6 +414,11 @@ namespace selain::command
       "session-clear", { "sessc" },
       "Deletes the saved session file.",
       cmd_session_clear
+    },
+    {
+      "session-restore", { "sessr" },
+      "Replaces open tabs with the session saved on disk.",
+      cmd_session_restore
     },
     {
       "session-save", { "sess" },
@@ -1016,6 +1026,22 @@ cmd_session_clear(
     window.show_error("Failed to clear session file.");
   } else {
     window.show_info("Session cleared.");
+  }
+  finish(callback);
+}
+
+static void
+cmd_session_restore(
+  selain::ui::MainWindow& window,
+  Glib::ustring,
+  selain::command::result_callback_type callback
+)
+{
+  if (!window.restore_session_from_disk())
+  {
+    window.show_error("No usable session file to restore.");
+  } else {
+    window.show_info("Session restored.");
   }
   finish(callback);
 }

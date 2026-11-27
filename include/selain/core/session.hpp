@@ -77,6 +77,39 @@ namespace selain
     static bool clear(const std::filesystem::path& path = {});
   };
 
+  /**
+   * Persistent LIFO stack of closed tab layouts for `X` / `:open-closed-tab`.
+   */
+  class ClosedTabStore
+  {
+  public:
+    /**
+     * Default path: `~/.local/share/selain/closed-tabs.json`.
+     */
+    static std::filesystem::path default_path();
+
+    /**
+     * Writes @p tabs atomically. When empty, deletes the file instead.
+     */
+    static bool save(
+      const std::vector<ui::LayoutSnapshot>& tabs,
+      const std::filesystem::path& path = {}
+    );
+
+    /**
+     * Loads closed-tab snapshots (oldest → newest). Returns an empty vector
+     * when the file is missing, empty, or corrupt.
+     */
+    static std::vector<ui::LayoutSnapshot> load(
+      const std::filesystem::path& path = {}
+    );
+
+    /**
+     * Deletes the closed-tabs file if present.
+     */
+    static bool clear(const std::filesystem::path& path = {});
+  };
+
   namespace session
   {
     bool is_restore_enabled();

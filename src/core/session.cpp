@@ -23,6 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 
@@ -38,7 +39,8 @@ namespace selain
     bool g_restore_enabled = true;
     bool g_save_enabled = true;
 
-    constexpr int k_session_version = 1;
+    constexpr int k_session_version = 2;
+    constexpr int k_closed_tabs_version = 1;
 
     Glib::ustring
     json_string(const inja::json& value, const char* key)
@@ -53,6 +55,19 @@ namespace selain
       return it->get<std::string>();
     }
 
+    std::optional<double>
+    json_number(const inja::json& value, const char* key)
+    {
+      const auto it = value.find(key);
+
+      if (it == value.end() || !it->is_number())
+      {
+        return std::nullopt;
+      }
+
+      return it->get<double>();
+    }
+
     inja::json
     encode_layout_node(const ui::LayoutNode& node)
     {
@@ -62,6 +77,7 @@ namespace selain
       {
         json["type"] = "leaf";
         json["uri"] = node.uri ? node.uri->raw() : std::string();
+        json["zoom"] = node.zoom;
         return json;
       }
 
@@ -70,6 +86,10 @@ namespace selain
         node.orientation == Gtk::Orientation::VERTICAL
           ? "vertical"
           : "horizontal";
+      if (node.ratio)
+      {
+        json["ratio"] = *node.ratio;
+      }
       if (node.start)
       {
         json["start"] = encode_layout_node(*node.start);
@@ -101,6 +121,10 @@ namespace selain
         {
           node->uri = uri;
         }
+        if (const auto zoom = json_number(json, "zoom"))
+        {
+          node->zoom = *zoom > 0.0 ? *zoom : 1.0;
+        }
 
         return node;
       }
@@ -118,6 +142,10 @@ namespace selain
         node->orientation = Gtk::Orientation::VERTICAL;
       } else {
         node->orientation = Gtk::Orientation::HORIZONTAL;
+      }
+      if (const auto ratio = json_number(json, "ratio"))
+      {
+        node->ratio = std::clamp(*ratio, 0.0, 1.0);
       }
 
       if (const auto it = json.find("start"); it != json.end())
@@ -205,11 +233,21 @@ namespace selain
         return std::nullopt;
       }
 
-      if (const auto it = json.find("version");
-          it == json.end() || !it->is_number_integer() ||
-          it->get<int>() != k_session_version)
       {
-        return std::nullopt;
+        const auto it = json.find("version");
+
+        if (it == json.end() || !it->is_number_integer())
+        {
+          return std::nullopt;
+        }
+
+        const auto version = it->get<int>();
+
+        // v1: URIs only; v2: optional zoom/ratio on layout nodes.
+        if (version != 1 && version != k_session_version)
+        {
+          return std::nullopt;
+        }
       }
 
       const auto tabs_it = json.find("tabs");
@@ -268,6 +306,173 @@ namespace selain
 
       return true;
     }
+
+    bool
+    write_atomic(const std::filesystem::path& target, const std::string& text)
+    {
+      if (!ensure_parent_directory(target))
+      {
+        return false;
+      }
+
+      const auto temp = target.string() + ".tmp";
+      {
+        std::ofstream out(temp, std::ios::binary | std::ios::trunc);
+
+        if (!out)
+        {
+          g_warning(
+            "Selain: failed to open temp file: %s",
+            temp.c_str()
+          );
+          return false;
+        }
+        out << text;
+        if (!out)
+        {
+          g_warning(
+            "Selain: failed to write temp file: %s",
+            temp.c_str()
+          );
+          std::filesystem::remove(temp);
+          return false;
+        }
+      }
+
+      std::error_code error;
+
+      std::filesystem::rename(temp, target, error);
+      if (error)
+      {
+        g_warning(
+          "Selain: failed to replace file %s: %s",
+          target.string().c_str(),
+          error.message().c_str()
+        );
+        std::filesystem::remove(temp);
+        return false;
+      }
+
+      return true;
+    }
+
+    std::optional<inja::json>
+    read_json_file(const std::filesystem::path& target)
+    {
+      if (!std::filesystem::exists(target))
+      {
+        return std::nullopt;
+      }
+
+      std::ifstream in(target, std::ios::binary);
+
+      if (!in)
+      {
+        g_warning(
+          "Selain: failed to open file: %s",
+          target.string().c_str()
+        );
+        return std::nullopt;
+      }
+
+      std::ostringstream buffer;
+
+      buffer << in.rdbuf();
+      if (!in && !in.eof())
+      {
+        g_warning(
+          "Selain: failed to read file: %s",
+          target.string().c_str()
+        );
+        return std::nullopt;
+      }
+
+      const auto parsed = inja::json::parse(buffer.str(), nullptr, false);
+
+      if (parsed.is_discarded())
+      {
+        g_warning(
+          "Selain: ignoring corrupt file: %s",
+          target.string().c_str()
+        );
+        return std::nullopt;
+      }
+
+      return parsed;
+    }
+
+    bool
+    remove_file(const std::filesystem::path& target)
+    {
+      if (!std::filesystem::exists(target))
+      {
+        return true;
+      }
+
+      std::error_code error;
+
+      std::filesystem::remove(target, error);
+      if (error)
+      {
+        g_warning(
+          "Selain: failed to remove file %s: %s",
+          target.string().c_str(),
+          error.message().c_str()
+        );
+        return false;
+      }
+
+      return true;
+    }
+
+    inja::json
+    encode_closed_tabs(const std::vector<ui::LayoutSnapshot>& tabs)
+    {
+      inja::json json;
+
+      json["version"] = k_closed_tabs_version;
+      json["tabs"] = inja::json::array();
+      for (const auto& tab : tabs)
+      {
+        json["tabs"].push_back(encode_layout_snapshot(tab));
+      }
+
+      return json;
+    }
+
+    std::vector<ui::LayoutSnapshot>
+    decode_closed_tabs(const inja::json& json)
+    {
+      std::vector<ui::LayoutSnapshot> tabs;
+
+      if (!json.is_object())
+      {
+        return tabs;
+      }
+      if (const auto it = json.find("version");
+          it == json.end() || !it->is_number_integer() ||
+          it->get<int>() != k_closed_tabs_version)
+      {
+        return tabs;
+      }
+
+      const auto tabs_it = json.find("tabs");
+
+      if (tabs_it == json.end() || !tabs_it->is_array())
+      {
+        return tabs;
+      }
+
+      for (const auto& tab_json : *tabs_it)
+      {
+        if (auto snapshot = decode_layout_snapshot(tab_json))
+        {
+          tabs.push_back(std::move(*snapshot));
+        }
+      }
+
+      return tabs;
+    }
   }
 
   std::filesystem::path
@@ -294,97 +499,22 @@ namespace selain
     {
       return clear(target);
     }
-    if (!ensure_parent_directory(target))
-    {
-      return false;
-    }
 
-    const auto temp = target.string() + ".tmp";
-    const auto text = encode_session(session).dump(2);
-    {
-      std::ofstream out(temp, std::ios::binary | std::ios::trunc);
-
-      if (!out)
-      {
-        g_warning(
-          "Selain: failed to open session temp file: %s",
-          temp.c_str()
-        );
-        return false;
-      }
-      out << text;
-      if (!out)
-      {
-        g_warning(
-          "Selain: failed to write session temp file: %s",
-          temp.c_str()
-        );
-        std::filesystem::remove(temp);
-        return false;
-      }
-    }
-
-    std::error_code error;
-
-    std::filesystem::rename(temp, target, error);
-    if (error)
-    {
-      g_warning(
-        "Selain: failed to replace session file: %s",
-        error.message().c_str()
-      );
-      std::filesystem::remove(temp);
-      return false;
-    }
-
-    return true;
+    return write_atomic(target, encode_session(session).dump(2));
   }
 
   std::optional<Session>
   SessionStore::load(const std::filesystem::path& path)
   {
     const auto target = path.empty() ? default_path() : path;
+    const auto parsed = read_json_file(target);
 
-    if (!std::filesystem::exists(target))
+    if (!parsed)
     {
       return std::nullopt;
     }
 
-    std::ifstream in(target, std::ios::binary);
-
-    if (!in)
-    {
-      g_warning(
-        "Selain: failed to open session file: %s",
-        target.string().c_str()
-      );
-      return std::nullopt;
-    }
-
-    std::ostringstream buffer;
-
-    buffer << in.rdbuf();
-    if (!in && !in.eof())
-    {
-      g_warning(
-        "Selain: failed to read session file: %s",
-        target.string().c_str()
-      );
-      return std::nullopt;
-    }
-
-    const auto parsed = inja::json::parse(buffer.str(), nullptr, false);
-
-    if (parsed.is_discarded())
-    {
-      g_warning(
-        "Selain: ignoring corrupt session file: %s",
-        target.string().c_str()
-      );
-      return std::nullopt;
-    }
-
-    auto session = decode_session(parsed);
+    auto session = decode_session(*parsed);
 
     if (!session)
     {
@@ -400,26 +530,65 @@ namespace selain
   bool
   SessionStore::clear(const std::filesystem::path& path)
   {
+    return remove_file(path.empty() ? default_path() : path);
+  }
+
+  std::filesystem::path
+  ClosedTabStore::default_path()
+  {
+    return std::filesystem::path(
+      Glib::build_filename(
+        Glib::get_user_data_dir(),
+        "selain",
+        "closed-tabs.json"
+      )
+    );
+  }
+
+  bool
+  ClosedTabStore::save(
+    const std::vector<ui::LayoutSnapshot>& tabs,
+    const std::filesystem::path& path
+  )
+  {
     const auto target = path.empty() ? default_path() : path;
 
-    if (!std::filesystem::exists(target))
+    if (tabs.empty())
     {
-      return true;
+      return clear(target);
     }
 
-    std::error_code error;
+    return write_atomic(target, encode_closed_tabs(tabs).dump(2));
+  }
 
-    std::filesystem::remove(target, error);
-    if (error)
+  std::vector<ui::LayoutSnapshot>
+  ClosedTabStore::load(const std::filesystem::path& path)
+  {
+    const auto target = path.empty() ? default_path() : path;
+    const auto parsed = read_json_file(target);
+
+    if (!parsed)
+    {
+      return {};
+    }
+
+    auto tabs = decode_closed_tabs(*parsed);
+
+    if (tabs.empty() && parsed->contains("tabs"))
     {
       g_warning(
-        "Selain: failed to clear session file: %s",
-        error.message().c_str()
+        "Selain: ignoring invalid closed-tabs file: %s",
+        target.string().c_str()
       );
-      return false;
     }
 
-    return true;
+    return tabs;
+  }
+
+  bool
+  ClosedTabStore::clear(const std::filesystem::path& path)
+  {
+    return remove_file(path.empty() ? default_path() : path);
   }
 
   namespace session

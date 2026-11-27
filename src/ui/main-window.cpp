@@ -57,6 +57,14 @@ namespace selain::ui
     m_password_manager = integration::pass::PasswordManager::create();
 #endif
     m_history_manager = HistoryManager::create();
+    m_closed_tabs = ClosedTabStore::load();
+    if (static_cast<int>(m_closed_tabs.size()) > MAX_CLOSED_TABS)
+    {
+      m_closed_tabs.erase(
+        m_closed_tabs.begin(),
+        m_closed_tabs.end() - MAX_CLOSED_TABS
+      );
+    }
 
     set_title("Selain");
     set_icon_name("selain");
@@ -403,7 +411,7 @@ namespace selain::ui
 
     if (snapshot.has_any_uri())
     {
-      m_last_closed_tab = std::move(snapshot);
+      push_closed_tab(std::move(snapshot));
     }
 
     // Last tab: defer window close so we do not destroy MainWindow while still
@@ -441,16 +449,62 @@ namespace selain::ui
   bool
   MainWindow::restore_last_closed_tab()
   {
-    if (!m_last_closed_tab || !m_last_closed_tab->has_any_uri())
+    if (m_closed_tabs.empty())
+    {
+      return false;
+    }
+
+    auto snapshot = std::move(m_closed_tabs.back());
+
+    m_closed_tabs.pop_back();
+    persist_closed_tabs();
+
+    if (!snapshot.has_any_uri())
     {
       return false;
     }
 
     const auto tab = open_tab();
 
-    tab->restore_layout(*m_last_closed_tab);
+    tab->restore_layout(snapshot);
 
     return true;
+  }
+
+  void
+  MainWindow::push_closed_tab(LayoutSnapshot snapshot)
+  {
+    m_closed_tabs.push_back(std::move(snapshot));
+    while (static_cast<int>(m_closed_tabs.size()) > MAX_CLOSED_TABS)
+    {
+      m_closed_tabs.erase(m_closed_tabs.begin());
+    }
+    persist_closed_tabs();
+  }
+
+  void
+  MainWindow::persist_closed_tabs()
+  {
+    if (!session::is_save_enabled())
+    {
+      return;
+    }
+
+    ClosedTabStore::save(m_closed_tabs);
+  }
+
+  void
+  MainWindow::clear_all_tabs_without_closed_stack()
+  {
+    while (m_notebook.get_n_pages() > 0)
+    {
+      if (auto* tab = get_nth_tab(0))
+      {
+        tab->prepare_close();
+      }
+      m_notebook.remove_page(0);
+    }
+    m_tabs_closing.clear();
   }
 
   Session
@@ -523,6 +577,30 @@ namespace selain::ui
     {
       tab->grab_focus();
     }
+
+    return true;
+  }
+
+  bool
+  MainWindow::restore_session_from_disk()
+  {
+    const auto session = SessionStore::load();
+
+    if (!session || session->tabs.empty())
+    {
+      return false;
+    }
+
+    m_session_restoring = true;
+    clear_all_tabs_without_closed_stack();
+    m_session_restoring = false;
+
+    if (!restore_session(*session))
+    {
+      return false;
+    }
+
+    flush_session_save(true);
 
     return true;
   }

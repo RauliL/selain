@@ -4,14 +4,15 @@ Reuse the existing closed-tab layout snapshot (`LayoutSnapshot` / `LayoutNode`,
 `Tab::capture_layout` / `Tab::restore_layout`) to remember all open tabs across
 browser restarts.
 
-**Status:** implemented (phases 1–2 + `:session-save` / `:session-clear`)  
+**Status:** implemented (phases 1–3)  
 **Depends on:** last-closed-tab restore (`X` / `:open-closed-tab`) already in tree
 
 Related code today:
 
 - Snapshot model + capture/restore: `include/selain/ui/tab.hpp`, `src/ui/tab.cpp`
-- Last-closed memory (in-process only): `MainWindow::m_last_closed_tab`,
-  `restore_last_closed_tab()` in `src/ui/main-window.cpp`
+- Session + closed-tab persistence: `include/selain/core/session.hpp`,
+  `src/core/session.cpp` (`session.json`, `closed-tabs.json`)
+- Last-closed stack: `MainWindow::m_closed_tabs`, `restore_last_closed_tab()`
 - Startup / first tab: `src/main.cpp` (`on_command_line`, homepage fallback)
 - Persistence precedent: `HistoryManager` → `~/.local/share/selain/history.sqlite`
 - Settings: `src/core/setting.cpp`
@@ -29,11 +30,11 @@ Related code today:
 4. Share one serialization of `LayoutSnapshot` with last-closed-tab if useful
    (e.g. durable undo stack later), but v1 can keep last-closed in-memory.
 
-## Non-goals (v1)
+## Non-goals
 
-- Restoring WebKit back/forward lists, scroll position, zoom, cookies, or form
-  state (cookies already live in the WebKit data dir).
-- Restoring paned pixel split ratios (same limitation as `X` today).
+- Restoring WebKit back/forward lists, scroll position, cookies, or form state
+  (cookies already live in the WebKit data dir). Split ratios and per-view zoom
+  **are** restored (Phase 3).
 - Multi-window sessions (Selain is single main window today).
 - Cloud sync / profile manager.
 
@@ -197,11 +198,11 @@ Do **not** require persisting the last-closed stack for v1.
 1. Debounced `request_session_save()` on tab/split/navigation/focus changes.
 2. Ensure rapid open/close does not corrupt the file (write temp + rename).
 
-### Phase 3 — Polish (optional)
+### Phase 3 — Polish (done)
 
-1. `:session-save` / `:session-clear` / interactive restore command.
-2. Persist last-closed stack to disk (multi-level `X`).
-3. Optional split ratios / zoom if capture grows later.
+1. `:session-save` / `:session-clear` / `:session-restore` (replace all tabs).
+2. Persist last-closed stack to `closed-tabs.json` (multi-level `X`, cap 25).
+3. Split ratios + per-leaf zoom in `LayoutSnapshot` / session JSON v2.
 
 ---
 

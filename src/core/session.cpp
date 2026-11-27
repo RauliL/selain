@@ -31,6 +31,7 @@
 #include <inja/inja.hpp>
 
 #include <selain/core/session.hpp>
+#include <selain/utils/json.hpp>
 
 namespace selain
 {
@@ -41,32 +42,6 @@ namespace selain
 
     constexpr int k_session_version = 2;
     constexpr int k_closed_tabs_version = 1;
-
-    Glib::ustring
-    json_string(const inja::json& value, const char* key)
-    {
-      const auto it = value.find(key);
-
-      if (it == value.end() || !it->is_string())
-      {
-        return {};
-      }
-
-      return it->get<std::string>();
-    }
-
-    std::optional<double>
-    json_number(const inja::json& value, const char* key)
-    {
-      const auto it = value.find(key);
-
-      if (it == value.end() || !it->is_number())
-      {
-        return std::nullopt;
-      }
-
-      return it->get<double>();
-    }
 
     inja::json
     encode_layout_node(const ui::LayoutNode& node)
@@ -110,18 +85,21 @@ namespace selain
         return nullptr;
       }
 
-      const auto type = json_string(json, "type");
+      const auto type = utils::json::get_string(json, "type");
 
       if (type == "leaf")
       {
         auto node = std::make_unique<ui::LayoutNode>();
 
         node->kind = ui::LayoutNode::Kind::Leaf;
-        if (const auto uri = json_string(json, "uri"); !uri.empty())
+        if (
+          const auto uri = utils::json::get_string(json, "uri");
+          !uri.empty()
+        )
         {
           node->uri = uri;
         }
-        if (const auto zoom = json_number(json, "zoom"))
+        if (const auto zoom = utils::json::get_number(json, "zoom"))
         {
           node->zoom = *zoom > 0.0 ? *zoom : 1.0;
         }
@@ -137,13 +115,13 @@ namespace selain
       auto node = std::make_unique<ui::LayoutNode>();
 
       node->kind = ui::LayoutNode::Kind::Split;
-      if (json_string(json, "orientation") == "vertical")
+      if (utils::json::get_string(json, "orientation") == "vertical")
       {
         node->orientation = Gtk::Orientation::VERTICAL;
       } else {
         node->orientation = Gtk::Orientation::HORIZONTAL;
       }
-      if (const auto ratio = json_number(json, "ratio"))
+      if (const auto ratio = utils::json::get_number(json, "ratio"))
       {
         node->ratio = std::clamp(*ratio, 0.0, 1.0);
       }

@@ -86,6 +86,7 @@ ADD_LIBRARY(
   selain-utils
   STATIC
   src/userscript/metadata.cpp
+  src/utils/json.cpp
   src/utils/string.cpp
   src/utils/url.cpp
 )

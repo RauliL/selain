@@ -27,6 +27,7 @@
 #include <inja/inja.hpp>
 
 #include <selain/integration/buku.hpp>
+#include <selain/utils/json.hpp>
 #include <selain/utils/string.hpp>
 
 namespace selain::integration::buku
@@ -93,17 +94,6 @@ namespace selain::integration::buku
     }
   }
 
-  static Glib::ustring
-  json_string(const inja::json& value, const char* key)
-  {
-    if (!value.contains(key) || !value[key].is_string())
-    {
-      return {};
-    }
-
-    return value[key].get<std::string>();
-  }
-
   static bool
   parse_bookmarks(
     const Glib::ustring& stdout_buf,
@@ -143,10 +133,10 @@ namespace selain::integration::buku
       {
         bookmark.index = item["index"].get<int>();
       }
-      bookmark.uri = json_string(item, "uri");
-      bookmark.title = json_string(item, "title");
-      bookmark.tags = json_string(item, "tags");
-      bookmark.description = json_string(item, "description");
+      bookmark.uri = utils::json::get_string(item, "uri");
+      bookmark.title = utils::json::get_string(item, "title");
+      bookmark.tags = utils::json::get_string(item, "tags");
+      bookmark.description = utils::json::get_string(item, "description");
 
       if (bookmark.uri.empty())
       {

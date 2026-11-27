@@ -32,6 +32,7 @@
 #include <selain/core/command.hpp>
 #include <selain/core/history-manager.hpp>
 #include <selain/core/password-manager.hpp>
+#include <selain/core/session.hpp>
 #include <selain/ui/command-entry.hpp>
 #include <selain/ui/status-bar.hpp>
 #include <selain/ui/tab-completion.hpp>
@@ -234,10 +235,45 @@ namespace selain::ui
     void close_tab(const Glib::RefPtr<Tab>& tab);
 
     /**
-     * Opens a new tab and restores the last closed tab layout. Returns false
-     * if there is no stored layout with at least one URI.
+     * Opens a new tab and restores the most recently closed tab layout from
+     * the undo stack. Returns false if the stack is empty.
      */
     bool restore_last_closed_tab();
+
+    /**
+     * Captures every open tab with at least one URI, plus the active tab
+     * index among those tabs.
+     */
+    Session capture_session() const;
+
+    /**
+     * Opens tabs from @p session without restoring homepage. Returns false
+     * when nothing usable was restored.
+     */
+    bool restore_session(const Session& session);
+
+    /**
+     * Replaces all open tabs with the session loaded from disk. Returns false
+     * when the file is missing, corrupt, or empty (current tabs unchanged).
+     */
+    bool restore_session_from_disk();
+
+    /**
+     * Schedules a debounced write of the current session to disk.
+     */
+    void request_session_save();
+
+    /**
+     * Cancels any pending debounced save and writes the session immediately
+     * when session saving is enabled. Pass @p force to write even when the
+     * `session-save` setting is off (e.g. `:session-save`).
+     */
+    void flush_session_save(bool force = false);
+
+    /**
+     * Deletes the on-disk session file.
+     */
+    bool clear_session();
 
     /**
      * Returns pointer to view that is currently active in this window, or
@@ -342,8 +378,13 @@ namespace selain::ui
     bool on_tab_list_scroll(double dx, double dy);
     void clear_prompt_ui();
     void complete_prompt(const Glib::ustring& text);
+    void push_closed_tab(LayoutSnapshot snapshot);
+    void persist_closed_tabs();
+    void clear_all_tabs_without_closed_stack();
 
   private:
+    static constexpr int MAX_CLOSED_TABS = 25;
+
     Glib::RefPtr<webkit::Context> m_web_context;
     Glib::RefPtr<webkit::Settings> m_web_settings;
     Glib::RefPtr<BookmarkManager> m_bookmark_manager;
@@ -357,7 +398,11 @@ namespace selain::ui
     Glib::RefPtr<Gtk::EventControllerKey> m_command_entry_key_controller;
     TabCompletion m_tab_completion;
     std::optional<PromptRequest> m_prompt;
-    std::optional<LayoutSnapshot> m_last_closed_tab;
+    std::vector<LayoutSnapshot> m_closed_tabs;
     std::unordered_set<Tab*> m_tabs_closing;
+    sigc::connection m_session_save_connection;
+    bool m_session_restoring = false;
+    /** True after a quit-path flush so close_request does not overwrite with empty tabs. */
+    bool m_session_quit_flushed = false;
   };
 }

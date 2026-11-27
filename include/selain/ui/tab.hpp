@@ -49,7 +49,10 @@ namespace selain::ui
 
     Kind kind = Kind::Leaf;
     std::optional<Glib::ustring> uri;
+    double zoom = 1.0;
     Gtk::Orientation orientation = Gtk::Orientation::HORIZONTAL;
+    /** Start-child fraction of the paned size in [0, 1], when known. */
+    std::optional<double> ratio;
     std::unique_ptr<LayoutNode> start;
     std::unique_ptr<LayoutNode> end;
   };

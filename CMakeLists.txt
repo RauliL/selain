@@ -134,6 +134,7 @@ SET(
   src/core/history-manager.cpp
   src/core/keyboard.cpp
   src/core/mode.cpp
+  src/core/session.cpp
   src/core/setting.cpp
   src/core/theme.cpp
   src/format/gemtext.cpp

@@ -31,6 +31,7 @@
 
 #include <selain/core/command.hpp>
 #include <selain/core/keyboard.hpp>
+#include <selain/core/session.hpp>
 #include <selain/core/setting.hpp>
 #include <selain/core/theme.hpp>
 #include <selain/ui/main-window.hpp>
@@ -198,9 +199,21 @@ on_command_line(
 
   if (argc == 1 && !window->get_current_tab())
   {
-    if (const auto homepage = selain::setting::get(*window, "homepage"))
+    bool restored = false;
+
+    if (selain::session::is_restore_enabled())
     {
-      window->open_tab(*homepage);
+      if (const auto session = selain::SessionStore::load())
+      {
+        restored = window->restore_session(*session);
+      }
+    }
+    if (!restored)
+    {
+      if (const auto homepage = selain::setting::get(*window, "homepage"))
+      {
+        window->open_tab(*homepage);
+      }
     }
   }
 

@@ -29,6 +29,7 @@
 
 #include <selain/config.hpp>
 
+#include <selain/core/session.hpp>
 #include <selain/core/setting.hpp>
 #include <selain/webkit/adblock.hpp>
 #include <selain/webkit/userscript.hpp>
@@ -330,6 +331,20 @@ namespace selain::setting
     {
       "search-engine",
       std::make_shared<StringSetting>(SELAIN_DEFAULT_SEARCH_ENGINE)
+    },
+    {
+      "session-restore",
+      std::make_shared<BoolSetting>(
+        session::is_restore_enabled,
+        session::set_restore_enabled
+      )
+    },
+    {
+      "session-save",
+      std::make_shared<BoolSetting>(
+        session::is_save_enabled,
+        session::set_save_enabled
+      )
     },
     {
       "userscripts",

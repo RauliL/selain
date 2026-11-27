@@ -40,6 +40,7 @@ namespace selain::ui
 {
   static constexpr int DEFAULT_WIDTH = 640;
   static constexpr int DEFAULT_HEIGHT = 480;
+  static constexpr int SESSION_SAVE_DEBOUNCE_MS = 750;
 
   MainWindow::MainWindow(const Glib::RefPtr<Gtk::Application>& application)
     : Gtk::ApplicationWindow(application)
@@ -56,6 +57,14 @@ namespace selain::ui
     m_password_manager = integration::pass::PasswordManager::create();
 #endif
     m_history_manager = HistoryManager::create();
+    m_closed_tabs = ClosedTabStore::load();
+    if (static_cast<int>(m_closed_tabs.size()) > MAX_CLOSED_TABS)
+    {
+      m_closed_tabs.erase(
+        m_closed_tabs.begin(),
+        m_closed_tabs.end() - MAX_CLOSED_TABS
+      );
+    }
 
     set_title("Selain");
     set_icon_name("selain");
@@ -85,11 +94,30 @@ namespace selain::ui
 
     add_css_class("selain-window");
 
+    signal_close_request().connect(
+      [this]()
+      {
+        // schedule_close() already flushed before prepare_close(); a second
+        // save here would capture empty URIs and delete session.json.
+        if (!m_session_quit_flushed)
+        {
+          flush_session_save();
+          m_session_quit_flushed = true;
+        }
+        return false;
+      },
+      false
+    );
+
     maximize();
   }
 
   MainWindow::~MainWindow()
   {
+    if (m_session_save_connection.connected())
+    {
+      m_session_save_connection.disconnect();
+    }
     while (m_notebook.get_n_pages() > 0)
     {
       if (auto* tab = get_nth_tab(0))
@@ -107,6 +135,11 @@ namespace selain::ui
   void
   MainWindow::schedule_close()
   {
+    if (!m_session_quit_flushed)
+    {
+      flush_session_save();
+      m_session_quit_flushed = true;
+    }
     Glib::signal_idle().connect_once([this]() {
       // Destroy WebKit views while the window is still fully alive; tearing
       // them down from ~MainWindow is too late and trips GObject criticals.
@@ -364,6 +397,7 @@ namespace selain::ui
       set_current_tab(tab);
       tab->grab_focus();
     }
+    request_session_save();
 
     return tab;
   }
@@ -387,7 +421,7 @@ namespace selain::ui
 
     if (snapshot.has_any_uri())
     {
-      m_last_closed_tab = std::move(snapshot);
+      push_closed_tab(std::move(snapshot));
     }
 
     // Last tab: defer window close so we do not destroy MainWindow while still
@@ -418,22 +452,214 @@ namespace selain::ui
       {
         current->grab_focus();
       }
+      request_session_save();
     });
   }
 
   bool
   MainWindow::restore_last_closed_tab()
   {
-    if (!m_last_closed_tab || !m_last_closed_tab->has_any_uri())
+    if (m_closed_tabs.empty())
+    {
+      return false;
+    }
+
+    auto snapshot = std::move(m_closed_tabs.back());
+
+    m_closed_tabs.pop_back();
+    persist_closed_tabs();
+
+    if (!snapshot.has_any_uri())
     {
       return false;
     }
 
     const auto tab = open_tab();
 
-    tab->restore_layout(*m_last_closed_tab);
+    tab->restore_layout(snapshot);
 
     return true;
+  }
+
+  void
+  MainWindow::push_closed_tab(LayoutSnapshot snapshot)
+  {
+    m_closed_tabs.push_back(std::move(snapshot));
+    while (static_cast<int>(m_closed_tabs.size()) > MAX_CLOSED_TABS)
+    {
+      m_closed_tabs.erase(m_closed_tabs.begin());
+    }
+    persist_closed_tabs();
+  }
+
+  void
+  MainWindow::persist_closed_tabs()
+  {
+    if (!session::is_save_enabled())
+    {
+      return;
+    }
+
+    ClosedTabStore::save(m_closed_tabs);
+  }
+
+  void
+  MainWindow::clear_all_tabs_without_closed_stack()
+  {
+    while (m_notebook.get_n_pages() > 0)
+    {
+      if (auto* tab = get_nth_tab(0))
+      {
+        tab->prepare_close();
+      }
+      m_notebook.remove_page(0);
+    }
+    m_tabs_closing.clear();
+  }
+
+  Session
+  MainWindow::capture_session() const
+  {
+    Session session;
+    const auto current = m_notebook.get_current_page();
+    int saved_index = 0;
+
+    for (int i = 0; i < get_tab_count(); ++i)
+    {
+      const auto* tab = get_nth_tab(i);
+
+      if (!tab)
+      {
+        continue;
+      }
+
+      auto snapshot = tab->capture_layout();
+
+      if (!snapshot.has_any_uri())
+      {
+        continue;
+      }
+      if (i == current)
+      {
+        session.active_tab = saved_index;
+      }
+      session.tabs.push_back(std::move(snapshot));
+      ++saved_index;
+    }
+
+    return session;
+  }
+
+  bool
+  MainWindow::restore_session(const Session& session)
+  {
+    if (session.tabs.empty())
+    {
+      return false;
+    }
+
+    m_session_restoring = true;
+
+    int opened = 0;
+
+    for (const auto& snapshot : session.tabs)
+    {
+      if (!snapshot.has_any_uri())
+      {
+        continue;
+      }
+
+      const auto tab = open_tab(Glib::ustring(), false);
+
+      tab->restore_layout(snapshot);
+      ++opened;
+    }
+
+    m_session_restoring = false;
+
+    if (opened == 0)
+    {
+      return false;
+    }
+
+    set_current_tab(session.active_tab);
+    if (const auto tab = get_current_tab())
+    {
+      tab->grab_focus();
+    }
+
+    return true;
+  }
+
+  bool
+  MainWindow::restore_session_from_disk()
+  {
+    const auto session = SessionStore::load();
+
+    if (!session || session->tabs.empty())
+    {
+      return false;
+    }
+
+    m_session_restoring = true;
+    clear_all_tabs_without_closed_stack();
+    m_session_restoring = false;
+
+    if (!restore_session(*session))
+    {
+      return false;
+    }
+
+    flush_session_save(true);
+
+    return true;
+  }
+
+  void
+  MainWindow::request_session_save()
+  {
+    if (m_session_restoring || !session::is_save_enabled())
+    {
+      return;
+    }
+    if (m_session_save_connection.connected())
+    {
+      m_session_save_connection.disconnect();
+    }
+    m_session_save_connection = Glib::signal_timeout().connect(
+      [this]()
+      {
+        flush_session_save();
+        return false;
+      },
+      SESSION_SAVE_DEBOUNCE_MS
+    );
+  }
+
+  void
+  MainWindow::flush_session_save(bool force)
+  {
+    if (m_session_save_connection.connected())
+    {
+      m_session_save_connection.disconnect();
+    }
+    if (!force && !session::is_save_enabled())
+    {
+      return;
+    }
+
+    SessionStore::save(capture_session());
+  }
+
+  bool
+  MainWindow::clear_session()
+  {
+    if (m_session_save_connection.connected())
+    {
+      m_session_save_connection.disconnect();
+    }
+
+    return SessionStore::clear();
   }
 
   void
@@ -646,6 +872,7 @@ namespace selain::ui
         }
       }
     );
+    request_session_save();
   }
 
   bool

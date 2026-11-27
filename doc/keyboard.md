@@ -20,7 +20,7 @@ shortcuts can be customized with `:bind` and `:unbind` commands.
 |`t`              |Open new tab.                       |
 |`T`              |Open searchable view list.          |
 |`x`              |Close current tab.                  |
-|`X`              |Reopen last closed tab layout.      |
+|`X`              |Reopen most recently closed tab layout (multi-level undo).|
 |`J`              |Switch to previous tab.             |
 |`K`              |Switch to next tab.                 |
 |`Alt-1` … `Alt-9`|Switch to tab 1–9.                  |

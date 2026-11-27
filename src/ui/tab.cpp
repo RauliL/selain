@@ -23,7 +23,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <algorithm>
+#include <functional>
 #include <limits>
+#include <memory>
 
 #include <selain/ui/gtk-compat.hpp>
 #include <selain/ui/main-window.hpp>
@@ -159,6 +162,7 @@ namespace selain::ui
 
         node->kind = LayoutNode::Kind::Leaf;
         node->uri = view->get_uri();
+        node->zoom = view->get_zoom_level();
         if (view == active)
         {
           active_index = leaf_counter;
@@ -174,6 +178,22 @@ namespace selain::ui
 
         node->kind = LayoutNode::Kind::Split;
         node->orientation = paned->get_orientation();
+
+        const int allocation =
+          paned->get_orientation() == Gtk::Orientation::HORIZONTAL
+            ? paned->get_width()
+            : paned->get_height();
+
+        if (allocation > 0)
+        {
+          node->ratio = std::clamp(
+            static_cast<double>(paned->get_position()) /
+              static_cast<double>(allocation),
+            0.0,
+            1.0
+          );
+        }
+
         if (const auto* start = paned->get_start_child())
         {
           node->start = capture_layout_widget(
@@ -312,6 +332,10 @@ namespace selain::ui
     m_active_view->add_css_class("selain-view-active");
     sync_active_chrome();
     m_active_view->grab_focus();
+    if (const auto window = get_main_window())
+    {
+      window->request_session_save();
+    }
   }
 
   void
@@ -461,6 +485,10 @@ namespace selain::ui
     m_active_view->add_css_class("selain-view-active");
     sync_active_chrome();
     m_active_view->grab_focus();
+    if (const auto window = get_main_window())
+    {
+      window->request_session_save();
+    }
   }
 
   void
@@ -916,6 +944,10 @@ namespace selain::ui
       {
         view->load_uri(*node.uri);
       }
+      if (node.zoom > 0.0)
+      {
+        view->set_zoom_level(node.zoom);
+      }
       leaves.push_back(view.get());
 
       return *view.get();
@@ -930,6 +962,33 @@ namespace selain::ui
     if (node.end)
     {
       paned.set_end_child(build_layout_node(*node.end, leaves));
+    }
+    if (node.ratio)
+    {
+      const double ratio = std::clamp(*node.ratio, 0.0, 1.0);
+      auto* paned_ptr = &paned;
+      const auto orientation = node.orientation;
+      auto apply_ratio = std::make_shared<std::function<void()>>();
+      auto attempts = std::make_shared<int>(0);
+
+      *apply_ratio = [paned_ptr, ratio, orientation, attempts, apply_ratio]() {
+        const int size =
+          orientation == Gtk::Orientation::HORIZONTAL
+            ? paned_ptr->get_width()
+            : paned_ptr->get_height();
+
+        if (size > 0)
+        {
+          paned_ptr->set_position(static_cast<int>(ratio * size));
+          return;
+        }
+        if (++(*attempts) < 8)
+        {
+          Glib::signal_idle().connect_once(*apply_ratio);
+        }
+      };
+
+      Glib::signal_idle().connect_once(*apply_ratio);
     }
 
     return paned;

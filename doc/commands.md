@@ -26,7 +26,7 @@ Selain currently supports following commands:
 |`:only`       |`:on`   |Closes all splits except the current.  |
 |`:open`       |`:o`    |Opens URI, domain, or search query.    |
 |`:open-tab`   |`:ot`   |Same as `:open`, in a new tab.         |
-|`:open-closed-tab`|`:oct`|Reopens the last closed tab layout.  |
+|`:open-closed-tab`|`:oct`|Reopens the most recently closed tab layout.|
 |`:paste`      |`:p`    |Opens clipboard text as URI/search.    |
 |`:paste-tab`  |`:pt`   |Same as `:paste`, in a new tab.        |
 |`:quit`       |`:q`    |Closes current split, or tab if alone. |
@@ -36,6 +36,9 @@ Selain currently supports following commands:
 |`:scroll`     |`:sc`   |Scrolls the current tab.               |
 |`:search-next`|`:sen`  |Goes to next search result.            |
 |`:search-prev`|`:sep`  |Goes to previous search result.        |
+|`:session-clear`|`:sessc`|Deletes the saved session file.      |
+|`:session-restore`|`:sessr`|Replaces open tabs with the saved session.|
+|`:session-save`|`:sess`|Writes the current session to disk now.|
 |`:set`        |`:se`   |Views/changes an setting.              |
 |`:split`      |`:sp`   |Splits the current view horizontally.  |
 |`:split-focus`|`:spf`  |Changes focus of splitted view.        |
@@ -71,6 +74,18 @@ History is stored in `~/.local/share/selain/history.sqlite`. Disable recording
 with `:set history=false`. Default binding: `zh`.
 
 `:history-clear` deletes all stored visits.
+
+`:session-save` writes open tabs (URIs, splits, split ratios, zoom, and focus)
+to `~/.local/share/selain/session.json` immediately. The same file is updated
+automatically while browsing and on quit when `session-save` is enabled.
+`:session-clear` deletes that file only (not the closed-tab undo stack).
+`:session-restore` replaces every open tab with the saved session. On the next
+startup with no CLI URLs, tabs are restored when `session-restore` is enabled
+(both settings default to `true`).
+
+Closed tabs for `X` / `:open-closed-tab` are kept as a multi-level stack in
+`~/.local/share/selain/closed-tabs.json` (up to 25 entries) when `session-save`
+is enabled.
 
 `:userscripts-reload` re-reads GreaseMonkey-style scripts from
 `~/.config/selain/scripts/` and reinstalls them. See [userscripts.md](userscripts.md).

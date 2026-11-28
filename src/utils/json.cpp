@@ -23,10 +23,44 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <fstream>
+#include <sstream>
+
 #include <selain/utils/json.hpp>
 
 namespace selain::utils::json
 {
+  std::optional<inja::json>
+  parse_file(const std::filesystem::path& path)
+  {
+    if (std::filesystem::exists(path))
+    {
+      std::ifstream in(path, std::ios::binary);
+      std::ostringstream buffer;
+      inja::json parsed;
+
+      if (!in)
+      {
+        g_warning("Selain: failed to open file: %s", path.c_str());
+
+        return std::nullopt;
+      }
+      buffer << in.rdbuf();
+      in.close();
+      parsed = inja::json::parse(buffer.str(), nullptr, false);
+      if (parsed.is_discarded())
+      {
+        g_warning("Selain: ignoring corrupt file: %s", path.c_str());
+
+        return std::nullopt;
+      }
+
+      return parsed;
+    }
+
+    return std::nullopt;
+  }
+
   Glib::ustring
   get_string(const inja::json& value, const char* key)
   {

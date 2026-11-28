@@ -25,11 +25,15 @@
  */
 #pragma once
 
+#include <filesystem>
+
 #include <glibmm.h>
 #include <inja/json.hpp>
 
 namespace selain::utils::json
 {
+  std::optional<inja::json> parse_file(const std::filesystem::path& path);
+
   Glib::ustring get_string(const inja::json& value, const char* key);
 
   std::optional<double> get_number(const inja::json& value, const char* key);

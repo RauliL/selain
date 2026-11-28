@@ -25,10 +25,8 @@
  */
 #include <algorithm>
 #include <fstream>
-#include <sstream>
 
 #include <glibmm.h>
-#include <inja/inja.hpp>
 
 #include <selain/core/session.hpp>
 #include <selain/utils/json.hpp>
@@ -334,51 +332,6 @@ namespace selain
       return true;
     }
 
-    std::optional<inja::json>
-    read_json_file(const std::filesystem::path& target)
-    {
-      if (!std::filesystem::exists(target))
-      {
-        return std::nullopt;
-      }
-
-      std::ifstream in(target, std::ios::binary);
-
-      if (!in)
-      {
-        g_warning(
-          "Selain: failed to open file: %s",
-          target.string().c_str()
-        );
-        return std::nullopt;
-      }
-
-      std::ostringstream buffer;
-
-      buffer << in.rdbuf();
-      if (!in && !in.eof())
-      {
-        g_warning(
-          "Selain: failed to read file: %s",
-          target.string().c_str()
-        );
-        return std::nullopt;
-      }
-
-      const auto parsed = inja::json::parse(buffer.str(), nullptr, false);
-
-      if (parsed.is_discarded())
-      {
-        g_warning(
-          "Selain: ignoring corrupt file: %s",
-          target.string().c_str()
-        );
-        return std::nullopt;
-      }
-
-      return parsed;
-    }
-
     bool
     remove_file(const std::filesystem::path& target)
     {
@@ -485,7 +438,7 @@ namespace selain
   SessionStore::load(const std::filesystem::path& path)
   {
     const auto target = path.empty() ? default_path() : path;
-    const auto parsed = read_json_file(target);
+    const auto parsed = utils::json::parse_file(target);
 
     if (!parsed)
     {
@@ -543,7 +496,7 @@ namespace selain
   ClosedTabStore::load(const std::filesystem::path& path)
   {
     const auto target = path.empty() ? default_path() : path;
-    const auto parsed = read_json_file(target);
+    const auto parsed = utils::json::parse_file(target);
 
     if (!parsed)
     {

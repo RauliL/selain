@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 PROJECT(
   selain
   VERSION
-    0.12
+    0.13
   DESCRIPTION
     "Modal Web browser."
   HOMEPAGE_URL

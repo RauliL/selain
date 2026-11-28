@@ -23,7 +23,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "giomm/simpleaction.h"
 #include <cstring>
 #include <format>
 
@@ -31,7 +30,6 @@
 
 #include <selain/core/setting.hpp>
 #include <selain/core/theme.hpp>
-#include <selain/ui/main-window.hpp>
 #include <selain/utils/string.hpp>
 #include <selain/utils/url.hpp>
 
@@ -70,15 +68,10 @@ namespace selain::ui
     guint,
     View*
   );
-  static gboolean on_context_menu(
+  gboolean on_context_menu(
     WebKitWebView*,
     WebKitContextMenu*,
     WebKitHitTestResult*,
-    View*
-  );
-  static void on_search_selected_text_activate(
-    GSimpleAction*,
-    GVariant*,
     View*
   );
   static void on_submit_form(
@@ -984,86 +977,6 @@ namespace selain::ui
   )
   {
     view->handle_mouse_target_changed(hit_test_result);
-  }
-
-  static void
-  on_search_selected_text_activate(
-    GSimpleAction*,
-    GVariant*,
-    View* view
-  )
-  {
-    view->get_selected_text(
-      [view](const std::optional<Glib::ustring>& text)
-      {
-        const auto window = view->get_main_window();
-        Glib::ustring query;
-
-        if (
-          !text ||
-          !window ||
-          (query = utils::string::trim(*text)).empty()
-        )
-        {
-          return;
-        }
-        if (const auto setting = setting::get(*window, "search-engine"))
-        {
-          // Use `build_search_uri` so domain-like selections are searched, not
-          // navigated to as URLs.
-          window->open_tab(utils::url::build_search_uri(*setting, query));
-        }
-      }
-    );
-  }
-
-  static gboolean
-  on_context_menu(
-    WebKitWebView*,
-    WebKitContextMenu* context_menu,
-    WebKitHitTestResult* hit_test_result,
-    View* view
-  )
-  {
-    Glib::ustring label = "Search the web";
-    GSimpleAction* action;
-
-    if (!webkit_hit_test_result_context_is_selection(hit_test_result))
-    {
-      return FALSE;
-    }
-    if (const auto window = view->get_main_window())
-    {
-      if (const auto setting = setting::get(*window, "search-engine"))
-      {
-        if (const auto host = utils::url::get_host(*setting))
-        {
-          label = std::format("Search with {}", host->raw());
-        }
-      }
-    }
-    action = g_simple_action_new("selain-search-selection", nullptr);
-    g_signal_connect(
-      action,
-      "activate",
-      G_CALLBACK(on_search_selected_text_activate),
-      static_cast<gpointer>(view)
-    );
-    webkit_context_menu_append(
-      context_menu,
-      webkit_context_menu_item_new_separator()
-    );
-    webkit_context_menu_append(
-      context_menu,
-      webkit_context_menu_item_new_from_gaction(
-        G_ACTION(action),
-        label.c_str(),
-        nullptr
-      )
-    );
-    g_object_unref(action);
-
-    return FALSE;
   }
 
   static void

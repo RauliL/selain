@@ -30,6 +30,7 @@
 #include <selain/utils/string.hpp>
 #include <selain/utils/url.hpp>
 
+using selain::utils::string::ellipsize;
 using selain::utils::string::fuzzy_match_score;
 using selain::utils::string::html_escape;
 using selain::utils::string::is_blank;
@@ -73,6 +74,17 @@ TEST_CASE("trim and trim_start", "[utils::string]")
   REQUIRE(trim_start(std::string("  hello  ")) == "hello  ");
   REQUIRE(trim_start(std::string("hello")) == "hello");
   REQUIRE(trim_start(std::string("   ")) == "");
+}
+
+TEST_CASE("ellipsize", "[utils::string]")
+{
+  REQUIRE(ellipsize(Glib::ustring("hello"), 20) == "hello");
+  REQUIRE(ellipsize(Glib::ustring("hello"), 5) == "hello");
+  REQUIRE(ellipsize(Glib::ustring("hello world"), 5) == "hell…");
+  REQUIRE(ellipsize(Glib::ustring("hello"), 1) == "…");
+  REQUIRE(ellipsize(Glib::ustring("hello"), 0) == "");
+  REQUIRE(ellipsize(Glib::ustring(""), 10) == "");
+  REQUIRE(ellipsize(Glib::ustring("äöåxyz"), 4) == "äöå…");
 }
 
 TEST_CASE("html_escape", "[utils::string]")

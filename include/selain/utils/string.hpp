@@ -177,6 +177,14 @@ namespace selain::utils::string
   }
 
   /**
+    * Truncates @p input to at most @p max_length characters, appending an
+    * ellipsis (…) when truncation occurs. @p max_length includes the ellipsis
+    * character. Returns @p input unchanged when it already fits, or an empty
+    * string when @p max_length is 0.
+    */
+  Glib::ustring ellipsize(const Glib::ustring& input, std::size_t max_length);
+
+  /**
     * Escapes HTML entities from given string.
     */
   std::string html_escape(std::string_view text);

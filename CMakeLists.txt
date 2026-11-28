@@ -143,6 +143,7 @@ SET(
   src/format/gemtext.cpp
   src/main.cpp
   src/ui/command-entry.cpp
+  src/ui/context-menu.cpp
   src/ui/list-dialog.cpp
   src/ui/main-window.cpp
   src/ui/status-bar.cpp

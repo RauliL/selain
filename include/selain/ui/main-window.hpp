@@ -231,6 +231,11 @@ namespace selain::ui
       bool focus = true
     );
 
+    Glib::RefPtr<Tab> open_search_tab(
+      const Glib::ustring& query,
+      bool focus = true
+    );
+
     void close_tab(Tab& tab);
     void close_tab(const Glib::RefPtr<Tab>& tab);
 

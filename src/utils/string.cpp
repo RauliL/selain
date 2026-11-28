@@ -27,6 +27,21 @@
 
 namespace selain::utils::string
 {
+  Glib::ustring
+  ellipsize(const Glib::ustring& input, std::size_t max_length)
+  {
+    if (input.length() <= max_length)
+    {
+      return input;
+    }
+    if (max_length == 0)
+    {
+      return Glib::ustring();
+    }
+
+    return input.substr(0, max_length - 1) + "…";
+  }
+
   std::string
   html_escape(std::string_view text)
   {

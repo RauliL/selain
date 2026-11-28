@@ -27,6 +27,7 @@
 
 #include <selain/config.hpp>
 
+#include <selain/core/setting.hpp>
 #if defined(SELAIN_ENABLE_BUKU_INTEGRATION)
 # include <selain/integration/buku.hpp>
 #endif
@@ -35,6 +36,8 @@
 #endif
 #include <selain/ui/main-window.hpp>
 #include <selain/ui/view.hpp>
+#include <selain/utils/string.hpp>
+#include <selain/utils/url.hpp>
 
 namespace selain::ui
 {
@@ -400,6 +403,24 @@ namespace selain::ui
     request_session_save();
 
     return tab;
+  }
+
+  Glib::RefPtr<Tab>
+  MainWindow::open_search_tab(const Glib::ustring& query, bool focus)
+  {
+    if (utils::string::is_blank(query))
+    {
+      show_error("Empty search query.");
+
+      return nullptr;
+    }
+    if (const auto setting = setting::get(*this, "search-engine"))
+    {
+      return open_tab(utils::url::build_search_uri(*setting, query), focus);
+    }
+    show_error("No search engine configured.");
+
+    return nullptr;
   }
 
   void
